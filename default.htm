@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html class=''>
+<head>
+	<style class="cp-pen-styles">
+		html, body {
+			width: 100%;
+			height: 100%;
+			margin: 0;
+			padding: 0;
+		}
+
+		canvas { 
+			padding: 0;
+			margin: 0;
+			position: absolute;
+			top: 0;
+			left: 0;
+		}
+
+		.toolbar {
+			position: absolute;
+			top: 0;
+			right: 0;
+			background: #EFEFEF;
+			padding: 0.5rem;
+		}
+	</style>
+</head>
+<body>
+	<canvas id="c" width="1000" height="500"></canvas>
+	<div class="toolbar">
+		<a href="#" id="clear">clear</a> | 
+		<a href="#" id="rectangle">rectangle</a> | 
+		<a href="#" id="circle">circle</a> | 
+		<a href="#" id="original">original</a>
+	</div>
+	<script src='https://code.jquery.com/jquery-2.2.4.min.js'></script>
+	<script src='scripts/app.js'></script>
+</body>
+</html>
