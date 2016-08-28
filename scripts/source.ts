@@ -19,6 +19,13 @@ class Source {
 	isEmpty() {
 		return this.items.length == 0;
 	}
+
+	removeLast() {
+		if (this.isEmpty())
+			return;
+
+		this.items.pop();
+	}
 }
 
 class Item {
@@ -30,7 +37,7 @@ class Item {
 		this.shape = Shape.Original;
 	}
 
-	record(x: number, y:number) {
+	record(x: number, y: number) {
 		this.raw.push(new Point(x, y));
 	}
 }
@@ -39,7 +46,7 @@ class Point {
 	x: number;
 	y: number;
 
-	constructor(x: number, y:number) {
+	constructor(x: number, y: number) {
 		this.x = x;
 		this.y = y;
 	}

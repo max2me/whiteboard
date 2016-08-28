@@ -7,8 +7,12 @@ var Director = (function () {
     }
     Director.prototype.init = function () {
         var _this = this;
-        $('html').keypress(function (e) {
+        $('html').keyup(function (e) {
             var c = String.fromCharCode(e.which).toLowerCase();
+            if (e.which == 8 || e.which == 46) {
+                _this.source.removeLast();
+                _this.drawer.redraw(_this.source);
+            }
             switch (c) {
                 case 'r':
                     _this.switchToRect();
@@ -27,7 +31,8 @@ var Director = (function () {
                     break;
             }
         });
-        $('#clear').click(this.clearAll);
+        var self = this;
+        $('#clear').click(function () { self.clearAll(); });
         $('#rectangle').click(this.switchToRect);
         $('#original').click(this.switchToOriginal);
         $('#circle').click(this.switchToCircle);
@@ -38,7 +43,6 @@ var Director = (function () {
         this.el.onmousedown = function (e) {
             _this.source.start(e.clientX, e.clientY);
             _this.isDrawing = true;
-            console.log(1);
         };
         this.el.onmousemove = function (e) {
             if (!_this.isDrawing)
@@ -202,6 +206,11 @@ var Source = (function () {
     };
     Source.prototype.isEmpty = function () {
         return this.items.length == 0;
+    };
+    Source.prototype.removeLast = function () {
+        if (this.isEmpty())
+            return;
+        this.items.pop();
     };
     return Source;
 }());

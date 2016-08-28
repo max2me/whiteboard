@@ -7,8 +7,13 @@ class Director {
 	isDrawing: boolean;
 
 	init() {
-		$('html').keypress((e: KeyboardEvent) => {
+		$('html').keyup((e: KeyboardEvent) => {
 			var c = String.fromCharCode(e.which).toLowerCase();
+
+			if (e.which == 8 || e.which == 46) { // backspace or delete
+				this.source.removeLast();
+				this.drawer.redraw(this.source);
+			}
 
 			switch(c) {
 				case 'r':
@@ -33,7 +38,9 @@ class Director {
 			}
 		})
 		
-		$('#clear').click(this.clearAll);
+		var self = this;
+
+		$('#clear').click(() => { self.clearAll(); });
 		$('#rectangle').click(this.switchToRect);
 		$('#original').click(this.switchToOriginal);
 		$('#circle').click(this.switchToCircle);
@@ -46,7 +53,6 @@ class Director {
 		this.el.onmousedown = (e: MouseEvent) => {
 			this.source.start(e.clientX, e.clientY);
 			this.isDrawing = true;
-			console.log(1);
 		};
 
 		this.el.onmousemove = (e: MouseEvent) => {
