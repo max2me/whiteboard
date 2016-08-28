@@ -17,51 +17,59 @@ class Drawer {
 		for(var i = 0; i < source.items.length; i++) {
 			var item = source.items[i];
 
-			switch(item.shape) {
-				case Shape.Original:
-					this.drawOriginal(item);
-					break;
-
-				case Shape.Rectangle:
-					this.drawRect(item);
-					break;
-
-				case Shape.Circle:
-					this.drawCircle(item);	
-					break;
-
-				case Shape.Ellipse:
-					this.drawEllipse(item);
-			}
+			this.drawItem(item, -2, -2);
+			this.drawItem(item, -1, -1);
+			this.drawItem(item, 0, 0);
+			this.drawItem(item, 1, 1);
+			this.drawItem(item, 2, 2);
 		}
 	}
 
-	drawOriginal(item: Item) {
+	drawItem(item: Item, shiftX: number, shiftY: number) {
+		switch(item.shape) {
+			case Shape.Original:
+				this.drawOriginal(item, shiftX, shiftY);
+				break;
+
+			case Shape.Rectangle:
+				this.drawRect(item, shiftX, shiftY);
+				break;
+
+			case Shape.Circle:
+				this.drawCircle(item, shiftX, shiftY);	
+				break;
+
+			case Shape.Ellipse:
+				this.drawEllipse(item, shiftX, shiftY);
+		}
+	}
+
+	drawOriginal(item: Item, shiftX: number, shiftY: number) {
 		this.ctx.beginPath();  
 		this.setupStroke();
-		this.ctx.moveTo(item.raw[0].x, item.raw[0].y);
+		this.ctx.moveTo(item.raw[0].x + shiftX, item.raw[0].y + shiftY);
 
 		for(var j = 1; j < item.raw.length; j++) {
-			this.ctx.lineTo(item.raw[j].x, item.raw[j].y);
+			this.ctx.lineTo(item.raw[j].x + shiftX, item.raw[j].y + shiftY);
 		}
 
 		this.ctx.stroke();
 	}
 
-	drawRect(item: Item) {
+	drawRect(item: Item, shiftX: number, shiftY: number) {
 		var b = this.getBounds(item.raw);
   
 		this.ctx.beginPath();  
 		this.setupStroke();
-		this.ctx.moveTo(b.xmin, b.ymin);
-		this.ctx.lineTo(b.xmax, b.ymin);
-		this.ctx.lineTo(b.xmax, b.ymax);
-		this.ctx.lineTo(b.xmin, b.ymax);
-		this.ctx.lineTo(b.xmin, b.ymin);
+		this.ctx.moveTo(b.xmin + shiftX, b.ymin + shiftY);
+		this.ctx.lineTo(b.xmax + shiftX, b.ymin + shiftY);
+		this.ctx.lineTo(b.xmax + shiftX, b.ymax + shiftY);
+		this.ctx.lineTo(b.xmin + shiftX, b.ymax + shiftY);
+		this.ctx.lineTo(b.xmin + shiftX, b.ymin + shiftY);
 		this.ctx.stroke();
 	}
 
-	drawCircle(item: Item) {
+	drawCircle(item: Item, shiftX: number, shiftY: number) {
 		var b = this.getBounds(item.raw);
   
 		this.ctx.beginPath();
@@ -74,11 +82,11 @@ class Drawer {
 		var radiusY = (b.ymax-b.ymin)/2;
 		var radius = Math.min(radiusX, radiusY);
 		
-		this.ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
+		this.ctx.arc(x + shiftX, y + shiftY, radius, 0, 2 * Math.PI, false);
 		this.ctx.stroke();
 	}
 
-	drawEllipse(item: Item) {
+	drawEllipse(item: Item, shiftX: number, shiftY: number) {
 		var b = this.getBounds(item.raw);
 		
 		var x = (b.xmax - b.xmin)/2 + b.xmin;
@@ -90,13 +98,13 @@ class Drawer {
 		 
 		this.ctx.beginPath();
 		this.setupStroke();
-		this.ctx.ellipse(x, y, radiusX, radiusY, 0, 0, 2 * Math.PI, false);
+		this.ctx.ellipse(x + shiftX, y + shiftY, radiusX, radiusY, 0, 0, 2 * Math.PI, false);
 		this.ctx.stroke();
 	}
 
 	setupStroke() {
 		this.ctx.globalAlpha = 1;
-		this.ctx.lineWidth = 8;
+		this.ctx.lineWidth = 2;
 		this.ctx.lineJoin = this.ctx.lineCap = 'round';
 	}
 
