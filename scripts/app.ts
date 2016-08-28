@@ -6,44 +6,37 @@ var drawer: Drawer;
 var isDrawing: boolean;
 
 $(() => {
-	$('#clear').click(() => {
-		source.items = [];
-		drawer.redraw(source);
-	});
-	
-	$('#rectangle').click(switchToRect);
 	$('html').keypress((e: KeyboardEvent) => {
 		var c = String.fromCharCode(e.which).toLowerCase();
 
-		if (c == 'r')
-			switchToRect();
+		switch(c) {
+			case 'r':
+				switchToRect();
+				break;
+
+			case 'x':
+				clearAll();
+				break;
+
+			case 'o':
+				switchToOriginal();
+				break;
+
+			case 'c':
+				switchToCircle();
+				break;
+
+			case 'e':
+				switchToEllipse();
+				break;
+		}
 	})
 	
-	
-	$('#original').click(() => {
-		if (source.isEmpty())
-			return;
-
-		source.last().shape = Shape.Original;
-		drawer.redraw(source);
-	});
-
-
-	$('#circle').click(() => {
-		if (source.isEmpty())
-			return;
-
-		source.last().shape = Shape.Circle;
-		drawer.redraw(source);
-	});
-
-	$('#ellipse').click(() => {
-		if (source.isEmpty())
-			return;
-
-		source.last().shape = Shape.Ellipse;
-		drawer.redraw(source);
-	});
+	$('#clear').click(clearAll);
+	$('#rectangle').click(switchToRect);
+	$('#original').click(switchToOriginal);
+	$('#circle').click(switchToCircle);
+	$('#ellipse').click(switchToEllipse);
 
 	source = new Source();
 	
@@ -72,5 +65,34 @@ function switchToRect() {
 		return;
 
 	source.last().shape = Shape.Rectangle;
+	drawer.redraw(source);
+}
+
+function clearAll() {
+	source.items = [];
+	drawer.redraw(source);
+}
+
+function switchToOriginal(){
+	if (source.isEmpty())
+		return;
+
+	source.last().shape = Shape.Original;
+	drawer.redraw(source);
+}
+
+function switchToCircle() {
+	if (source.isEmpty())
+		return;
+
+	source.last().shape = Shape.Circle;
+	drawer.redraw(source);
+}
+
+function switchToEllipse() {
+	if (source.isEmpty())
+		return;
+
+	source.last().shape = Shape.Ellipse;
 	drawer.redraw(source);
 }
