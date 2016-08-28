@@ -13,6 +13,18 @@ $(function () {
         source.last().shape = Shape.Rectangle;
         drawer.redraw(source);
     });
+    $('#original').click(function () {
+        if (source.isEmpty())
+            return;
+        source.last().shape = Shape.Original;
+        drawer.redraw(source);
+    });
+    $('#circle').click(function () {
+        if (source.isEmpty())
+            return;
+        source.last().shape = Shape.Circle;
+        drawer.redraw(source);
+    });
     source = new Source();
     el = $('#c').get(0);
     drawer = new Drawer(el);
@@ -34,7 +46,6 @@ var Drawer = (function () {
     function Drawer(el) {
         this.el = el;
         this.ctx = el.getContext('2d');
-        this.ctx.lineWidth = 8;
         this.ctx.lineJoin = this.ctx.lineCap = 'round';
         this.el.width = $('body').width();
         this.el.height = $('body').height();
@@ -47,11 +58,13 @@ var Drawer = (function () {
                 this.drawOriginal(item);
             else if (item.shape == Shape.Rectangle)
                 this.drawRect(item);
+            else if (item.shape == Shape.Circle)
+                this.drawCircle(item);
         }
     };
     Drawer.prototype.drawOriginal = function (item) {
         this.ctx.beginPath();
-        this.ctx.globalAlpha = 1;
+        this.setupStroke();
         this.ctx.moveTo(item.raw[0].x, item.raw[0].y);
         for (var j = 1; j < item.raw.length; j++) {
             this.ctx.lineTo(item.raw[j].x, item.raw[j].y);
@@ -61,13 +74,25 @@ var Drawer = (function () {
     Drawer.prototype.drawRect = function (item) {
         var b = this.getBounds(item.raw);
         this.ctx.beginPath();
-        this.ctx.globalAlpha = 1;
+        this.setupStroke();
         this.ctx.moveTo(b.xmin, b.ymin);
         this.ctx.lineTo(b.xmax, b.ymin);
         this.ctx.lineTo(b.xmax, b.ymax);
         this.ctx.lineTo(b.xmin, b.ymax);
         this.ctx.lineTo(b.xmin, b.ymin);
         this.ctx.stroke();
+    };
+    Drawer.prototype.drawCircle = function (item) {
+        var b = this.getBounds(item.raw);
+        this.ctx.beginPath();
+        this.setupStroke();
+        this.ctx.arc((b.xmax - b.xmin) / 2 + b.xmin, (b.ymax - b.ymin) / 2 + b.ymin, Math.min((b.xmax - b.xmin) / 2, (b.ymax - b.ymin) / 2), 0, 2 * Math.PI, false);
+        this.ctx.stroke();
+    };
+    Drawer.prototype.setupStroke = function () {
+        this.ctx.globalAlpha = 1;
+        this.ctx.lineWidth = 8;
+        this.ctx.lineJoin = this.ctx.lineCap = 'round';
     };
     Drawer.prototype.getBounds = function (coords) {
         var xmin = 1000, xmax = 0, ymin = 1000, ymax = 0;
@@ -132,5 +157,6 @@ var Shape;
 (function (Shape) {
     Shape[Shape["Original"] = 0] = "Original";
     Shape[Shape["Rectangle"] = 1] = "Rectangle";
+    Shape[Shape["Circle"] = 2] = "Circle";
 })(Shape || (Shape = {}));
 //# sourceMappingURL=app.js.map

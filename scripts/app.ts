@@ -18,8 +18,24 @@ $(() => {
 		source.last().shape = Shape.Rectangle;
 		drawer.redraw(source);
 	});
-	// $('#original').click(canvasOriginal);
-	// $('#circle').click(canvasCircle);
+	
+	
+	$('#original').click(() => {
+		if (source.isEmpty())
+			return;
+
+		source.last().shape = Shape.Original;
+		drawer.redraw(source);
+	});
+
+
+	$('#circle').click(() => {
+		if (source.isEmpty())
+			return;
+
+		source.last().shape = Shape.Circle;
+		drawer.redraw(source);
+	});
 
 	source = new Source();
 	

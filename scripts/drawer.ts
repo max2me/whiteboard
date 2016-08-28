@@ -5,7 +5,6 @@ class Drawer {
 	constructor(el: any) {
 		this.el = el;
 		this.ctx = el.getContext('2d');
-		this.ctx.lineWidth = 8;
 		this.ctx.lineJoin = this.ctx.lineCap = 'round';
 
 		this.el.width =$('body').width();
@@ -20,14 +19,18 @@ class Drawer {
 
 			if (item.shape == Shape.Original)
 				this.drawOriginal(item);
+
 			else if (item.shape == Shape.Rectangle) 
 				this.drawRect(item);
+
+			else if (item.shape == Shape.Circle) 
+				this.drawCircle(item);
 		}
 	}
 
 	drawOriginal(item: Item) {
 		this.ctx.beginPath();  
-		this.ctx.globalAlpha = 1;
+		this.setupStroke();
 		this.ctx.moveTo(item.raw[0].x, item.raw[0].y);
 
 		for(var j = 1; j < item.raw.length; j++) {
@@ -41,13 +44,30 @@ class Drawer {
 		var b = this.getBounds(item.raw);
   
 		this.ctx.beginPath();  
-		this.ctx.globalAlpha = 1;
+		this.setupStroke();
 		this.ctx.moveTo(b.xmin, b.ymin);
 		this.ctx.lineTo(b.xmax, b.ymin);
 		this.ctx.lineTo(b.xmax, b.ymax);
 		this.ctx.lineTo(b.xmin, b.ymax);
 		this.ctx.lineTo(b.xmin, b.ymin);
 		this.ctx.stroke();
+	}
+
+	drawCircle(item: Item) {
+		var b = this.getBounds(item.raw);
+  
+		this.ctx.beginPath();
+		this.setupStroke();
+		this.ctx.arc((b.xmax - b.xmin)/2 + b.xmin, 
+				(b.ymax - b.ymin)/2 + b.ymin, 
+				Math.min((b.xmax-b.xmin)/2, (b.ymax-b.ymin)/2), 0, 2 * Math.PI, false);
+		this.ctx.stroke();
+	}
+
+	setupStroke() {
+		this.ctx.globalAlpha = 1;
+		this.ctx.lineWidth = 8;
+		this.ctx.lineJoin = this.ctx.lineCap = 'round';
 	}
 
 	getBounds(coords: Point[]){

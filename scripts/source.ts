@@ -47,5 +47,6 @@ class Point {
 
 enum Shape {
 	Original,
-	Rectangle
+	Rectangle,
+	Circle
 }
