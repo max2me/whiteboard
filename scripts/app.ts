@@ -11,13 +11,13 @@ $(() => {
 		drawer.redraw(source);
 	});
 	
-	$('#rectangle').click(() => {
-		if (source.isEmpty())
-			return;
+	$('#rectangle').click(switchToRect);
+	$('html').keypress((e: KeyboardEvent) => {
+		var c = String.fromCharCode(e.which).toLowerCase();
 
-		source.last().shape = Shape.Rectangle;
-		drawer.redraw(source);
-	});
+		if (c == 'r')
+			switchToRect();
+	})
 	
 	
 	$('#original').click(() => {
@@ -34,6 +34,14 @@ $(() => {
 			return;
 
 		source.last().shape = Shape.Circle;
+		drawer.redraw(source);
+	});
+
+	$('#ellipse').click(() => {
+		if (source.isEmpty())
+			return;
+
+		source.last().shape = Shape.Ellipse;
 		drawer.redraw(source);
 	});
 
@@ -59,4 +67,10 @@ $(() => {
 	};
 });
 
+function switchToRect() {
+	if (source.isEmpty())
+		return;
 
+	source.last().shape = Shape.Rectangle;
+	drawer.redraw(source);
+}

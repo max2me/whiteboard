@@ -7,11 +7,11 @@ $(function () {
         source.items = [];
         drawer.redraw(source);
     });
-    $('#rectangle').click(function () {
-        if (source.isEmpty())
-            return;
-        source.last().shape = Shape.Rectangle;
-        drawer.redraw(source);
+    $('#rectangle').click(switchToRect);
+    $('html').keypress(function (e) {
+        var c = String.fromCharCode(e.which);
+        if (c == 'r')
+            switchToRect();
     });
     $('#original').click(function () {
         if (source.isEmpty())
@@ -23,6 +23,12 @@ $(function () {
         if (source.isEmpty())
             return;
         source.last().shape = Shape.Circle;
+        drawer.redraw(source);
+    });
+    $('#ellipse').click(function () {
+        if (source.isEmpty())
+            return;
+        source.last().shape = Shape.Ellipse;
         drawer.redraw(source);
     });
     source = new Source();
@@ -42,6 +48,12 @@ $(function () {
         isDrawing = false;
     };
 });
+function switchToRect() {
+    if (source.isEmpty())
+        return;
+    source.last().shape = Shape.Rectangle;
+    drawer.redraw(source);
+}
 var Drawer = (function () {
     function Drawer(el) {
         this.el = el;
@@ -54,12 +66,19 @@ var Drawer = (function () {
         this.clear();
         for (var i = 0; i < source.items.length; i++) {
             var item = source.items[i];
-            if (item.shape == Shape.Original)
-                this.drawOriginal(item);
-            else if (item.shape == Shape.Rectangle)
-                this.drawRect(item);
-            else if (item.shape == Shape.Circle)
-                this.drawCircle(item);
+            switch (item.shape) {
+                case Shape.Original:
+                    this.drawOriginal(item);
+                    break;
+                case Shape.Rectangle:
+                    this.drawRect(item);
+                    break;
+                case Shape.Circle:
+                    this.drawCircle(item);
+                    break;
+                case Shape.Ellipse:
+                    this.drawEllipse(item);
+            }
         }
     };
     Drawer.prototype.drawOriginal = function (item) {
@@ -86,7 +105,24 @@ var Drawer = (function () {
         var b = this.getBounds(item.raw);
         this.ctx.beginPath();
         this.setupStroke();
-        this.ctx.arc((b.xmax - b.xmin) / 2 + b.xmin, (b.ymax - b.ymin) / 2 + b.ymin, Math.min((b.xmax - b.xmin) / 2, (b.ymax - b.ymin) / 2), 0, 2 * Math.PI, false);
+        var x = (b.xmax - b.xmin) / 2 + b.xmin;
+        var y = (b.ymax - b.ymin) / 2 + b.ymin;
+        var radiusX = (b.xmax - b.xmin) / 2;
+        var radiusY = (b.ymax - b.ymin) / 2;
+        var radius = Math.min(radiusX, radiusY);
+        this.ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
+        this.ctx.stroke();
+    };
+    Drawer.prototype.drawEllipse = function (item) {
+        var b = this.getBounds(item.raw);
+        var x = (b.xmax - b.xmin) / 2 + b.xmin;
+        var y = (b.ymax - b.ymin) / 2 + b.ymin;
+        var radiusX = (b.xmax - b.xmin) / 2;
+        var radiusY = (b.ymax - b.ymin) / 2;
+        var radius = Math.min(radiusX, radiusY);
+        this.ctx.beginPath();
+        this.setupStroke();
+        this.ctx.ellipse(x, y, radiusX, radiusY, 0, 0, 2 * Math.PI, false);
         this.ctx.stroke();
     };
     Drawer.prototype.setupStroke = function () {
@@ -158,5 +194,6 @@ var Shape;
     Shape[Shape["Original"] = 0] = "Original";
     Shape[Shape["Rectangle"] = 1] = "Rectangle";
     Shape[Shape["Circle"] = 2] = "Circle";
+    Shape[Shape["Ellipse"] = 3] = "Ellipse";
 })(Shape || (Shape = {}));
 //# sourceMappingURL=app.js.map

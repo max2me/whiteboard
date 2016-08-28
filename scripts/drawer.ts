@@ -17,14 +17,22 @@ class Drawer {
 		for(var i = 0; i < source.items.length; i++) {
 			var item = source.items[i];
 
-			if (item.shape == Shape.Original)
-				this.drawOriginal(item);
+			switch(item.shape) {
+				case Shape.Original:
+					this.drawOriginal(item);
+					break;
 
-			else if (item.shape == Shape.Rectangle) 
-				this.drawRect(item);
+				case Shape.Rectangle:
+					this.drawRect(item);
+					break;
 
-			else if (item.shape == Shape.Circle) 
-				this.drawCircle(item);
+				case Shape.Circle:
+					this.drawCircle(item);	
+					break;
+
+				case Shape.Ellipse:
+					this.drawEllipse(item);
+			}
 		}
 	}
 
@@ -58,9 +66,31 @@ class Drawer {
   
 		this.ctx.beginPath();
 		this.setupStroke();
-		this.ctx.arc((b.xmax - b.xmin)/2 + b.xmin, 
-				(b.ymax - b.ymin)/2 + b.ymin, 
-				Math.min((b.xmax-b.xmin)/2, (b.ymax-b.ymin)/2), 0, 2 * Math.PI, false);
+		
+		var x = (b.xmax - b.xmin)/2 + b.xmin;
+		var y = (b.ymax - b.ymin)/2 + b.ymin;
+		
+		var radiusX = (b.xmax-b.xmin)/2;
+		var radiusY = (b.ymax-b.ymin)/2;
+		var radius = Math.min(radiusX, radiusY);
+		
+		this.ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
+		this.ctx.stroke();
+	}
+
+	drawEllipse(item: Item) {
+		var b = this.getBounds(item.raw);
+		
+		var x = (b.xmax - b.xmin)/2 + b.xmin;
+		var y = (b.ymax - b.ymin)/2 + b.ymin;
+		
+		var radiusX = (b.xmax-b.xmin)/2;
+		var radiusY = (b.ymax-b.ymin)/2;
+		var radius = Math.min(radiusX, radiusY);
+		 
+		this.ctx.beginPath();
+		this.setupStroke();
+		this.ctx.ellipse(x, y, radiusX, radiusY, 0, 0, 2 * Math.PI, false);
 		this.ctx.stroke();
 	}
 
