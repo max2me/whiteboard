@@ -1,9 +1,9 @@
 declare var $:any;
 
-var el;
+var el: HTMLElement;
 var source: Source;
 var drawer: Drawer;
-var isDrawing;
+var isDrawing: boolean;
 
 $(() => {
 	$('#clear').click(() => {
@@ -11,7 +11,13 @@ $(() => {
 		drawer.redraw(source);
 	});
 	
-	// $('#rectangle').click(canvasRect);
+	$('#rectangle').click(() => {
+		if (source.isEmpty())
+			return;
+
+		source.last().shape = Shape.Rectangle;
+		drawer.redraw(source);
+	});
 	// $('#original').click(canvasOriginal);
 	// $('#circle').click(canvasCircle);
 

@@ -15,13 +15,19 @@ class Source {
 
 		this.items.push(item);
 	}
+
+	isEmpty() {
+		return this.items.length == 0;
+	}
 }
 
 class Item {
 	raw: Point[];
+	shape: Shape;
 
 	constructor(){
 		this.raw = [];
+		this.shape = Shape.Original;
 	}
 
 	record(x: number, y:number) {
@@ -37,4 +43,9 @@ class Point {
 		this.x = x;
 		this.y = y;
 	}
+}
+
+enum Shape {
+	Original,
+	Rectangle
 }
