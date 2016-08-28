@@ -1,78 +1,85 @@
-var el;
-var source;
-var drawer;
-var isDrawing;
 $(function () {
-    $('html').keypress(function (e) {
-        var c = String.fromCharCode(e.which).toLowerCase();
-        switch (c) {
-            case 'r':
-                switchToRect();
-                break;
-            case 'x':
-                clearAll();
-                break;
-            case 'o':
-                switchToOriginal();
-                break;
-            case 'c':
-                switchToCircle();
-                break;
-            case 'e':
-                switchToEllipse();
-                break;
-        }
-    });
-    $('#clear').click(clearAll);
-    $('#rectangle').click(switchToRect);
-    $('#original').click(switchToOriginal);
-    $('#circle').click(switchToCircle);
-    $('#ellipse').click(switchToEllipse);
-    source = new Source();
-    el = $('#c').get(0);
-    drawer = new Drawer(el);
-    el.onmousedown = function (e) {
-        source.start(e.clientX, e.clientY);
-        isDrawing = true;
-    };
-    el.onmousemove = function (e) {
-        if (!isDrawing)
-            return;
-        source.last().record(e.clientX, e.clientY);
-        drawer.redraw(source);
-    };
-    el.onmouseup = function () {
-        isDrawing = false;
-    };
+    var director = new Director();
+    director.init();
 });
-function switchToRect() {
-    if (source.isEmpty())
-        return;
-    source.last().shape = Shape.Rectangle;
-    drawer.redraw(source);
-}
-function clearAll() {
-    source.items = [];
-    drawer.redraw(source);
-}
-function switchToOriginal() {
-    if (source.isEmpty())
-        return;
-    source.last().shape = Shape.Original;
-    drawer.redraw(source);
-}
-function switchToCircle() {
-    if (source.isEmpty())
-        return;
-    source.last().shape = Shape.Circle;
-    drawer.redraw(source);
-}
-function switchToEllipse() {
-    if (source.isEmpty())
-        return;
-    source.last().shape = Shape.Ellipse;
-    drawer.redraw(source);
-}
+var Director = (function () {
+    function Director() {
+    }
+    Director.prototype.init = function () {
+        var _this = this;
+        $('html').keypress(function (e) {
+            var c = String.fromCharCode(e.which).toLowerCase();
+            switch (c) {
+                case 'r':
+                    _this.switchToRect();
+                    break;
+                case 'x':
+                    _this.clearAll();
+                    break;
+                case 'o':
+                    _this.switchToOriginal();
+                    break;
+                case 'c':
+                    _this.switchToCircle();
+                    break;
+                case 'e':
+                    _this.switchToEllipse();
+                    break;
+            }
+        });
+        $('#clear').click(this.clearAll);
+        $('#rectangle').click(this.switchToRect);
+        $('#original').click(this.switchToOriginal);
+        $('#circle').click(this.switchToCircle);
+        $('#ellipse').click(this.switchToEllipse);
+        this.source = new Source();
+        this.el = $('#c').get(0);
+        this.drawer = new Drawer(this.el);
+        this.el.onmousedown = function (e) {
+            _this.source.start(e.clientX, e.clientY);
+            _this.isDrawing = true;
+            console.log(1);
+        };
+        this.el.onmousemove = function (e) {
+            if (!_this.isDrawing)
+                return;
+            _this.source.last().record(e.clientX, e.clientY);
+            _this.drawer.redraw(_this.source);
+        };
+        this.el.onmouseup = function () {
+            _this.isDrawing = false;
+        };
+    };
+    Director.prototype.switchToRect = function () {
+        if (this.source.isEmpty())
+            return;
+        this.source.last().shape = Shape.Rectangle;
+        this.drawer.redraw(this.source);
+    };
+    Director.prototype.clearAll = function () {
+        this.source.items = [];
+        this.drawer.redraw(this.source);
+    };
+    Director.prototype.switchToOriginal = function () {
+        if (this.source.isEmpty())
+            return;
+        this.source.last().shape = Shape.Original;
+        this.drawer.redraw(this.source);
+    };
+    Director.prototype.switchToCircle = function () {
+        if (this.source.isEmpty())
+            return;
+        this.source.last().shape = Shape.Circle;
+        this.drawer.redraw(this.source);
+    };
+    Director.prototype.switchToEllipse = function () {
+        if (this.source.isEmpty())
+            return;
+        this.source.last().shape = Shape.Ellipse;
+        this.drawer.redraw(this.source);
+    };
+    return Director;
+}());
 var Drawer = (function () {
     function Drawer(el) {
         this.el = el;
