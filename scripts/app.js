@@ -9,7 +9,7 @@ $(function () {
     });
     $('#rectangle').click(switchToRect);
     $('html').keypress(function (e) {
-        var c = String.fromCharCode(e.which);
+        var c = String.fromCharCode(e.which).toLowerCase();
         if (c == 'r')
             switchToRect();
     });

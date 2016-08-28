@@ -124,3 +124,7 @@ class Drawer {
 		this.ctx.clearRect(0, 0, this.el.width, this.el.height);
 	}
 }
+
+interface CanvasRenderingContext2D {
+	ellipse(x: number, y: number, radiusx: number, radiusy: number, rotation: number, start: number, end: number, clockwise: boolean) : void;
+}

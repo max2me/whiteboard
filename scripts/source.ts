@@ -9,7 +9,7 @@ class Source {
 		return this.items[this.items.length - 1];
 	}
 
-	start(x: Number, y:Number) {
+	start(x: number, y: number) {
 		var item = new Item();
 		item.record(x, y);
 
@@ -36,10 +36,10 @@ class Item {
 }
 
 class Point {
-	x: Number;
-	y: Number;
+	x: number;
+	y: number;
 
-	constructor(x: Number, y:Number) {
+	constructor(x: number, y:number) {
 		this.x = x;
 		this.y = y;
 	}
