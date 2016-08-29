@@ -6,58 +6,67 @@ var Director = (function () {
     function Director() {
     }
     Director.prototype.init = function () {
-        var _this = this;
+        var self = this;
         $('html').keyup(function (e) {
             var c = String.fromCharCode(e.which).toLowerCase();
             if (e.which == 8 || e.which == 46) {
-                _this.source.removeLast();
-                _this.drawer.redraw(_this.source);
+                self.source.removeLast();
+                self.drawer.redraw(self.source);
             }
             switch (c) {
                 case 'r':
-                    _this.switchToRect();
+                    self.switchToRect();
                     break;
                 case 'x':
-                    _this.clearAll();
+                    self.clearAll();
                     break;
                 case 'o':
-                    _this.switchToOriginal();
+                    self.switchToOriginal();
                     break;
                 case 'c':
-                    _this.switchToCircle();
+                    self.switchToCircle();
                     break;
                 case 'e':
-                    _this.switchToEllipse();
+                    self.switchToEllipse();
+                    break;
+                case 'l':
+                    self.switchToLine();
                     break;
             }
         });
-        var self = this;
-        $('#clear').click(function () { self.clearAll(); });
-        $('#rectangle').click(this.switchToRect);
-        $('#original').click(this.switchToOriginal);
-        $('#circle').click(this.switchToCircle);
-        $('#ellipse').click(this.switchToEllipse);
+        $('#clear').click(this.clearAll.bind(this));
+        $('#rectangle').click(this.switchToRect.bind(this));
+        $('#original').click(this.switchToOriginal.bind(this));
+        $('#circle').click(this.switchToCircle.bind(this));
+        $('#ellipse').click(this.switchToEllipse.bind(this));
+        $('#line').click(this.switchToLine.bind(this));
         this.source = new Source();
         this.el = $('#c').get(0);
         this.drawer = new Drawer(this.el);
         this.el.onmousedown = function (e) {
-            _this.source.start(e.clientX, e.clientY);
-            _this.isDrawing = true;
+            self.source.start(e.clientX, e.clientY);
+            self.isDrawing = true;
         };
         this.el.onmousemove = function (e) {
-            if (!_this.isDrawing)
+            if (!self.isDrawing)
                 return;
-            _this.source.last().record(e.clientX, e.clientY);
-            _this.drawer.redraw(_this.source);
+            self.source.last().record(e.clientX, e.clientY);
+            self.drawer.redraw(self.source);
         };
-        this.el.onmouseup = function () {
-            _this.isDrawing = false;
+        self.el.onmouseup = function () {
+            self.isDrawing = false;
         };
     };
     Director.prototype.switchToRect = function () {
         if (this.source.isEmpty())
             return;
         this.source.last().shape = Shape.Rectangle;
+        this.drawer.redraw(this.source);
+    };
+    Director.prototype.switchToLine = function () {
+        if (this.source.isEmpty())
+            return;
+        this.source.last().shape = Shape.Line;
         this.drawer.redraw(this.source);
     };
     Director.prototype.clearAll = function () {
@@ -116,6 +125,10 @@ var Drawer = (function () {
                 break;
             case Shape.Ellipse:
                 this.drawEllipse(item, shiftX, shiftY);
+                break;
+            case Shape.Line:
+                this.drawLine(item, shiftX, shiftY);
+                break;
         }
     };
     Drawer.prototype.drawOriginal = function (item, shiftX, shiftY) {
@@ -124,6 +137,16 @@ var Drawer = (function () {
         this.ctx.moveTo(item.raw[0].x + shiftX, item.raw[0].y + shiftY);
         for (var j = 1; j < item.raw.length; j++) {
             this.ctx.lineTo(item.raw[j].x + shiftX, item.raw[j].y + shiftY);
+        }
+        this.ctx.stroke();
+    };
+    Drawer.prototype.drawLine = function (item, shiftX, shiftY) {
+        this.ctx.beginPath();
+        this.setupStroke();
+        var pts = window.simplify(item.raw, 10, true);
+        this.ctx.moveTo(pts[0].x + shiftX, pts[0].y + shiftY);
+        for (var j = 1; j < pts.length; j++) {
+            this.ctx.lineTo(pts[j].x + shiftX, pts[j].y + shiftY);
         }
         this.ctx.stroke();
     };
@@ -237,5 +260,6 @@ var Shape;
     Shape[Shape["Rectangle"] = 1] = "Rectangle";
     Shape[Shape["Circle"] = 2] = "Circle";
     Shape[Shape["Ellipse"] = 3] = "Ellipse";
+    Shape[Shape["Line"] = 4] = "Line";
 })(Shape || (Shape = {}));
 //# sourceMappingURL=app.js.map

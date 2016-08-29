@@ -56,5 +56,6 @@ enum Shape {
 	Original,
 	Rectangle,
 	Circle,
-	Ellipse
+	Ellipse,
+	Line
 }

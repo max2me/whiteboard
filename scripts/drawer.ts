@@ -41,6 +41,11 @@ class Drawer {
 
 			case Shape.Ellipse:
 				this.drawEllipse(item, shiftX, shiftY);
+				break;
+
+			case Shape.Line:
+				this.drawLine(item, shiftX, shiftY);
+				break;
 		}
 	}
 
@@ -51,6 +56,20 @@ class Drawer {
 
 		for(var j = 1; j < item.raw.length; j++) {
 			this.ctx.lineTo(item.raw[j].x + shiftX, item.raw[j].y + shiftY);
+		}
+
+		this.ctx.stroke();
+	}
+
+	drawLine(item: Item, shiftX: number, shiftY: number) {
+		this.ctx.beginPath();  
+		this.setupStroke();
+
+		var pts = window.simplify(item.raw, 10, true);
+
+		this.ctx.moveTo(pts[0].x + shiftX, pts[0].y + shiftY);
+		for(var j = 1; j < pts.length; j++) {
+			this.ctx.lineTo(pts[j].x + shiftX, pts[j].y + shiftY);
 		}
 
 		this.ctx.stroke();
@@ -135,4 +154,8 @@ class Drawer {
 
 interface CanvasRenderingContext2D {
 	ellipse(x: number, y: number, radiusx: number, radiusy: number, rotation: number, start: number, end: number, clockwise: boolean) : void;
+}
+
+interface Window {
+	simplify(points: Point[], tolerance: number, highestQuality: boolean): Point[];
 }

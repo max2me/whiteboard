@@ -7,63 +7,69 @@ class Director {
 	isDrawing: boolean;
 
 	init() {
+		var self = this;
+
 		$('html').keyup((e: KeyboardEvent) => {
 			var c = String.fromCharCode(e.which).toLowerCase();
 
 			if (e.which == 8 || e.which == 46) { // backspace or delete
-				this.source.removeLast();
-				this.drawer.redraw(this.source);
+				self.source.removeLast();
+				self.drawer.redraw(self.source);
 			}
 
 			switch(c) {
 				case 'r':
-					this.switchToRect();
+					self.switchToRect();
 					break;
 
 				case 'x':
-					this.clearAll();
+					self.clearAll();
 					break;
 
 				case 'o':
-					this.switchToOriginal();
+					self.switchToOriginal();
 					break;
 
 				case 'c':
-					this.switchToCircle();
+					self.switchToCircle();
 					break;
 
 				case 'e':
-					this.switchToEllipse();
+					self.switchToEllipse();
+					break;
+
+				case 'l':
+					self.switchToLine();
 					break;
 			}
 		})
 		
-		var self = this;
 
-		$('#clear').click(() => { self.clearAll(); });
-		$('#rectangle').click(this.switchToRect);
-		$('#original').click(this.switchToOriginal);
-		$('#circle').click(this.switchToCircle);
-		$('#ellipse').click(this.switchToEllipse);
+		$('#clear').click(this.clearAll.bind(this));
+		$('#rectangle').click(this.switchToRect.bind(this));
+		$('#original').click(this.switchToOriginal.bind(this));
+		$('#circle').click(this.switchToCircle.bind(this));
+		$('#ellipse').click(this.switchToEllipse.bind(this));
+		$('#line').click(this.switchToLine.bind(this));
 
 		this.source = new Source();
 		this.el = $('#c').get(0);
 		this.drawer = new Drawer(this.el);
 
 		this.el.onmousedown = (e: MouseEvent) => {
-			this.source.start(e.clientX, e.clientY);
-			this.isDrawing = true;
+			self.source.start(e.clientX, e.clientY);
+			self.isDrawing = true;
 		};
 
 		this.el.onmousemove = (e: MouseEvent) => {
-			if (!this.isDrawing) return;
+			if (!self.isDrawing) return;
 
-			this.source.last().record(e.clientX, e.clientY);
-			this.drawer.redraw(this.source);
+			self.source.last().record(e.clientX, e.clientY);
+			self.drawer.redraw(self.source);
 		};
 
-		this.el.onmouseup = () => {
-			this.isDrawing = false;
+		self.el.onmouseup = () => {
+			self.isDrawing = false;
 		};
 	}
 
@@ -72,6 +78,14 @@ class Director {
 			return;
 
 		this.source.last().shape = Shape.Rectangle;
+		this.drawer.redraw(this.source);
+	}
+
+	switchToLine() {
+		if (this.source.isEmpty())
+			return;
+
+		this.source.last().shape = Shape.Line;
 		this.drawer.redraw(this.source);
 	}
 
