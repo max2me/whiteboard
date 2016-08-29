@@ -18,7 +18,7 @@ class Director {
 				return;
 			}
 
-			console.log(c);
+			console.log(c, e.which);
 
 			switch(c) {
 				case 'r':

@@ -21,19 +21,23 @@ class Drawer {
 								&& item.shape != Shape.StraightLine 
 								&& item.shape != Shape.Original;
 
+			var last = i == source.items.length - 1;
+
 			if (thinStroke)
-				this.drawItem(item, -2, -2);
-				
-			this.drawItem(item, -1, -1);
-			this.drawItem(item, 0, 0);
-			this.drawItem(item, 1, 1);
+				this.drawItem(item, -2, -2, last);
+
+			this.drawItem(item, -1, -1, last);
+			this.drawItem(item, 0, 0, last);
+			this.drawItem(item, 1, 1, last);
 			
 			if (thinStroke)
-				this.drawItem(item, 2, 2);
+				this.drawItem(item, 2, 2, last);
 		}
 	}
 
-	drawItem(item: Item, shiftX: number, shiftY: number) {
+	drawItem(item: Item, shiftX: number, shiftY: number, last: boolean) {
+		this.setupStroke(item, last);
+
 		switch(item.shape) {
 			case Shape.Original:
 				this.drawOriginal(item, shiftX, shiftY);
@@ -62,8 +66,7 @@ class Drawer {
 	}
 
 	drawOriginal(item: Item, shiftX: number, shiftY: number) {
-		this.ctx.beginPath();  
-		this.setupStroke(item);
+		this.ctx.beginPath();
 		this.ctx.moveTo(item.raw[0].x + shiftX, item.raw[0].y + shiftY);
 
 		for(var j = 1; j < item.raw.length; j++) {
@@ -74,8 +77,7 @@ class Drawer {
 	}
 
 	drawLine(item: Item, shiftX: number, shiftY: number) {
-		this.ctx.beginPath();  
-		this.setupStroke(item);
+		this.ctx.beginPath();
 
 		var pts = window.simplify(item.raw, 20, true);
 
@@ -88,8 +90,7 @@ class Drawer {
 	}
 
 	drawStraightLine(item: Item, shiftX: number, shiftY: number) {
-		this.ctx.beginPath();  
-		this.setupStroke(item);
+		this.ctx.beginPath();
 
 		this.ctx.moveTo(item.raw[0].x + shiftX, item.raw[0].y + shiftY);
 		this.ctx.lineTo(item.raw[item.raw.length - 1].x + shiftX, item.raw[item.raw.length - 1].y + shiftY);
@@ -100,8 +101,7 @@ class Drawer {
 	drawRect(item: Item, shiftX: number, shiftY: number) {
 		var b = this.getBounds(item.raw);
   
-		this.ctx.beginPath();  
-		this.setupStroke(item);
+		this.ctx.beginPath();
 		this.ctx.moveTo(b.xmin + shiftX, b.ymin + shiftY);
 		this.ctx.lineTo(b.xmax + shiftX, b.ymin + shiftY);
 		this.ctx.lineTo(b.xmax + shiftX, b.ymax + shiftY);
@@ -114,7 +114,6 @@ class Drawer {
 		var b = this.getBounds(item.raw);
   
 		this.ctx.beginPath();
-		this.setupStroke(item);
 		
 		var x = (b.xmax - b.xmin)/2 + b.xmin;
 		var y = (b.ymax - b.ymin)/2 + b.ymin;
@@ -138,15 +137,15 @@ class Drawer {
 		var radius = Math.min(radiusX, radiusY);
 		 
 		this.ctx.beginPath();
-		this.setupStroke(item);
 		this.ctx.ellipse(x + shiftX, y + shiftY, radiusX, radiusY, 0, 0, 2 * Math.PI, false);
 		this.ctx.stroke();
 	}
 
-	setupStroke(item: Item) {
+	setupStroke(item: Item, last: boolean) {
 		this.ctx.globalAlpha = 1;
 		this.ctx.lineWidth = 2;
 		this.ctx.lineJoin = this.ctx.lineCap = 'round';
+		this.ctx.strokeStyle = last ? 'purple' : '#000';
 	}
 
 	getBounds(coords: Point[]){
