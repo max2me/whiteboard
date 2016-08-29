@@ -15,7 +15,10 @@ class Director {
 			if (e.which == 8 || e.which == 46) { // backspace or delete
 				self.source.removeLast();
 				self.drawer.redraw(self.source);
+				return;
 			}
+
+			console.log(c);
 
 			switch(c) {
 				case 'r':
@@ -39,7 +42,10 @@ class Director {
 					break;
 
 				case 'l':
-					self.switchToLine();
+					if (e.shiftKey)
+						self.switchToStraightLine();
+					else
+						self.switchToLine();
 					break;
 			}
 		})
@@ -51,6 +57,7 @@ class Director {
 		$('#circle').click(this.switchToCircle.bind(this));
 		$('#ellipse').click(this.switchToEllipse.bind(this));
 		$('#line').click(this.switchToLine.bind(this));
+		$('#line-straight').click(this.switchToStraightLine.bind(this));
 
 		this.source = new Source();
 		this.el = $('#c').get(0);
@@ -86,6 +93,14 @@ class Director {
 			return;
 
 		this.source.last().shape = Shape.Line;
+		this.drawer.redraw(this.source);
+	}
+
+	switchToStraightLine() {
+		if (this.source.isEmpty())
+			return;
+
+		this.source.last().shape = Shape.StraightLine;
 		this.drawer.redraw(this.source);
 	}
 
