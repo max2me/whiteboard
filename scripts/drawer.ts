@@ -1,9 +1,12 @@
 class Drawer {
 	ctx: CanvasRenderingContext2D;
 	el: HTMLCanvasElement;
+	source: Source;
 
-	constructor(el: any) {
+	constructor(el: any, source: Source) {
 		this.el = el;
+		this.source = source;
+
 		this.ctx = el.getContext('2d');
 		this.ctx.lineJoin = this.ctx.lineCap = 'round';
 
@@ -11,17 +14,23 @@ class Drawer {
 		this.el.height = $('body').height();
 	}
 
-	redraw(source: Source) {
+	redraw() {
 		this.clear();
 
-		for(var i = 0; i < source.items.length; i++) {
-			var item = source.items[i];
+		for(var i = 0; i < this.source.items.length; i++) {
+			var item = this.source.items[i];
+			var last = i == this.source.items.length - 1;
+
+			if (item.shape == Shape.Text) {
+				this.drawItem(item, 0, 0, last);
+				continue;
+			}
 
 			var thinStroke = item.shape != Shape.Line 
 								&& item.shape != Shape.StraightLine 
 								&& item.shape != Shape.Original;
 
-			var last = i == source.items.length - 1;
+			
 
 			if (thinStroke)
 				this.drawItem(item, -2, -2, last);
@@ -39,7 +48,7 @@ class Drawer {
 		this.setupStroke(item, last);
 
 		switch(item.shape) {
-			case Shape.Original:
+			case Shape.Original: 
 				this.drawOriginal(item, shiftX, shiftY);
 				break;
 
@@ -62,7 +71,17 @@ class Drawer {
 			case Shape.StraightLine:
 				this.drawStraightLine(item, shiftX, shiftY);
 				break;
+
+			case Shape.Text:
+				this.drawText(item, last);
+				break;
 		}
+	}
+
+	drawText(item: Item, last: boolean) {
+		this.ctx.font = "20px 	'Permanent Marker'";
+		this.ctx.fillStyle = last ? 'purple' : 'black';
+		this.ctx.fillText(item.text, item.raw[0].x, item.raw[0].y);		
 	}
 
 	drawOriginal(item: Item, shiftX: number, shiftY: number) {
@@ -104,6 +123,8 @@ class Drawer {
 		this.ctx.beginPath();
 		this.ctx.moveTo(b.xmin + shiftX, b.ymin + shiftY);
 		this.ctx.lineTo(b.xmax + shiftX, b.ymin + shiftY);
+		this.ctx.lineTo(b.xmax + shiftX - 0, b.ymax + shiftY); // Tilt it a little
+		this.ctx.lineTo(b.xmin + shiftX - 0, b.ymax + shiftY); // Tilt it a little
 		this.ctx.lineTo(b.xmin + shiftX, b.ymin + shiftY);
 		this.ctx.stroke();
 	}

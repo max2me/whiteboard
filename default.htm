@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html class=''>
 <head>
+	<link href="//fonts.googleapis.com/css?family=Permanent+Marker" rel="stylesheet">
 	<style class="cp-pen-styles">
 		html, body {
 			width: 100%;
@@ -15,6 +16,7 @@
 			position: absolute;
 			top: 0;
 			left: 0;
+			z-index: 100;
 		}
 
 		.toolbar {
@@ -24,7 +26,16 @@
 			background: #EFEFEF;
 			padding: 0.5rem;
 		}
+
+		.fontloader {
+			position: absolute;
+			top: -100px;
+			left: -100px;
+			font-family: 'Permanent Marker';
+			z-index: 0;
+		}
 	</style>
+	
 </head>
 <body>
 	<canvas id="c" width="1000" height="500"></canvas>
@@ -40,5 +51,6 @@
 	<script src='https://code.jquery.com/jquery-2.2.4.min.js'></script>
 	<script src='scripts/simplify.js'></script>
 	<script src='scripts/app.js'></script>
+	<span class="fontloader">font</span>
 </body>
 </html>

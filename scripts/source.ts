@@ -31,10 +31,12 @@ class Source {
 class Item {
 	raw: Point[];
 	shape: Shape;
+	text: string;
 
 	constructor(){
 		this.raw = [];
 		this.shape = Shape.Original;
+		this.text = 'My Sample Text';
 	}
 
 	record(x: number, y: number) {
@@ -58,5 +60,6 @@ enum Shape {
 	Circle,
 	Ellipse,
 	Line,
-	StraightLine
+	StraightLine,
+	Text
 }

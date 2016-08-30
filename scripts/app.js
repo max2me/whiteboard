@@ -16,32 +16,39 @@ var Director = (function () {
         $('#line').click(this.switchToLine.bind(this));
         $('#line-straight').click(this.switchToStraightLine.bind(this));
         this.source = new Source();
-        this.el = $('#c').get(0);
-        this.drawer = new Drawer(this.el);
+        this.el = document.getElementById('c');
+        this.drawer = new Drawer(this.el, this.source);
         $(this.el)
             .mousedown(function (e) {
             self.source.start(e.clientX, e.clientY);
             self.isDrawing = true;
-            console.log('onmousedown');
+            return false;
         })
             .mousemove(function (e) {
             if (!self.isDrawing)
                 return;
             self.source.last().record(e.clientX, e.clientY);
-            self.drawer.redraw(self.source);
+            self.drawer.redraw();
         })
             .mouseup(function () {
             self.isDrawing = false;
             if (self.source.last().raw.length == 1) {
                 self.source.removeLast();
             }
+            return false;
+        })
+            .dblclick(function (e) {
+            self.source.start(e.clientX, e.clientY);
+            self.source.last().shape = Shape.Text;
+            self.drawer.redraw();
+            return false;
         });
     };
     Director.prototype.generalHotkeys = function (e) {
         var c = String.fromCharCode(e.which).toLowerCase();
         if (e.which == 8 || e.which == 46) {
             this.source.removeLast();
-            this.drawer.redraw(this.source);
+            this.drawer.redraw();
             return;
         }
         console.log(c, e.which);
@@ -73,60 +80,65 @@ var Director = (function () {
         if (this.source.isEmpty())
             return;
         this.source.last().shape = Shape.Rectangle;
-        this.drawer.redraw(this.source);
+        this.drawer.redraw();
     };
     Director.prototype.switchToLine = function () {
         if (this.source.isEmpty())
             return;
         this.source.last().shape = Shape.Line;
-        this.drawer.redraw(this.source);
+        this.drawer.redraw();
     };
     Director.prototype.switchToStraightLine = function () {
         if (this.source.isEmpty())
             return;
         this.source.last().shape = Shape.StraightLine;
-        this.drawer.redraw(this.source);
+        this.drawer.redraw();
     };
     Director.prototype.clearAll = function () {
         this.source.items = [];
-        this.drawer.redraw(this.source);
+        this.drawer.redraw();
     };
     Director.prototype.switchToOriginal = function () {
         if (this.source.isEmpty())
             return;
         this.source.last().shape = Shape.Original;
-        this.drawer.redraw(this.source);
+        this.drawer.redraw();
     };
     Director.prototype.switchToCircle = function () {
         if (this.source.isEmpty())
             return;
         this.source.last().shape = Shape.Circle;
-        this.drawer.redraw(this.source);
+        this.drawer.redraw();
     };
     Director.prototype.switchToEllipse = function () {
         if (this.source.isEmpty())
             return;
         this.source.last().shape = Shape.Ellipse;
-        this.drawer.redraw(this.source);
+        this.drawer.redraw();
     };
     return Director;
 }());
 var Drawer = (function () {
-    function Drawer(el) {
+    function Drawer(el, source) {
         this.el = el;
+        this.source = source;
         this.ctx = el.getContext('2d');
         this.ctx.lineJoin = this.ctx.lineCap = 'round';
         this.el.width = $('body').width();
         this.el.height = $('body').height();
     }
-    Drawer.prototype.redraw = function (source) {
+    Drawer.prototype.redraw = function () {
         this.clear();
-        for (var i = 0; i < source.items.length; i++) {
-            var item = source.items[i];
+        for (var i = 0; i < this.source.items.length; i++) {
+            var item = this.source.items[i];
+            var last = i == this.source.items.length - 1;
+            if (item.shape == Shape.Text) {
+                this.drawItem(item, 0, 0, last);
+                continue;
+            }
             var thinStroke = item.shape != Shape.Line
                 && item.shape != Shape.StraightLine
                 && item.shape != Shape.Original;
-            var last = i == source.items.length - 1;
             if (thinStroke)
                 this.drawItem(item, -2, -2, last);
             this.drawItem(item, -1, -1, last);
@@ -157,7 +169,15 @@ var Drawer = (function () {
             case Shape.StraightLine:
                 this.drawStraightLine(item, shiftX, shiftY);
                 break;
+            case Shape.Text:
+                this.drawText(item, last);
+                break;
         }
+    };
+    Drawer.prototype.drawText = function (item, last) {
+        this.ctx.font = "20px 	'Permanent Marker'";
+        this.ctx.fillStyle = last ? 'purple' : 'black';
+        this.ctx.fillText(item.text, item.raw[0].x, item.raw[0].y);
     };
     Drawer.prototype.drawOriginal = function (item, shiftX, shiftY) {
         this.ctx.beginPath();
@@ -271,6 +291,7 @@ var Item = (function () {
     function Item() {
         this.raw = [];
         this.shape = Shape.Original;
+        this.text = 'My Sample Text';
     }
     Item.prototype.record = function (x, y) {
         this.raw.push(new Point(x, y));
@@ -292,5 +313,6 @@ var Shape;
     Shape[Shape["Ellipse"] = 3] = "Ellipse";
     Shape[Shape["Line"] = 4] = "Line";
     Shape[Shape["StraightLine"] = 5] = "StraightLine";
+    Shape[Shape["Text"] = 6] = "Text";
 })(Shape || (Shape = {}));
 //# sourceMappingURL=app.js.map
