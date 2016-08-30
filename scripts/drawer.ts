@@ -81,7 +81,7 @@ class Drawer {
 	drawText(item: Item, last: boolean) {
 		this.ctx.font = "20px 	'Permanent Marker'";
 		this.ctx.fillStyle = last ? 'purple' : 'black';
-		this.ctx.fillText(item.text, item.raw[0].x, item.raw[0].y);		
+		this.ctx.fillText(item.text + (last ? '_' : ''), item.raw[0].x, item.raw[0].y);		
 	}
 
 	drawOriginal(item: Item, shiftX: number, shiftY: number) {

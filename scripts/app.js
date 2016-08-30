@@ -7,7 +7,9 @@ var Director = (function () {
     }
     Director.prototype.init = function () {
         var self = this;
-        $('html').keyup(this.generalHotkeys.bind(this));
+        $('html')
+            .keydown(self.generalHotkeys.bind(this))
+            .keyup(self.textTyping.bind(this));
         $('#clear').click(this.clearAll.bind(this));
         $('#rectangle').click(this.switchToRect.bind(this));
         $('#original').click(this.switchToOriginal.bind(this));
@@ -44,7 +46,26 @@ var Director = (function () {
             return false;
         });
     };
+    Director.prototype.textTyping = function (e) {
+        var last = this.source.last();
+        if (last.shape != Shape.Text)
+            return;
+        if (e.which == 8 || e.which == 46) {
+            if (last.text.length > 0) {
+                last.text = last.text.substr(0, last.text.length - 1);
+            }
+            this.drawer.redraw();
+            return;
+        }
+        var char = String.fromCharCode(e.which).toLowerCase();
+        if (e.shiftKey)
+            char = char.toUpperCase();
+        last.text += char;
+        this.drawer.redraw();
+    };
     Director.prototype.generalHotkeys = function (e) {
+        if (this.source.last().shape == Shape.Text)
+            return;
         var c = String.fromCharCode(e.which).toLowerCase();
         if (e.which == 8 || e.which == 46) {
             this.source.removeLast();
@@ -177,7 +198,7 @@ var Drawer = (function () {
     Drawer.prototype.drawText = function (item, last) {
         this.ctx.font = "20px 	'Permanent Marker'";
         this.ctx.fillStyle = last ? 'purple' : 'black';
-        this.ctx.fillText(item.text, item.raw[0].x, item.raw[0].y);
+        this.ctx.fillText(item.text + (last ? '_' : ''), item.raw[0].x, item.raw[0].y);
     };
     Drawer.prototype.drawOriginal = function (item, shiftX, shiftY) {
         this.ctx.beginPath();

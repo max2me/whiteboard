@@ -9,8 +9,9 @@ class Director {
 	init() {
 		var self = this;
 
-		$('html').keyup(this.generalHotkeys.bind(this))
-		
+		$('html')
+			.keydown(self.generalHotkeys.bind(this))
+			.keyup(self.textTyping.bind(this));
 
 		$('#clear').click(this.clearAll.bind(this));
 		$('#rectangle').click(this.switchToRect.bind(this));
@@ -50,12 +51,36 @@ class Director {
 			.dblclick((e: MouseEvent) => {
 				self.source.start(e.clientX, e.clientY);
 				self.source.last().shape = Shape.Text;
-				self.drawer.redraw();
+				self.drawer.redraw();				
+
 				return false;
 			});
 	}
 
+	textTyping(e: KeyboardEvent) {
+		var last = this.source.last();
+		if (last.shape != Shape.Text) return;
+
+		if (e.which == 8 || e.which == 46) {
+			if (last.text.length > 0) {
+				last.text = last.text.substr(0, last.text.length - 1);
+			}
+			this.drawer.redraw();
+			return;
+		}
+		
+		var char = String.fromCharCode(e.which).toLowerCase();
+		if (e.shiftKey)
+			char = char.toUpperCase();
+
+		last.text += char;
+
+		this.drawer.redraw();
+	}
+
 	generalHotkeys(e: KeyboardEvent) {
+		if (this.source.last().shape == Shape.Text) return;
+
 		var c = String.fromCharCode(e.which).toLowerCase();
 
 		if (e.which == 8 || e.which == 46) { // backspace or delete
