@@ -11,7 +11,7 @@ class Director {
 
 		$('html')
 			.keydown(self.generalHotkeys.bind(this))
-			.keyup(self.textTyping.bind(this));
+			.keydown(self.textTyping.bind(this));
 
 		$('#clear').click(this.clearAll.bind(this));
 		$('#rectangle').click(this.switchToRect.bind(this));
@@ -90,6 +90,16 @@ class Director {
 			return;
 		}
 
+		if (e.which == 38) {
+			this.source.last().sizeK *= 1.05;
+			this.drawer.redraw();
+		}
+
+		if (e.which == 40) {
+			this.source.last().sizeK *= 0.95;
+			this.drawer.redraw();
+		}
+
 		console.log(c, e.which);
 
 		switch(c) {
@@ -112,7 +122,6 @@ class Director {
 			return;
 
 		this.source.last().shape = Shape.Rectangle;
-		this.source.last().sizeK = 2;
 		this.drawer.redraw();
 	}
 

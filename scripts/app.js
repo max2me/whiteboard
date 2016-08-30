@@ -9,7 +9,7 @@ var Director = (function () {
         var self = this;
         $('html')
             .keydown(self.generalHotkeys.bind(this))
-            .keyup(self.textTyping.bind(this));
+            .keydown(self.textTyping.bind(this));
         $('#clear').click(this.clearAll.bind(this));
         $('#rectangle').click(this.switchToRect.bind(this));
         $('#original').click(this.switchToOriginal.bind(this));
@@ -73,6 +73,14 @@ var Director = (function () {
             this.drawer.redraw();
             return;
         }
+        if (e.which == 38) {
+            this.source.last().sizeK *= 1.05;
+            this.drawer.redraw();
+        }
+        if (e.which == 40) {
+            this.source.last().sizeK *= 0.95;
+            this.drawer.redraw();
+        }
         console.log(c, e.which);
         switch (c) {
             case 'r':
@@ -102,7 +110,6 @@ var Director = (function () {
         if (this.source.isEmpty())
             return;
         this.source.last().shape = Shape.Rectangle;
-        this.source.last().sizeK = 2;
         this.drawer.redraw();
     };
     Director.prototype.switchToLine = function () {
