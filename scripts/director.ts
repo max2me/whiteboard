@@ -59,7 +59,7 @@ class Director {
 
 	textTyping(e: KeyboardEvent) {
 		var last = this.source.last();
-		if (last.shape != Shape.Text) return;
+		if (last == null || last.shape != Shape.Text) return;
 
 		if (e.which == 8 || e.which == 46) {
 			if (last.text.length > 0) {
@@ -79,7 +79,8 @@ class Director {
 	}
 
 	generalHotkeys(e: KeyboardEvent) {
-		if (this.source.last().shape == Shape.Text) return;
+		if (this.source.last() == null ||
+			this.source.last().shape == Shape.Text) return;
 
 		var c = String.fromCharCode(e.which).toLowerCase();
 

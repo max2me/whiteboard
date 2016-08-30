@@ -6,7 +6,7 @@ class Source {
 	}
 
 	last(): Item {
-		return this.items[this.items.length - 1];
+		return this.items.length ? this.items[this.items.length - 1] : null;
 	}
 
 	start(x: number, y: number) {
@@ -36,7 +36,7 @@ class Item {
 	constructor(){
 		this.raw = [];
 		this.shape = Shape.Original;
-		this.text = 'My Sample Text';
+		this.text = '';
 	}
 
 	record(x: number, y: number) {

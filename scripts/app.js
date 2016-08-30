@@ -48,7 +48,7 @@ var Director = (function () {
     };
     Director.prototype.textTyping = function (e) {
         var last = this.source.last();
-        if (last.shape != Shape.Text)
+        if (last == null || last.shape != Shape.Text)
             return;
         if (e.which == 8 || e.which == 46) {
             if (last.text.length > 0) {
@@ -64,7 +64,8 @@ var Director = (function () {
         this.drawer.redraw();
     };
     Director.prototype.generalHotkeys = function (e) {
-        if (this.source.last().shape == Shape.Text)
+        if (this.source.last() == null ||
+            this.source.last().shape == Shape.Text)
             return;
         var c = String.fromCharCode(e.which).toLowerCase();
         if (e.which == 8 || e.which == 46) {
@@ -291,7 +292,7 @@ var Source = (function () {
         this.items = [];
     }
     Source.prototype.last = function () {
-        return this.items[this.items.length - 1];
+        return this.items.length ? this.items[this.items.length - 1] : null;
     };
     Source.prototype.start = function (x, y) {
         var item = new Item();
@@ -312,7 +313,7 @@ var Item = (function () {
     function Item() {
         this.raw = [];
         this.shape = Shape.Original;
-        this.text = 'My Sample Text';
+        this.text = '';
     }
     Item.prototype.record = function (x, y) {
         this.raw.push(new Point(x, y));
