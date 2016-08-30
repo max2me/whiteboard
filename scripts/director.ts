@@ -1,13 +1,22 @@
 declare var $:any;
 
+enum Mode {
+	Drawing,
+	Scaling,
+	None
+}
+
 class Director {
 	el: HTMLElement;
 	source: Source;
 	drawer: Drawer;
-	isDrawing: boolean;
+	mode: Mode;
+
+	initScaleDistance: number;
 
 	init() {
 		var self = this;
+		self.mode = Mode.None;
 
 		$('html')
 			.keydown(self.generalHotkeys.bind(this))
@@ -27,23 +36,43 @@ class Director {
 
 		$(this.el)
 			.mousedown((e: MouseEvent) => {
-				self.source.start(e.clientX, e.clientY);
-				self.isDrawing = true;
+				
+				if (e.shiftKey && !self.source.isEmpty) {
+					self.mode = Mode.Scaling;
+
+					var b = Drawer.getBounds(self.source.last().raw);
+					self.initScaleDistance = self.distance(new Point(b.centerX, b.centerY), new Point(e.clientX, e.clientY));
+				} else {
+					self.source.start(e.clientX, e.clientY);
+					self.mode = Mode.Drawing;
+				}
+
 				return false;
 			})
 
 			.mousemove((e: MouseEvent) => {
-				if (!self.isDrawing) return;
+				if (self.mode == Mode.None) return;
 
-				self.source.last().record(e.clientX, e.clientY);
+				if (self.mode == Mode.Scaling) {
+					var b = Drawer.getBounds(self.source.last().raw);
+					var distance = self.distance(new Point(b.centerX, b.centerY), new Point(e.clientX, e.clientY));
+					self.source.last().sizeK = distance / self.initScaleDistance;
+				} else {
+					self.source.last().record(e.clientX, e.clientY);
+				}
 				self.drawer.redraw();
 			})
 
 			.mouseup(() => {
-				self.isDrawing = false;
-				if (self.source.last().raw.length == 1) {
-					self.source.removeLast();
+				if (self.mode == Mode.None) return;
+
+				if (self.mode == Mode.Drawing) {
+					if (self.source.last().raw.length == 1) {
+						self.source.removeLast();
+					}
 				}
+
+				self.mode = Mode.None;
 
 				return false;
 			})
@@ -55,6 +84,10 @@ class Director {
 
 				return false;
 			});
+	}
+
+	distance(p1: Point, p2: Point) {
+		return Math.abs(Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)));
 	}
 
 	textTyping(e: KeyboardEvent) {

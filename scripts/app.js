@@ -2,11 +2,18 @@ $(function () {
     var director = new Director();
     director.init();
 });
+var Mode;
+(function (Mode) {
+    Mode[Mode["Drawing"] = 0] = "Drawing";
+    Mode[Mode["Scaling"] = 1] = "Scaling";
+    Mode[Mode["None"] = 2] = "None";
+})(Mode || (Mode = {}));
 var Director = (function () {
     function Director() {
     }
     Director.prototype.init = function () {
         var self = this;
+        self.mode = Mode.None;
         $('html')
             .keydown(self.generalHotkeys.bind(this))
             .keydown(self.textTyping.bind(this));
@@ -22,21 +29,39 @@ var Director = (function () {
         this.drawer = new Drawer(this.el, this.source);
         $(this.el)
             .mousedown(function (e) {
-            self.source.start(e.clientX, e.clientY);
-            self.isDrawing = true;
+            if (e.shiftKey && !self.source.isEmpty) {
+                self.mode = Mode.Scaling;
+                var b = Drawer.getBounds(self.source.last().raw);
+                self.initScaleDistance = self.distance(new Point(b.centerX, b.centerY), new Point(e.clientX, e.clientY));
+            }
+            else {
+                self.source.start(e.clientX, e.clientY);
+                self.mode = Mode.Drawing;
+            }
             return false;
         })
             .mousemove(function (e) {
-            if (!self.isDrawing)
+            if (self.mode == Mode.None)
                 return;
-            self.source.last().record(e.clientX, e.clientY);
+            if (self.mode == Mode.Scaling) {
+                var b = Drawer.getBounds(self.source.last().raw);
+                var distance = self.distance(new Point(b.centerX, b.centerY), new Point(e.clientX, e.clientY));
+                self.source.last().sizeK = distance / self.initScaleDistance;
+            }
+            else {
+                self.source.last().record(e.clientX, e.clientY);
+            }
             self.drawer.redraw();
         })
             .mouseup(function () {
-            self.isDrawing = false;
-            if (self.source.last().raw.length == 1) {
-                self.source.removeLast();
+            if (self.mode == Mode.None)
+                return;
+            if (self.mode == Mode.Drawing) {
+                if (self.source.last().raw.length == 1) {
+                    self.source.removeLast();
+                }
             }
+            self.mode = Mode.None;
             return false;
         })
             .dblclick(function (e) {
@@ -45,6 +70,9 @@ var Director = (function () {
             self.drawer.redraw();
             return false;
         });
+    };
+    Director.prototype.distance = function (p1, p2) {
+        return Math.abs(Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)));
     };
     Director.prototype.textTyping = function (e) {
         var last = this.source.last();
@@ -162,19 +190,17 @@ var Drawer = (function () {
         for (var i = 0; i < this.source.items.length; i++) {
             var item = this.source.items[i];
             var last = i == this.source.items.length - 1;
+            this.ctx.save();
+            var b = Drawer.getBounds(item.raw);
+            this.ctx.translate(b.centerX, b.centerY);
+            this.ctx.scale(item.sizeK, item.sizeK);
             if (item.shape == Shape.Text) {
                 this.drawItem(item, 0, 0, last);
             }
             else {
-                this.ctx.save();
-                var b = this.getBounds(item.raw);
-                var centerX = b.xmin + (b.xmax - b.xmin) / 2;
-                var centerY = b.ymin + (b.ymax - b.ymin) / 2;
-                this.ctx.translate(centerX, centerY);
-                this.ctx.scale(item.sizeK, item.sizeK);
-                this.drawItem(item, -centerX, -centerY, last);
-                this.ctx.restore();
+                this.drawItem(item, -b.centerX, -b.centerY, last);
             }
+            this.ctx.restore();
         }
     };
     Drawer.prototype.drawItem = function (item, shiftX, shiftY, last) {
@@ -232,7 +258,7 @@ var Drawer = (function () {
         this.ctx.stroke();
     };
     Drawer.prototype.drawRect = function (item, shiftX, shiftY) {
-        var b = this.getBounds(item.raw);
+        var b = Drawer.getBounds(item.raw);
         this.ctx.beginPath();
         this.ctx.moveTo(b.xmin + shiftX, b.ymin + shiftY);
         this.ctx.lineTo(b.xmax + shiftX, b.ymin + shiftY);
@@ -242,7 +268,7 @@ var Drawer = (function () {
         this.ctx.stroke();
     };
     Drawer.prototype.drawCircle = function (item, shiftX, shiftY) {
-        var b = this.getBounds(item.raw);
+        var b = Drawer.getBounds(item.raw);
         this.ctx.beginPath();
         var x = (b.xmax - b.xmin) / 2 + b.xmin;
         var y = (b.ymax - b.ymin) / 2 + b.ymin;
@@ -253,7 +279,7 @@ var Drawer = (function () {
         this.ctx.stroke();
     };
     Drawer.prototype.drawEllipse = function (item, shiftX, shiftY) {
-        var b = this.getBounds(item.raw);
+        var b = Drawer.getBounds(item.raw);
         var x = (b.xmax - b.xmin) / 2 + b.xmin;
         var y = (b.ymax - b.ymin) / 2 + b.ymin;
         var radiusX = (b.xmax - b.xmin) / 2;
@@ -269,7 +295,7 @@ var Drawer = (function () {
         this.ctx.lineJoin = this.ctx.lineCap = 'round';
         this.ctx.strokeStyle = last ? 'purple' : '#000';
     };
-    Drawer.prototype.getBounds = function (coords) {
+    Drawer.getBounds = function (coords) {
         var xmin = 1000, xmax = 0, ymin = 1000, ymax = 0;
         for (var i = 0; i < coords.length; i++) {
             var p = coords[i];
@@ -286,7 +312,9 @@ var Drawer = (function () {
             xmin: xmin,
             xmax: xmax,
             ymin: ymin,
-            ymax: ymax
+            ymax: ymax,
+            centerX: xmin + (xmax - xmin) / 2,
+            centerY: ymin + (ymax - ymin) / 2
         };
     };
     Drawer.prototype.clear = function () {

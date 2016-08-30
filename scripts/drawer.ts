@@ -21,6 +21,10 @@ class Drawer {
 			var item = this.source.items[i];
 			var last = i == this.source.items.length - 1;
 
+			this.ctx.save();
+			var b = Drawer.getBounds(item.raw);
+			this.ctx.translate(b.centerX, b.centerY);
+			this.ctx.scale(item.sizeK, item.sizeK);
 			
 			if (item.shape == Shape.Text) {
 				this.drawItem(item, 0, 0, last);
@@ -41,16 +45,11 @@ class Drawer {
 				this.drawItem(item, -1, -1, last);
 				*/
 				
-				this.ctx.save();
+				
 
-				var b = this.getBounds(item.raw);
-				var centerX = b.xmin + (b.xmax - b.xmin) / 2;
-				var centerY = b.ymin + (b.ymax - b.ymin) / 2;
-
-				this.ctx.translate(centerX, centerY);
-				this.ctx.scale(item.sizeK, item.sizeK);
-				this.drawItem(item, -centerX, -centerY, last);
-				this.ctx.restore();
+				
+				this.drawItem(item, -b.centerX, -b.centerY, last);
+				
 				
 				/*
 				this.drawItem(item, 1, 1, last);
@@ -60,6 +59,8 @@ class Drawer {
 				}
 				*/
 			}
+
+			this.ctx.restore();
 		}
 	}
 
@@ -137,7 +138,7 @@ class Drawer {
 	}
 
 	drawRect(item: Item, shiftX: number, shiftY: number) {
-		var b = this.getBounds(item.raw);
+		var b = Drawer.getBounds(item.raw);
   
 		this.ctx.beginPath();
 		this.ctx.moveTo(b.xmin + shiftX, b.ymin + shiftY);
@@ -149,7 +150,7 @@ class Drawer {
 	}
 
 	drawCircle(item: Item, shiftX: number, shiftY: number) {
-		var b = this.getBounds(item.raw);
+		var b = Drawer.getBounds(item.raw);
   
 		this.ctx.beginPath();
 		
@@ -165,7 +166,7 @@ class Drawer {
 	}
 
 	drawEllipse(item: Item, shiftX: number, shiftY: number) {
-		var b = this.getBounds(item.raw);
+		var b = Drawer.getBounds(item.raw);
 		
 		var x = (b.xmax - b.xmin)/2 + b.xmin;
 		var y = (b.ymax - b.ymin)/2 + b.ymin;
@@ -186,7 +187,7 @@ class Drawer {
 		this.ctx.strokeStyle = last ? 'purple' : '#000';
 	}
 
-	getBounds(coords: Point[]){
+	static getBounds(coords: Point[]){
 		var xmin = 1000, xmax = 0, ymin = 1000, ymax = 0;
 		
 		for(var i = 0; i < coords.length; i++) {
@@ -201,7 +202,9 @@ class Drawer {
 			xmin: xmin,
 			xmax: xmax,
 			ymin: ymin,
-			ymax: ymax
+			ymax: ymax,
+			centerX: xmin + (xmax - xmin) / 2,
+			centerY: ymin + (ymax - ymin) / 2
 		}
 	}
 
