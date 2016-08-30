@@ -13,6 +13,7 @@ class Director {
 	mode: Mode;
 
 	initScaleDistance: number;
+	initScale: number;
 
 	init() {
 		var self = this;
@@ -37,11 +38,12 @@ class Director {
 		$(this.el)
 			.mousedown((e: MouseEvent) => {
 				
-				if (e.shiftKey && !self.source.isEmpty) {
+				if (e.shiftKey && !self.source.isEmpty()) {
 					self.mode = Mode.Scaling;
 
 					var b = Drawer.getBounds(self.source.last().raw);
 					self.initScaleDistance = self.distance(new Point(b.centerX, b.centerY), new Point(e.clientX, e.clientY));
+					self.initScale = self.source.last().sizeK;
 				} else {
 					self.source.start(e.clientX, e.clientY);
 					self.mode = Mode.Drawing;
@@ -56,7 +58,7 @@ class Director {
 				if (self.mode == Mode.Scaling) {
 					var b = Drawer.getBounds(self.source.last().raw);
 					var distance = self.distance(new Point(b.centerX, b.centerY), new Point(e.clientX, e.clientY));
-					self.source.last().sizeK = distance / self.initScaleDistance;
+					self.source.last().sizeK = self.initScale * distance / self.initScaleDistance;
 				} else {
 					self.source.last().record(e.clientX, e.clientY);
 				}
