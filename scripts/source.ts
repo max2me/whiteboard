@@ -32,11 +32,13 @@ class Item {
 	raw: Point[];
 	shape: Shape;
 	text: string;
+	sizeK: number;
 
 	constructor(){
 		this.raw = [];
 		this.shape = Shape.Original;
 		this.text = '';
+		this.sizeK = 1;
 	}
 
 	record(x: number, y: number) {

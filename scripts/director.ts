@@ -112,6 +112,7 @@ class Director {
 			return;
 
 		this.source.last().shape = Shape.Rectangle;
+		this.source.last().sizeK = 2;
 		this.drawer.redraw();
 	}
 

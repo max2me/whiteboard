@@ -102,6 +102,7 @@ var Director = (function () {
         if (this.source.isEmpty())
             return;
         this.source.last().shape = Shape.Rectangle;
+        this.source.last().sizeK = 2;
         this.drawer.redraw();
     };
     Director.prototype.switchToLine = function () {
@@ -156,18 +157,17 @@ var Drawer = (function () {
             var last = i == this.source.items.length - 1;
             if (item.shape == Shape.Text) {
                 this.drawItem(item, 0, 0, last);
-                continue;
             }
-            var thinStroke = item.shape != Shape.Line
-                && item.shape != Shape.StraightLine
-                && item.shape != Shape.Original;
-            if (thinStroke)
-                this.drawItem(item, -2, -2, last);
-            this.drawItem(item, -1, -1, last);
-            this.drawItem(item, 0, 0, last);
-            this.drawItem(item, 1, 1, last);
-            if (thinStroke)
-                this.drawItem(item, 2, 2, last);
+            else {
+                this.ctx.save();
+                var b = this.getBounds(item.raw);
+                var centerX = b.xmin + (b.xmax - b.xmin) / 2;
+                var centerY = b.ymin + (b.ymax - b.ymin) / 2;
+                this.ctx.translate(centerX, centerY);
+                this.ctx.scale(item.sizeK, item.sizeK);
+                this.drawItem(item, -centerX, -centerY, last);
+                this.ctx.restore();
+            }
         }
     };
     Drawer.prototype.drawItem = function (item, shiftX, shiftY, last) {
@@ -314,6 +314,7 @@ var Item = (function () {
         this.raw = [];
         this.shape = Shape.Original;
         this.text = '';
+        this.sizeK = 1;
     }
     Item.prototype.record = function (x, y) {
         this.raw.push(new Point(x, y));
