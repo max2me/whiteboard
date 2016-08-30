@@ -9,46 +9,7 @@ class Director {
 	init() {
 		var self = this;
 
-		$('html').keyup((e: KeyboardEvent) => {
-			var c = String.fromCharCode(e.which).toLowerCase();
-
-			if (e.which == 8 || e.which == 46) { // backspace or delete
-				self.source.removeLast();
-				self.drawer.redraw(self.source);
-				return;
-			}
-
-			console.log(c, e.which);
-
-			switch(c) {
-				case 'r':
-					self.switchToRect();
-					break;
-
-				case 'x':
-					self.clearAll();
-					break;
-
-				case 'o':
-					self.switchToOriginal();
-					break;
-
-				case 'c':
-					self.switchToCircle();
-					break;
-
-				case 'e':
-					self.switchToEllipse();
-					break;
-
-				case 'l':
-					if (e.shiftKey)
-						self.switchToStraightLine();
-					else
-						self.switchToLine();
-					break;
-			}
-		})
+		$('html').keyup(this.generalHotkeys.bind(this))
 		
 
 		$('#clear').click(this.clearAll.bind(this));
@@ -63,21 +24,67 @@ class Director {
 		this.el = $('#c').get(0);
 		this.drawer = new Drawer(this.el);
 
-		this.el.onmousedown = (e: MouseEvent) => {
-			self.source.start(e.clientX, e.clientY);
-			self.isDrawing = true;
-		};
+		$(this.el)
+			.mousedown((e: MouseEvent) => {
+				self.source.start(e.clientX, e.clientY);
+				self.isDrawing = true;
+				console.log('onmousedown');
+			})
 
-		this.el.onmousemove = (e: MouseEvent) => {
-			if (!self.isDrawing) return;
+			.mousemove((e: MouseEvent) => {
+				if (!self.isDrawing) return;
 
-			self.source.last().record(e.clientX, e.clientY);
-			self.drawer.redraw(self.source);
-		};
+				self.source.last().record(e.clientX, e.clientY);
+				self.drawer.redraw(self.source);
+				})
 
-		self.el.onmouseup = () => {
-			self.isDrawing = false;
-		};
+			.mouseup(() => {
+				self.isDrawing = false;
+				if (self.source.last().raw.length == 1) {
+					self.source.removeLast();
+				}
+			});
+	}
+
+	generalHotkeys(e: KeyboardEvent) {
+		var c = String.fromCharCode(e.which).toLowerCase();
+
+		if (e.which == 8 || e.which == 46) { // backspace or delete
+			this.source.removeLast();
+			this.drawer.redraw(this.source);
+			return;
+		}
+
+		console.log(c, e.which);
+
+		switch(c) {
+			case 'r':
+				this.switchToRect();
+				break;
+
+			case 'x':
+				this.clearAll();
+				break;
+
+			case 'o':
+				this.switchToOriginal();
+				break;
+
+			case 'c':
+				this.switchToCircle();
+				break;
+
+			case 'e':
+				this.switchToEllipse();
+				break;
+
+			case 'l':
+				if (e.shiftKey)
+					this.switchToStraightLine();
+				else
+					this.switchToLine();
+				break;
+		}
 	}
 
 	switchToRect() {

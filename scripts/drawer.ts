@@ -104,8 +104,6 @@ class Drawer {
 		this.ctx.beginPath();
 		this.ctx.moveTo(b.xmin + shiftX, b.ymin + shiftY);
 		this.ctx.lineTo(b.xmax + shiftX, b.ymin + shiftY);
-		this.ctx.lineTo(b.xmax + shiftX, b.ymax + shiftY);
-		this.ctx.lineTo(b.xmin + shiftX, b.ymax + shiftY);
 		this.ctx.lineTo(b.xmin + shiftX, b.ymin + shiftY);
 		this.ctx.stroke();
 	}
@@ -143,7 +141,7 @@ class Drawer {
 
 	setupStroke(item: Item, last: boolean) {
 		this.ctx.globalAlpha = 1;
-		this.ctx.lineWidth = 2;
+		this.ctx.lineWidth = 4;
 		this.ctx.lineJoin = this.ctx.lineCap = 'round';
 		this.ctx.strokeStyle = last ? 'purple' : '#000';
 	}

@@ -7,38 +7,7 @@ var Director = (function () {
     }
     Director.prototype.init = function () {
         var self = this;
-        $('html').keyup(function (e) {
-            var c = String.fromCharCode(e.which).toLowerCase();
-            if (e.which == 8 || e.which == 46) {
-                self.source.removeLast();
-                self.drawer.redraw(self.source);
-                return;
-            }
-            console.log(c, e.which);
-            switch (c) {
-                case 'r':
-                    self.switchToRect();
-                    break;
-                case 'x':
-                    self.clearAll();
-                    break;
-                case 'o':
-                    self.switchToOriginal();
-                    break;
-                case 'c':
-                    self.switchToCircle();
-                    break;
-                case 'e':
-                    self.switchToEllipse();
-                    break;
-                case 'l':
-                    if (e.shiftKey)
-                        self.switchToStraightLine();
-                    else
-                        self.switchToLine();
-                    break;
-            }
-        });
+        $('html').keyup(this.generalHotkeys.bind(this));
         $('#clear').click(this.clearAll.bind(this));
         $('#rectangle').click(this.switchToRect.bind(this));
         $('#original').click(this.switchToOriginal.bind(this));
@@ -49,19 +18,56 @@ var Director = (function () {
         this.source = new Source();
         this.el = $('#c').get(0);
         this.drawer = new Drawer(this.el);
-        this.el.onmousedown = function (e) {
+        $(this.el)
+            .mousedown(function (e) {
             self.source.start(e.clientX, e.clientY);
             self.isDrawing = true;
-        };
-        this.el.onmousemove = function (e) {
+            console.log('onmousedown');
+        })
+            .mousemove(function (e) {
             if (!self.isDrawing)
                 return;
             self.source.last().record(e.clientX, e.clientY);
             self.drawer.redraw(self.source);
-        };
-        self.el.onmouseup = function () {
+        })
+            .mouseup(function () {
             self.isDrawing = false;
-        };
+            if (self.source.last().raw.length == 1) {
+                self.source.removeLast();
+            }
+        });
+    };
+    Director.prototype.generalHotkeys = function (e) {
+        var c = String.fromCharCode(e.which).toLowerCase();
+        if (e.which == 8 || e.which == 46) {
+            this.source.removeLast();
+            this.drawer.redraw(this.source);
+            return;
+        }
+        console.log(c, e.which);
+        switch (c) {
+            case 'r':
+                this.switchToRect();
+                break;
+            case 'x':
+                this.clearAll();
+                break;
+            case 'o':
+                this.switchToOriginal();
+                break;
+            case 'c':
+                this.switchToCircle();
+                break;
+            case 'e':
+                this.switchToEllipse();
+                break;
+            case 'l':
+                if (e.shiftKey)
+                    this.switchToStraightLine();
+                else
+                    this.switchToLine();
+                break;
+        }
     };
     Director.prototype.switchToRect = function () {
         if (this.source.isEmpty())
@@ -181,8 +187,8 @@ var Drawer = (function () {
         this.ctx.beginPath();
         this.ctx.moveTo(b.xmin + shiftX, b.ymin + shiftY);
         this.ctx.lineTo(b.xmax + shiftX, b.ymin + shiftY);
-        this.ctx.lineTo(b.xmax + shiftX, b.ymax + shiftY);
-        this.ctx.lineTo(b.xmin + shiftX, b.ymax + shiftY);
+        this.ctx.lineTo(b.xmax + shiftX - 0, b.ymax + shiftY);
+        this.ctx.lineTo(b.xmin + shiftX - 0, b.ymax + shiftY);
         this.ctx.lineTo(b.xmin + shiftX, b.ymin + shiftY);
         this.ctx.stroke();
     };
@@ -210,7 +216,7 @@ var Drawer = (function () {
     };
     Drawer.prototype.setupStroke = function (item, last) {
         this.ctx.globalAlpha = 1;
-        this.ctx.lineWidth = 2;
+        this.ctx.lineWidth = 4;
         this.ctx.lineJoin = this.ctx.lineCap = 'round';
         this.ctx.strokeStyle = last ? 'purple' : '#000';
     };
