@@ -1,5 +1,6 @@
+var director = null;
 $(function () {
-    var director = new Director();
+    director = new Director();
     director.init();
 });
 var Mode;
@@ -39,7 +40,7 @@ var Director = (function () {
                 self.initScaleDistance = self.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
                 self.initScale = self.source.last().sizeK;
             }
-            else if (e.altKey && !self.source.isEmpty()) {
+            else if (e.shiftKey && !self.source.isEmpty()) {
                 self.mode = Mode.Moving;
                 self.initMovingPoint = new Point(e.clientX, e.clientY);
                 self.initMoveX = self.source.last().moveX;
@@ -90,11 +91,11 @@ var Director = (function () {
     };
     Director.prototype.modifierKeyDown = function (e) {
         $('html').toggleClass('mode-scaling', e.ctrlKey);
-        $('html').toggleClass('mode-moving', e.altKey);
+        $('html').toggleClass('mode-moving', e.shiftKey);
     };
     Director.prototype.modifierKeyUp = function (e) {
         $('html').toggleClass('mode-scaling', e.ctrlKey);
-        $('html').toggleClass('mode-moving', e.altKey);
+        $('html').toggleClass('mode-moving', e.shiftKey);
     };
     Director.prototype.distance = function (p1, p2) {
         return Math.abs(Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)));
@@ -337,7 +338,7 @@ var Drawer = (function () {
                 centerY: coords[0].y
             };
         }
-        var xmin = 1000, xmax = 0, ymin = 1000, ymax = 0;
+        var xmin = 1000000, xmax = 0, ymin = 1000000, ymax = 0;
         for (var i = 0; i < coords.length; i++) {
             var p = coords[i];
             if (p.x < xmin)

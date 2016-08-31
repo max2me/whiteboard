@@ -53,7 +53,7 @@ class Director {
 					self.initScaleDistance = self.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
 					self.initScale = self.source.last().sizeK;
 
-				} else if (e.altKey && !self.source.isEmpty()) {
+				} else if (e.shiftKey && !self.source.isEmpty()) {
 					self.mode = Mode.Moving;
 					self.initMovingPoint = new Point(e.clientX, e.clientY);
 					self.initMoveX = self.source.last().moveX;
@@ -115,13 +115,13 @@ class Director {
 	modifierKeyDown(e:KeyboardEvent) {
 		// console.log('modifiedKeyDown', e.ctrlKey, e.altKey);
 		$('html').toggleClass('mode-scaling', e.ctrlKey);
-		$('html').toggleClass('mode-moving', e.altKey);
+		$('html').toggleClass('mode-moving', e.shiftKey);
 	}
 
 	modifierKeyUp(e:KeyboardEvent) {
 		// console.log('modifiedKeyUp', e.ctrlKey, e.altKey);
 		$('html').toggleClass('mode-scaling', e.ctrlKey);
-		$('html').toggleClass('mode-moving', e.altKey);
+		$('html').toggleClass('mode-moving', e.shiftKey);
 	}
 
 	distance(p1: Point, p2: Point) {

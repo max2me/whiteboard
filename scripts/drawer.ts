@@ -179,7 +179,7 @@ class Drawer {
 			}
 		}
 
-		var xmin = 1000, xmax = 0, ymin = 1000, ymax = 0;
+		var xmin = 1000000, xmax = 0, ymin = 1000000, ymax = 0;
 		
 		for(var i = 0; i < coords.length; i++) {
 			var p = coords[i];

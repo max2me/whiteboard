@@ -1,7 +1,7 @@
-
+var director: Director = null;
 
 $(() => {
-	var director = new Director();
+	director = new Director();
 	director.init();
 });
 
