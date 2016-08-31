@@ -29,14 +29,7 @@ class Drawer {
 			this.ctx.translate(shiftX + item.moveX, shiftY + item.moveY);
 			this.ctx.scale(item.sizeK, item.sizeK);
 			
-			if (item.shape == Shape.Text) {
-				this.drawItem(item, -shiftX, -shiftY, last);
-			
-			} else {
-				
-				this.drawItem(item, -shiftX, -shiftY, last);
-				
-			}
+			this.drawItem(item, -shiftX, -shiftY, last);
 
 			this.ctx.restore();
 		}
@@ -160,9 +153,18 @@ class Drawer {
 
 	setupStroke(item: Item, last: boolean) {
 		this.ctx.globalAlpha = 1;
-		this.ctx.lineWidth = 4;
+		this.ctx.lineWidth = item.shape == Shape.Original ? 4 : 6;
 		this.ctx.lineJoin = this.ctx.lineCap = 'round';
-		this.ctx.strokeStyle = last ? 'purple' : '#000';
+		this.ctx.strokeStyle = '#000';
+
+		if (last) {
+			this.ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+			this.ctx.shadowOffsetX = 0; 
+			this.ctx.shadowOffsetY = 0;
+			this.ctx.shadowBlur = 10;
+		} else {
+			this.ctx.shadowColor = 'transparent';
+		}
 	}
 
 	static getBounds(coords: Point[]){

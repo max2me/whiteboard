@@ -49,8 +49,8 @@ class Director {
 					self.mode = Mode.Scaling;
 
 					var item = self.source.last();
-					var b = Drawer.getBounds(item.raw);
-					self.initScaleDistance = self.distance(new Point(b.centerX + item.moveX, b.centerY + item.moveY), new Point(e.clientX, e.clientY));
+					var bounds = Drawer.getBounds(item.raw);
+					self.initScaleDistance = self.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
 					self.initScale = self.source.last().sizeK;
 
 				} else if (e.altKey && !self.source.isEmpty()) {
@@ -72,8 +72,8 @@ class Director {
 
 				if (self.mode == Mode.Scaling) {
 					var item = self.source.last();
-					var b = Drawer.getBounds(item.raw);
-					var distance = self.distance(new Point(b.centerX + item.moveX, b.centerY + item.moveY), new Point(e.clientX, e.clientY));
+					var bounds = Drawer.getBounds(item.raw);
+					var distance = self.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
 					
 					item.sizeK = self.initScale * distance / self.initScaleDistance;
 				
@@ -180,7 +180,8 @@ class Director {
 			case 'c': this.switchToCircle(); break;
 			case 'e': this.switchToEllipse(); break;
 			case 'l':
-				if (e.shiftKey)
+				var item = this.source.last();
+				if (item.shape == Shape.Line)
 					this.switchToStraightLine();
 				else
 					this.switchToLine();

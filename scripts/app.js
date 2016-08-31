@@ -35,8 +35,8 @@ var Director = (function () {
             if (e.ctrlKey && !self.source.isEmpty()) {
                 self.mode = Mode.Scaling;
                 var item = self.source.last();
-                var b = Drawer.getBounds(item.raw);
-                self.initScaleDistance = self.distance(new Point(b.centerX + item.moveX, b.centerY + item.moveY), new Point(e.clientX, e.clientY));
+                var bounds = Drawer.getBounds(item.raw);
+                self.initScaleDistance = self.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
                 self.initScale = self.source.last().sizeK;
             }
             else if (e.altKey && !self.source.isEmpty()) {
@@ -56,8 +56,8 @@ var Director = (function () {
                 return;
             if (self.mode == Mode.Scaling) {
                 var item = self.source.last();
-                var b = Drawer.getBounds(item.raw);
-                var distance = self.distance(new Point(b.centerX + item.moveX, b.centerY + item.moveY), new Point(e.clientX, e.clientY));
+                var bounds = Drawer.getBounds(item.raw);
+                var distance = self.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
                 item.sizeK = self.initScale * distance / self.initScaleDistance;
             }
             else if (self.mode == Mode.Moving) {
@@ -151,7 +151,8 @@ var Director = (function () {
                 this.switchToEllipse();
                 break;
             case 'l':
-                if (e.shiftKey)
+                var item = this.source.last();
+                if (item.shape == Shape.Line)
                     this.switchToStraightLine();
                 else
                     this.switchToLine();
@@ -220,12 +221,7 @@ var Drawer = (function () {
             var shiftY = b.centerY;
             this.ctx.translate(shiftX + item.moveX, shiftY + item.moveY);
             this.ctx.scale(item.sizeK, item.sizeK);
-            if (item.shape == Shape.Text) {
-                this.drawItem(item, -shiftX, -shiftY, last);
-            }
-            else {
-                this.drawItem(item, -shiftX, -shiftY, last);
-            }
+            this.drawItem(item, -shiftX, -shiftY, last);
             this.ctx.restore();
         }
     };
@@ -317,9 +313,18 @@ var Drawer = (function () {
     };
     Drawer.prototype.setupStroke = function (item, last) {
         this.ctx.globalAlpha = 1;
-        this.ctx.lineWidth = 4;
+        this.ctx.lineWidth = item.shape == Shape.Original ? 4 : 6;
         this.ctx.lineJoin = this.ctx.lineCap = 'round';
-        this.ctx.strokeStyle = last ? 'purple' : '#000';
+        this.ctx.strokeStyle = '#000';
+        if (last) {
+            this.ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            this.ctx.shadowOffsetX = 0;
+            this.ctx.shadowOffsetY = 0;
+            this.ctx.shadowBlur = 10;
+        }
+        else {
+            this.ctx.shadowColor = 'transparent';
+        }
     };
     Drawer.getBounds = function (coords) {
         if (coords.length == 1) {
