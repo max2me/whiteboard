@@ -23,15 +23,18 @@ class Drawer {
 
 			this.ctx.save();
 			var b = Drawer.getBounds(item.raw);
-			this.ctx.translate(b.centerX, b.centerY);
+			var shiftX = b.centerX;
+			var shiftY = b.centerY;
+			
+			this.ctx.translate(shiftX + item.moveX, shiftY + item.moveY);
 			this.ctx.scale(item.sizeK, item.sizeK);
 			
 			if (item.shape == Shape.Text) {
-				this.drawItem(item, -b.centerX, -b.centerY, last);
+				this.drawItem(item, -shiftX, -shiftY, last);
 			
 			} else {
 				
-				this.drawItem(item, -b.centerX, -b.centerY, last);
+				this.drawItem(item, -shiftX, -shiftY, last);
 				
 			}
 

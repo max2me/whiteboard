@@ -3,6 +3,7 @@ declare var $:any;
 enum Mode {
 	Drawing,
 	Scaling,
+	Moving,
 	None
 }
 
@@ -15,13 +16,19 @@ class Director {
 	initScaleDistance: number;
 	initScale: number;
 
+	initMovingPoint: Point;
+	initMoveX: number;
+	initMoveY: number;
+
 	init() {
 		var self = this;
 		self.mode = Mode.None;
 
 		$('html')
 			.keydown(self.generalHotkeys.bind(this))
-			.keydown(self.textTyping.bind(this));
+			.keydown(self.textTyping.bind(this))
+			.keydown(self.modifierKeyDown.bind(this))
+			.keyup(self.modifierKeyUp.bind(this));
 
 		$('#clear').click(this.clearAll.bind(this));
 		$('#rectangle').click(this.switchToRect.bind(this));
@@ -41,9 +48,17 @@ class Director {
 				if (e.ctrlKey && !self.source.isEmpty()) {
 					self.mode = Mode.Scaling;
 
-					var b = Drawer.getBounds(self.source.last().raw);
-					self.initScaleDistance = self.distance(new Point(b.centerX, b.centerY), new Point(e.clientX, e.clientY));
+					var item = self.source.last();
+					var b = Drawer.getBounds(item.raw);
+					self.initScaleDistance = self.distance(new Point(b.centerX + item.moveX, b.centerY + item.moveY), new Point(e.clientX, e.clientY));
 					self.initScale = self.source.last().sizeK;
+
+				} else if (e.altKey && !self.source.isEmpty()) {
+					self.mode = Mode.Moving;
+					self.initMovingPoint = new Point(e.clientX, e.clientY);
+					self.initMoveX = self.source.last().moveX;
+					self.initMoveY = self.source.last().moveY;
+
 				} else {
 					self.source.start(e.clientX, e.clientY);
 					self.mode = Mode.Drawing;
@@ -56,9 +71,17 @@ class Director {
 				if (self.mode == Mode.None) return;
 
 				if (self.mode == Mode.Scaling) {
-					var b = Drawer.getBounds(self.source.last().raw);
-					var distance = self.distance(new Point(b.centerX, b.centerY), new Point(e.clientX, e.clientY));
-					self.source.last().sizeK = self.initScale * distance / self.initScaleDistance;
+					var item = self.source.last();
+					var b = Drawer.getBounds(item.raw);
+					var distance = self.distance(new Point(b.centerX + item.moveX, b.centerY + item.moveY), new Point(e.clientX, e.clientY));
+					
+					item.sizeK = self.initScale * distance / self.initScaleDistance;
+				
+				} else if (self.mode == Mode.Moving) {
+					var current = new Point(e.clientX, e.clientY);
+					self.source.last().moveX = self.initMoveX + current.x - self.initMovingPoint.x;
+					self.source.last().moveY = self.initMoveY + current.y - self.initMovingPoint.y;
+
 				} else {
 					self.source.last().record(e.clientX, e.clientY);
 				}
@@ -87,6 +110,18 @@ class Director {
 
 				return false;
 			});
+	}
+
+	modifierKeyDown(e:KeyboardEvent) {
+		// console.log('modifiedKeyDown', e.ctrlKey, e.altKey);
+		$('html').toggleClass('mode-scaling', e.ctrlKey);
+		$('html').toggleClass('mode-moving', e.altKey);
+	}
+
+	modifierKeyUp(e:KeyboardEvent) {
+		// console.log('modifiedKeyUp', e.ctrlKey, e.altKey);
+		$('html').toggleClass('mode-scaling', e.ctrlKey);
+		$('html').toggleClass('mode-moving', e.altKey);
 	}
 
 	distance(p1: Point, p2: Point) {
@@ -136,7 +171,7 @@ class Director {
 			this.drawer.redraw();
 		}
 
-		console.log(c, e.which);
+		// console.log(c, e.which);
 
 		switch(c) {
 			case 'r': this.switchToRect(); break;

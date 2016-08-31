@@ -33,12 +33,16 @@ class Item {
 	shape: Shape;
 	text: string;
 	sizeK: number;
+	moveX: number;
+	moveY: number;
 
 	constructor(){
 		this.raw = [];
 		this.shape = Shape.Original;
 		this.text = '';
 		this.sizeK = 1;
+		this.moveX = 0;
+		this.moveY = 0;
 	}
 
 	record(x: number, y: number) {

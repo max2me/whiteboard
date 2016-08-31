@@ -6,7 +6,8 @@ var Mode;
 (function (Mode) {
     Mode[Mode["Drawing"] = 0] = "Drawing";
     Mode[Mode["Scaling"] = 1] = "Scaling";
-    Mode[Mode["None"] = 2] = "None";
+    Mode[Mode["Moving"] = 2] = "Moving";
+    Mode[Mode["None"] = 3] = "None";
 })(Mode || (Mode = {}));
 var Director = (function () {
     function Director() {
@@ -16,7 +17,9 @@ var Director = (function () {
         self.mode = Mode.None;
         $('html')
             .keydown(self.generalHotkeys.bind(this))
-            .keydown(self.textTyping.bind(this));
+            .keydown(self.textTyping.bind(this))
+            .keydown(self.modifierKeyDown.bind(this))
+            .keyup(self.modifierKeyUp.bind(this));
         $('#clear').click(this.clearAll.bind(this));
         $('#rectangle').click(this.switchToRect.bind(this));
         $('#original').click(this.switchToOriginal.bind(this));
@@ -31,9 +34,16 @@ var Director = (function () {
             .mousedown(function (e) {
             if (e.ctrlKey && !self.source.isEmpty()) {
                 self.mode = Mode.Scaling;
-                var b = Drawer.getBounds(self.source.last().raw);
-                self.initScaleDistance = self.distance(new Point(b.centerX, b.centerY), new Point(e.clientX, e.clientY));
+                var item = self.source.last();
+                var b = Drawer.getBounds(item.raw);
+                self.initScaleDistance = self.distance(new Point(b.centerX + item.moveX, b.centerY + item.moveY), new Point(e.clientX, e.clientY));
                 self.initScale = self.source.last().sizeK;
+            }
+            else if (e.altKey && !self.source.isEmpty()) {
+                self.mode = Mode.Moving;
+                self.initMovingPoint = new Point(e.clientX, e.clientY);
+                self.initMoveX = self.source.last().moveX;
+                self.initMoveY = self.source.last().moveY;
             }
             else {
                 self.source.start(e.clientX, e.clientY);
@@ -45,9 +55,15 @@ var Director = (function () {
             if (self.mode == Mode.None)
                 return;
             if (self.mode == Mode.Scaling) {
-                var b = Drawer.getBounds(self.source.last().raw);
-                var distance = self.distance(new Point(b.centerX, b.centerY), new Point(e.clientX, e.clientY));
-                self.source.last().sizeK = self.initScale * distance / self.initScaleDistance;
+                var item = self.source.last();
+                var b = Drawer.getBounds(item.raw);
+                var distance = self.distance(new Point(b.centerX + item.moveX, b.centerY + item.moveY), new Point(e.clientX, e.clientY));
+                item.sizeK = self.initScale * distance / self.initScaleDistance;
+            }
+            else if (self.mode == Mode.Moving) {
+                var current = new Point(e.clientX, e.clientY);
+                self.source.last().moveX = self.initMoveX + current.x - self.initMovingPoint.x;
+                self.source.last().moveY = self.initMoveY + current.y - self.initMovingPoint.y;
             }
             else {
                 self.source.last().record(e.clientX, e.clientY);
@@ -71,6 +87,14 @@ var Director = (function () {
             self.drawer.redraw();
             return false;
         });
+    };
+    Director.prototype.modifierKeyDown = function (e) {
+        $('html').toggleClass('mode-scaling', e.ctrlKey);
+        $('html').toggleClass('mode-moving', e.altKey);
+    };
+    Director.prototype.modifierKeyUp = function (e) {
+        $('html').toggleClass('mode-scaling', e.ctrlKey);
+        $('html').toggleClass('mode-moving', e.altKey);
     };
     Director.prototype.distance = function (p1, p2) {
         return Math.abs(Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)));
@@ -110,7 +134,6 @@ var Director = (function () {
             this.source.last().sizeK *= 0.95;
             this.drawer.redraw();
         }
-        console.log(c, e.which);
         switch (c) {
             case 'r':
                 this.switchToRect();
@@ -193,13 +216,15 @@ var Drawer = (function () {
             var last = i == this.source.items.length - 1;
             this.ctx.save();
             var b = Drawer.getBounds(item.raw);
-            this.ctx.translate(b.centerX, b.centerY);
+            var shiftX = b.centerX;
+            var shiftY = b.centerY;
+            this.ctx.translate(shiftX + item.moveX, shiftY + item.moveY);
             this.ctx.scale(item.sizeK, item.sizeK);
             if (item.shape == Shape.Text) {
-                this.drawItem(item, -b.centerX, -b.centerY, last);
+                this.drawItem(item, -shiftX, -shiftY, last);
             }
             else {
-                this.drawItem(item, -b.centerX, -b.centerY, last);
+                this.drawItem(item, -shiftX, -shiftY, last);
             }
             this.ctx.restore();
         }
@@ -361,6 +386,8 @@ var Item = (function () {
         this.shape = Shape.Original;
         this.text = '';
         this.sizeK = 1;
+        this.moveX = 0;
+        this.moveY = 0;
     }
     Item.prototype.record = function (x, y) {
         this.raw.push(new Point(x, y));
