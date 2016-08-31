@@ -27,37 +27,12 @@ class Drawer {
 			this.ctx.scale(item.sizeK, item.sizeK);
 			
 			if (item.shape == Shape.Text) {
-				this.drawItem(item, 0, 0, last);
+				this.drawItem(item, -b.centerX, -b.centerY, last);
 			
 			} else {
-
-				/*
-				var thinStroke = item.shape != Shape.Line 
-									&& item.shape != Shape.StraightLine 
-									&& item.shape != Shape.Original;
-
-				
-
-				if (thinStroke) {
-					this.drawItem(item, -2, -2, last);
-				}
-
-				this.drawItem(item, -1, -1, last);
-				*/
-				
-				
-
 				
 				this.drawItem(item, -b.centerX, -b.centerY, last);
 				
-				
-				/*
-				this.drawItem(item, 1, 1, last);
-				
-				if (thinStroke) {
-					this.drawItem(item, 2, 2, last);
-				}
-				*/
 			}
 
 			this.ctx.restore();
@@ -93,15 +68,15 @@ class Drawer {
 				break;
 
 			case Shape.Text:
-				this.drawText(item, last);
+				this.drawText(item, shiftX, shiftY, last);
 				break;
 		}
 	}
 
-	drawText(item: Item, last: boolean) {
+	drawText(item: Item, shiftX: number, shiftY: number, last: boolean) {
 		this.ctx.font = "20px 	'Permanent Marker'";
 		this.ctx.fillStyle = last ? 'purple' : 'black';
-		this.ctx.fillText(item.text + (last ? '_' : ''), item.raw[0].x, item.raw[0].y);		
+		this.ctx.fillText(item.text + (last ? '_' : ''), item.raw[0].x + shiftX, item.raw[0].y + shiftY);		
 	}
 
 	drawOriginal(item: Item, shiftX: number, shiftY: number) {
@@ -188,6 +163,17 @@ class Drawer {
 	}
 
 	static getBounds(coords: Point[]){
+		if (coords.length == 1) {
+			return {
+				xmin: coords[0].x,
+				xmax: coords[0].x,
+				ymin: coords[0].y,
+				ymax: coords[0].y,
+				centerX: coords[0].x,
+				centerY: coords[0].y
+			}
+		}
+
 		var xmin = 1000, xmax = 0, ymin = 1000, ymax = 0;
 		
 		for(var i = 0; i < coords.length; i++) {

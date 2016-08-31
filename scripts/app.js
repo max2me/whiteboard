@@ -29,7 +29,7 @@ var Director = (function () {
         this.drawer = new Drawer(this.el, this.source);
         $(this.el)
             .mousedown(function (e) {
-            if (e.shiftKey && !self.source.isEmpty()) {
+            if (e.ctrlKey && !self.source.isEmpty()) {
                 self.mode = Mode.Scaling;
                 var b = Drawer.getBounds(self.source.last().raw);
                 self.initScaleDistance = self.distance(new Point(b.centerX, b.centerY), new Point(e.clientX, e.clientY));
@@ -196,7 +196,7 @@ var Drawer = (function () {
             this.ctx.translate(b.centerX, b.centerY);
             this.ctx.scale(item.sizeK, item.sizeK);
             if (item.shape == Shape.Text) {
-                this.drawItem(item, 0, 0, last);
+                this.drawItem(item, -b.centerX, -b.centerY, last);
             }
             else {
                 this.drawItem(item, -b.centerX, -b.centerY, last);
@@ -226,14 +226,14 @@ var Drawer = (function () {
                 this.drawStraightLine(item, shiftX, shiftY);
                 break;
             case Shape.Text:
-                this.drawText(item, last);
+                this.drawText(item, shiftX, shiftY, last);
                 break;
         }
     };
-    Drawer.prototype.drawText = function (item, last) {
+    Drawer.prototype.drawText = function (item, shiftX, shiftY, last) {
         this.ctx.font = "20px 	'Permanent Marker'";
         this.ctx.fillStyle = last ? 'purple' : 'black';
-        this.ctx.fillText(item.text + (last ? '_' : ''), item.raw[0].x, item.raw[0].y);
+        this.ctx.fillText(item.text + (last ? '_' : ''), item.raw[0].x + shiftX, item.raw[0].y + shiftY);
     };
     Drawer.prototype.drawOriginal = function (item, shiftX, shiftY) {
         this.ctx.beginPath();
@@ -297,6 +297,16 @@ var Drawer = (function () {
         this.ctx.strokeStyle = last ? 'purple' : '#000';
     };
     Drawer.getBounds = function (coords) {
+        if (coords.length == 1) {
+            return {
+                xmin: coords[0].x,
+                xmax: coords[0].x,
+                ymin: coords[0].y,
+                ymax: coords[0].y,
+                centerX: coords[0].x,
+                centerY: coords[0].y
+            };
+        }
         var xmin = 1000, xmax = 0, ymin = 1000, ymax = 0;
         for (var i = 0; i < coords.length; i++) {
             var p = coords[i];

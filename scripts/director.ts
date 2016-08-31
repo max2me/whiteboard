@@ -38,7 +38,7 @@ class Director {
 		$(this.el)
 			.mousedown((e: MouseEvent) => {
 				
-				if (e.shiftKey && !self.source.isEmpty()) {
+				if (e.ctrlKey && !self.source.isEmpty()) {
 					self.mode = Mode.Scaling;
 
 					var b = Drawer.getBounds(self.source.last().raw);
@@ -62,6 +62,7 @@ class Director {
 				} else {
 					self.source.last().record(e.clientX, e.clientY);
 				}
+
 				self.drawer.redraw();
 			})
 
