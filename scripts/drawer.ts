@@ -33,6 +33,14 @@ class Drawer {
 			
 			this.drawItem(item, -shiftX, -shiftY, last);
 
+			if (item.lineArrowEnd &&
+				(item.shape == Shape.Original ||
+				item.shape == Shape.Line ||
+				item.shape == Shape.SmoothLine || 
+				item.shape == Shape.StraightLine)) {
+				this.drawArrow(item, shiftX, shiftY);
+			}
+
 			this.ctx.restore();
 		}
 	}
@@ -129,6 +137,41 @@ class Drawer {
 		}
 
 		this.ctx.stroke();
+	}
+
+	drawArrow(item: Item, shiftX: number, shiftY: number) {
+		console.log('drawing arrow');
+		var p2 = item.raw[item.raw.length - 1];
+		var p1 = item.raw[item.raw.length - 2];
+
+		var dist = Drawer.distance(p1, p2);
+
+		this.ctx.lineWidth = 2;
+		this.ctx.strokeStyle = '#0000ff';
+
+		var angle = Math.acos((p2.y - p1.y) / dist);
+
+		if (p2.x < p1.x) angle = 2 * Math.PI - angle;
+
+		var size = 15;
+
+		this.ctx.save();
+		this.ctx.beginPath();
+		this.ctx.translate(p2.x - shiftX, p2.y - shiftY);
+		this.ctx.rotate(-angle);
+
+		this.ctx.lineWidth = 4;
+		this.ctx.strokeStyle = '#000000';
+		
+		this.ctx.moveTo(0, 0);
+		this.ctx.lineTo(size/2, -size);
+		this.ctx.stroke();
+		
+		this.ctx.moveTo(0, 0);
+		this.ctx.lineTo(-size/2, -size);
+		this.ctx.stroke();
+		
+		this.ctx.restore();
 	}
 
 	drawSmoothLine(item: Item, shiftX: number, shiftY: number) {

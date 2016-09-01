@@ -125,7 +125,12 @@ class Director {
 			})
 
 			.mouseup(() => {
-				if (self.mode == Mode.None || self.mode == Mode.DrawingSteps) return;
+				if (self.mode == Mode.DrawingSteps) {
+					//self.source.last().raw.pop();
+					return;
+				}
+
+				if (self.mode == Mode.None) return;
 
 				if (self.mode == Mode.Drawing) {
 					if (self.source.last().raw.length == 1) {
@@ -160,6 +165,7 @@ class Director {
 		var html = '';
 
 		if (this.mode == Mode.DrawingSteps && !e.ctrlKey && !e.shiftKey) {
+			this.source.last().raw.pop(); // Clean up after moving
 			this.mode = Mode.None;
 		}
 
@@ -222,7 +228,14 @@ class Director {
 			this.drawer.redraw(false);
 		}
 
-		// console.log(c, e.which);
+		console.log(c, e.which);
+
+		if (e.which == 39) { // ARROW RIGHT
+			console.log('arr right');
+			this.source.last().lineArrowEnd = !this.source.last().lineArrowEnd;
+			this.drawer.redraw(false);
+			return;
+		}
 
 		switch(c) {
 			case 'r': this.switchToRect(); break;

@@ -105,7 +105,10 @@ var Director = (function () {
             self.drawer.redraw(true);
         })
             .mouseup(function () {
-            if (self.mode == Mode.None || self.mode == Mode.DrawingSteps)
+            if (self.mode == Mode.DrawingSteps) {
+                return;
+            }
+            if (self.mode == Mode.None)
                 return;
             if (self.mode == Mode.Drawing) {
                 if (self.source.last().raw.length == 1) {
@@ -132,6 +135,7 @@ var Director = (function () {
     Director.prototype.syncUpHtmlState = function (e) {
         var html = '';
         if (this.mode == Mode.DrawingSteps && !e.ctrlKey && !e.shiftKey) {
+            this.source.last().raw.pop();
             this.mode = Mode.None;
         }
         if (e.ctrlKey && e.shiftKey)
@@ -181,6 +185,13 @@ var Director = (function () {
         if (e.which == 40) {
             this.source.last().sizeK *= 0.95;
             this.drawer.redraw(false);
+        }
+        console.log(c, e.which);
+        if (e.which == 39) {
+            console.log('arr right');
+            this.source.last().lineArrowEnd = !this.source.last().lineArrowEnd;
+            this.drawer.redraw(false);
+            return;
         }
         switch (c) {
             case 'r':
@@ -280,6 +291,13 @@ var Drawer = (function () {
             this.ctx.translate(shiftX + item.moveX, shiftY + item.moveY);
             this.ctx.scale(item.sizeK, item.sizeK);
             this.drawItem(item, -shiftX, -shiftY, last);
+            if (item.lineArrowEnd &&
+                (item.shape == Shape.Original ||
+                    item.shape == Shape.Line ||
+                    item.shape == Shape.SmoothLine ||
+                    item.shape == Shape.StraightLine)) {
+                this.drawArrow(item, shiftX, shiftY);
+            }
             this.ctx.restore();
         }
     };
@@ -353,6 +371,31 @@ var Drawer = (function () {
             this.ctx.lineTo(pts[j].x, pts[j].y);
         }
         this.ctx.stroke();
+    };
+    Drawer.prototype.drawArrow = function (item, shiftX, shiftY) {
+        console.log('drawing arrow');
+        var p2 = item.raw[item.raw.length - 1];
+        var p1 = item.raw[item.raw.length - 2];
+        var dist = Drawer.distance(p1, p2);
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = '#0000ff';
+        var angle = Math.acos((p2.y - p1.y) / dist);
+        if (p2.x < p1.x)
+            angle = 2 * Math.PI - angle;
+        var size = 15;
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.translate(p2.x - shiftX, p2.y - shiftY);
+        this.ctx.rotate(-angle);
+        this.ctx.lineWidth = 4;
+        this.ctx.strokeStyle = '#000000';
+        this.ctx.moveTo(0, 0);
+        this.ctx.lineTo(size / 2, -size);
+        this.ctx.stroke();
+        this.ctx.moveTo(0, 0);
+        this.ctx.lineTo(-size / 2, -size);
+        this.ctx.stroke();
+        this.ctx.restore();
     };
     Drawer.prototype.drawSmoothLine = function (item, shiftX, shiftY) {
         this.ctx.beginPath();
@@ -527,6 +570,7 @@ var Item = (function () {
         this.sizeK = 1;
         this.moveX = 0;
         this.moveY = 0;
+        this.lineArrowEnd = false;
     }
     Item.prototype.record = function (x, y) {
         this.raw.push(new Point(x, y));

@@ -39,6 +39,7 @@ class Item {
 	sizeK: number;
 	moveX: number;
 	moveY: number;
+	lineArrowEnd: boolean;
 
 	constructor(){
 		this.raw = [];
@@ -47,6 +48,7 @@ class Item {
 		this.sizeK = 1;
 		this.moveX = 0;
 		this.moveY = 0;
+		this.lineArrowEnd = false;
 	}
 
 	record(x: number, y: number) {
