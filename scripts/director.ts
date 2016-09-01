@@ -204,7 +204,7 @@ class Director {
 			case 'k': this.switchToStraightLine(); break; 
 			case 'l':
 				var item = this.source.last();
-				if (item.shape == Shape.SmoothLine)
+				if (item.shape == Shape.SmoothLine || e.shiftKey)
 					this.switchToLine();
 				else
 					this.switchToSmoothLine();
