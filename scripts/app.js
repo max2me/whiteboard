@@ -275,8 +275,8 @@ var Drawer = (function () {
         }
     };
     Drawer.prototype.drawText = function (item, shiftX, shiftY, last) {
-        this.ctx.font = "20px 	'Permanent Marker'";
-        this.ctx.fillStyle = last ? 'purple' : 'black';
+        this.ctx.font = "30px 	'Permanent Marker'";
+        this.ctx.fillStyle = 'black';
         this.ctx.fillText(item.text + (last ? '_' : ''), item.raw[0].x + shiftX, item.raw[0].y + shiftY);
     };
     Drawer.prototype.drawOriginal = function (item, shiftX, shiftY) {
@@ -337,7 +337,7 @@ var Drawer = (function () {
         if (len == 2) {
             this.ctx.beginPath();
             this.ctx.moveTo(pts[0].x, pts[0].y);
-            this.ctx.lineTo(pts[1].y, pts[1].y);
+            this.ctx.lineTo(pts[1].x, pts[1].y);
             this.ctx.stroke();
         }
         else {
