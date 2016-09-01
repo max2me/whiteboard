@@ -59,6 +59,16 @@ class Director {
 					self.initMoveX = self.source.last().moveX;
 					self.initMoveY = self.source.last().moveY;
 
+				} else if (e.altKey && !self.source.isEmpty()) {
+					self.mode = Mode.Moving;
+
+					var newItem = JSON.parse(JSON.stringify(self.source.last()));
+					self.source.push(newItem);
+
+					self.initMovingPoint = new Point(e.clientX, e.clientY);
+					self.initMoveX = self.source.last().moveX;
+					self.initMoveY = self.source.last().moveY;
+
 				} else {
 					self.source.start(e.clientX, e.clientY);
 					self.mode = Mode.Drawing;
@@ -116,12 +126,14 @@ class Director {
 		// console.log('modifiedKeyDown', e.ctrlKey, e.altKey);
 		$('html').toggleClass('mode-scaling', e.ctrlKey);
 		$('html').toggleClass('mode-moving', e.shiftKey);
+		$('html').toggleClass('mode-cloning', e.altKey);
 	}
 
 	modifierKeyUp(e:KeyboardEvent) {
 		// console.log('modifiedKeyUp', e.ctrlKey, e.altKey);
 		$('html').toggleClass('mode-scaling', e.ctrlKey);
 		$('html').toggleClass('mode-moving', e.shiftKey);
+		$('html').toggleClass('mode-cloning', e.altKey);
 	}
 
 	distance(p1: Point, p2: Point) {

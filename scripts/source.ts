@@ -9,6 +9,10 @@ class Source {
 		return this.items.length ? this.items[this.items.length - 1] : null;
 	}
 
+	push(item: Item) {
+		this.items.push(item);
+	}
+
 	start(x: number, y: number) {
 		var item = new Item();
 		item.record(x, y);

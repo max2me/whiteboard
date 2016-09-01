@@ -46,6 +46,14 @@ var Director = (function () {
                 self.initMoveX = self.source.last().moveX;
                 self.initMoveY = self.source.last().moveY;
             }
+            else if (e.altKey && !self.source.isEmpty()) {
+                self.mode = Mode.Moving;
+                var newItem = JSON.parse(JSON.stringify(self.source.last()));
+                self.source.push(newItem);
+                self.initMovingPoint = new Point(e.clientX, e.clientY);
+                self.initMoveX = self.source.last().moveX;
+                self.initMoveY = self.source.last().moveY;
+            }
             else {
                 self.source.start(e.clientX, e.clientY);
                 self.mode = Mode.Drawing;
@@ -92,10 +100,12 @@ var Director = (function () {
     Director.prototype.modifierKeyDown = function (e) {
         $('html').toggleClass('mode-scaling', e.ctrlKey);
         $('html').toggleClass('mode-moving', e.shiftKey);
+        $('html').toggleClass('mode-cloning', e.altKey);
     };
     Director.prototype.modifierKeyUp = function (e) {
         $('html').toggleClass('mode-scaling', e.ctrlKey);
         $('html').toggleClass('mode-moving', e.shiftKey);
+        $('html').toggleClass('mode-cloning', e.altKey);
     };
     Director.prototype.distance = function (p1, p2) {
         return Math.abs(Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)));
@@ -437,6 +447,9 @@ var Source = (function () {
     }
     Source.prototype.last = function () {
         return this.items.length ? this.items[this.items.length - 1] : null;
+    };
+    Source.prototype.push = function (item) {
+        this.items.push(item);
     };
     Source.prototype.start = function (x, y) {
         var item = new Item();

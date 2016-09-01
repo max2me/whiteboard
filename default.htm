@@ -42,6 +42,10 @@
 		html.mode-moving canvas {
 			cursor: move;
 		}
+
+		html.mode-cloning canvas {
+			cursor: copy;
+		}
 	</style>
 	
 </head>
@@ -55,8 +59,9 @@
 		<a href="#" id="line"><strong>l</strong>ine</a> | 
 		<a href="#" id="line-straight">[x] straight line</a> | 
 		<a href="#" id="original"><strong>o</strong>riginal</a> | 
-		hold shift to move|
-		hold ctrl to resize 
+		hold shift to move |
+		hold ctrl to resize |
+		hold alt to clone
 	</div>
 	<script src='https://code.jquery.com/jquery-2.2.4.min.js'></script>
 	<script src='scripts/simplify.js'></script>
