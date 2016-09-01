@@ -179,12 +179,13 @@ class Director {
 			case 'o': this.switchToOriginal(); break;
 			case 'c': this.switchToCircle(); break;
 			case 'e': this.switchToEllipse(); break;
+			case 'k': this.switchToStraightLine(); break; 
 			case 'l':
 				var item = this.source.last();
-				if (item.shape == Shape.Line)
-					this.switchToStraightLine();
-				else
+				if (item.shape == Shape.SmoothLine)
 					this.switchToLine();
+				else
+					this.switchToSmoothLine();
 				break;
 		}
 	}
@@ -198,10 +199,18 @@ class Director {
 	}
 
 	switchToLine() {
-		if (this.source.isEmpty())
+		if (this.source.isEmpty()) 
 			return;
 
 		this.source.last().shape = Shape.Line;
+		this.drawer.redraw();
+	}
+
+	switchToSmoothLine() {
+		if (this.source.isEmpty())
+			return;
+
+		this.source.last().shape = Shape.SmoothLine;
 		this.drawer.redraw();
 	}
 

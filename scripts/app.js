@@ -151,12 +151,15 @@ var Director = (function () {
             case 'e':
                 this.switchToEllipse();
                 break;
+            case 'k':
+                this.switchToStraightLine();
+                break;
             case 'l':
                 var item = this.source.last();
-                if (item.shape == Shape.Line)
-                    this.switchToStraightLine();
-                else
+                if (item.shape == Shape.SmoothLine)
                     this.switchToLine();
+                else
+                    this.switchToSmoothLine();
                 break;
         }
     };
@@ -170,6 +173,12 @@ var Director = (function () {
         if (this.source.isEmpty())
             return;
         this.source.last().shape = Shape.Line;
+        this.drawer.redraw();
+    };
+    Director.prototype.switchToSmoothLine = function () {
+        if (this.source.isEmpty())
+            return;
+        this.source.last().shape = Shape.SmoothLine;
         this.drawer.redraw();
     };
     Director.prototype.switchToStraightLine = function () {
@@ -244,6 +253,9 @@ var Drawer = (function () {
             case Shape.Line:
                 this.drawLine(item, shiftX, shiftY);
                 break;
+            case Shape.SmoothLine:
+                this.drawSmoothLine(item, shiftX, shiftY);
+                break;
             case Shape.StraightLine:
                 this.drawStraightLine(item, shiftX, shiftY);
                 break;
@@ -267,12 +279,67 @@ var Drawer = (function () {
     };
     Drawer.prototype.drawLine = function (item, shiftX, shiftY) {
         this.ctx.beginPath();
-        var pts = window.simplify(item.raw, 20, true);
-        this.ctx.moveTo(pts[0].x + shiftX, pts[0].y + shiftY);
+        var temp = [];
+        for (var i = 0; i < item.raw.length; i++) {
+            var p = item.raw[i];
+            temp.push(new Point(p.x + shiftX, p.y + shiftY));
+        }
+        var pts = window.simplify(temp, 20, true);
+        this.ctx.moveTo(pts[0].x, pts[0].y);
         for (var j = 1; j < pts.length; j++) {
-            this.ctx.lineTo(pts[j].x + shiftX, pts[j].y + shiftY);
+            this.ctx.lineTo(pts[j].x, pts[j].y);
         }
         this.ctx.stroke();
+    };
+    Drawer.prototype.drawSmoothLine = function (item, shiftX, shiftY) {
+        this.ctx.beginPath();
+        var temp = [];
+        for (var i = 0; i < item.raw.length; i++) {
+            var p = item.raw[i];
+            temp.push(new Point(p.x + shiftX, p.y + shiftY));
+        }
+        var pts = window.simplify(temp, 30, true);
+        var cps = [];
+        for (var i = 0; i < pts.length - 2; i += 1) {
+            cps = cps.concat(Drawer.controlPoints(pts[i], pts[i + 1], pts[i + 2]));
+        }
+        this.drawCurvedPath(cps, pts);
+    };
+    Drawer.distance = function (p1, p2) {
+        return Math.abs(Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)));
+    };
+    Drawer.va = function (p1, p2) {
+        return [p2.x - p1.x, p2.y - p1.y];
+    };
+    Drawer.controlPoints = function (p1, p2, p3) {
+        var t = 0.5;
+        var v = Drawer.va(p1, p3);
+        var d01 = Drawer.distance(p1, p2);
+        var d12 = Drawer.distance(p2, p3);
+        var d012 = d01 + d12;
+        return [new Point(p2.x - v[0] * t * d01 / d012, p2.y - v[1] * t * d01 / d012),
+            new Point(p2.x + v[0] * t * d12 / d012, p2.y + v[1] * t * d12 / d012)];
+    };
+    Drawer.prototype.drawCurvedPath = function (cps, pts) {
+        var len = pts.length;
+        if (len < 2)
+            return;
+        if (len == 2) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(pts[0].x, pts[0].y);
+            this.ctx.lineTo(pts[1].y, pts[1].y);
+            this.ctx.stroke();
+        }
+        else {
+            this.ctx.beginPath();
+            this.ctx.moveTo(pts[0].x, pts[0].y);
+            this.ctx.quadraticCurveTo(cps[0].x, cps[0].y, pts[1].x, pts[1].y);
+            for (var i = 2; i < len - 1; i += 1) {
+                this.ctx.bezierCurveTo(cps[2 * (i - 1) - 1].x, cps[2 * (i - 1) - 1].y, cps[2 * (i - 1)].x, cps[2 * (i - 1)].y, pts[i].x, pts[i].y);
+            }
+            this.ctx.quadraticCurveTo(cps[(2 * (i - 1) - 1)].x, cps[(2 * (i - 1) - 1)].y, pts[i].x, pts[i].y);
+            this.ctx.stroke();
+        }
     };
     Drawer.prototype.drawStraightLine = function (item, shiftX, shiftY) {
         this.ctx.beginPath();
@@ -416,5 +483,6 @@ var Shape;
     Shape[Shape["Line"] = 4] = "Line";
     Shape[Shape["StraightLine"] = 5] = "StraightLine";
     Shape[Shape["Text"] = 6] = "Text";
+    Shape[Shape["SmoothLine"] = 7] = "SmoothLine";
 })(Shape || (Shape = {}));
 //# sourceMappingURL=app.js.map

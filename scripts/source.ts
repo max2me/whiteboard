@@ -67,5 +67,6 @@ enum Shape {
 	Ellipse,
 	Line,
 	StraightLine,
-	Text
+	Text,
+	SmoothLine
 }

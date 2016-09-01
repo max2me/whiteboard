@@ -59,6 +59,10 @@ class Drawer {
 				this.drawLine(item, shiftX, shiftY);
 				break;
 
+			case Shape.SmoothLine:
+				this.drawSmoothLine(item, shiftX, shiftY);
+				break;
+
 			case Shape.StraightLine:
 				this.drawStraightLine(item, shiftX, shiftY);
 				break;
@@ -89,15 +93,98 @@ class Drawer {
 	drawLine(item: Item, shiftX: number, shiftY: number) {
 		this.ctx.beginPath();
 
-		var pts = window.simplify(item.raw, 20, true);
+		var temp: Point[] = [];
+		for(var i = 0; i < item.raw.length; i++) {
+			var p = item.raw[i];
+			temp.push(new Point(p.x + shiftX, p.y + shiftY));
+		}
 
-		this.ctx.moveTo(pts[0].x + shiftX, pts[0].y + shiftY);
+		var pts = window.simplify(temp, 20, true);
+
+		this.ctx.moveTo(pts[0].x, pts[0].y);
 		for(var j = 1; j < pts.length; j++) {
-			this.ctx.lineTo(pts[j].x + shiftX, pts[j].y + shiftY);
+			this.ctx.lineTo(pts[j].x, pts[j].y);
 		}
 
 		this.ctx.stroke();
 	}
+
+	drawSmoothLine(item: Item, shiftX: number, shiftY: number) {
+		this.ctx.beginPath();
+
+		// Deep clone array so we wouldnt modify original object AND adjust position of poitns
+		var temp: Point[] = [];
+		for(var i = 0; i < item.raw.length; i++) {
+			var p = item.raw[i];
+			temp.push(new Point(p.x + shiftX, p.y + shiftY));
+		}
+
+		var pts = window.simplify(temp, 30, true);
+
+		var cps:Point[] = []; // There will be two control points for each "middle" point, 1 ... len-2e
+
+		for (var i = 0; i < pts.length - 2; i += 1) {
+			cps = cps.concat(
+				Drawer.controlPoints(
+						pts[i], 
+						pts[i+1], 
+						pts[i+2]
+					)
+				);
+		}
+		
+		this.drawCurvedPath(cps, pts);
+	}
+
+	static distance(p1: Point, p2: Point) {
+		return Math.abs(Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)));
+	}
+
+	static va(p1: Point, p2: Point){
+		return [p2.x-p1.x, p2.y-p1.y];
+	}
+
+	static controlPoints(p1: Point, p2: Point, p3: Point) : Point[]{
+		var t = 0.5;
+		var v = Drawer.va(p1, p3);
+		var d01 = Drawer.distance(p1, p2);
+		var d12 = Drawer.distance(p2, p3);
+		var d012 = d01 + d12;
+		return [new Point(p2.x - v[0] * t * d01 / d012, p2.y - v[1] * t * d01 / d012),
+				new Point(p2.x + v[0] * t * d12 / d012, p2.y + v[1] * t * d12 / d012) ];
+	}
+
+	drawCurvedPath(cps: Point[], pts: Point[]){
+		var len = pts.length;
+		if (len < 2) return;
+
+		if (len == 2) {
+			this.ctx.beginPath();
+			this.ctx.moveTo(pts[0].x, pts[0].y);
+			this.ctx.lineTo(pts[1].y, pts[1].y);
+			this.ctx.stroke();
+		
+		} else {
+			this.ctx.beginPath();
+			this.ctx.moveTo(pts[0].x, pts[0].y);
+			
+			// from point 0 to point 1 is a quadratic
+			this.ctx.quadraticCurveTo(cps[0].x, cps[0].y, pts[1].x, pts[1].y);
+			
+			// for all middle points, connect with bezier
+			for (var i = 2; i < len-1; i += 1) {
+				this.ctx.bezierCurveTo(
+						cps[2*(i-1)-1].x, cps[2*(i-1)-1].y,
+						cps[2*(i-1)].x, cps[2*(i-1)].y,
+						pts[i].x, pts[i].y);
+			}
+
+			this.ctx.quadraticCurveTo(cps[(2*(i-1)-1)].x, cps[(2*(i-1)-1)].y, pts[i].x, pts[i].y);
+			this.ctx.stroke();			
+		}
+	}
+
+
 
 	drawStraightLine(item: Item, shiftX: number, shiftY: number) {
 		this.ctx.beginPath();
