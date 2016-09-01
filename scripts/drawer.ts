@@ -2,6 +2,7 @@ class Drawer {
 	ctx: CanvasRenderingContext2D;
 	el: HTMLCanvasElement;
 	source: Source;
+	activeDrawing: boolean;
 
 	constructor(el: any, source: Source) {
 		this.el = el;
@@ -14,8 +15,9 @@ class Drawer {
 		this.el.height = $('body').height();
 	}
 
-	redraw() {
+	redraw(activeDrawing: boolean) {
 		this.clear();
+		this.activeDrawing = activeDrawing;
 
 		for(var i = 0; i < this.source.items.length; i++) {
 			var item = this.source.items[i];
@@ -70,7 +72,27 @@ class Drawer {
 			case Shape.Text:
 				this.drawText(item, shiftX, shiftY, last);
 				break;
+
+			case Shape.Eraser:
+				this.drawEraser(item, shiftX, shiftY, last);
+				break;
 		}
+	}
+
+	drawEraser(item: Item, shiftX: number, shiftY: number, last: boolean) {
+		this.ctx.lineWidth = 30;
+		this.ctx.lineJoin = this.ctx.lineCap = 'round';
+		this.ctx.strokeStyle = this.activeDrawing ? '#F9F9F9' : '#FFFFFF';
+		this.ctx.shadowColor = 'transparent';
+
+		this.ctx.beginPath();
+		this.ctx.moveTo(item.raw[0].x + shiftX, item.raw[0].y + shiftY);
+
+		for(var j = 1; j < item.raw.length; j++) {
+			this.ctx.lineTo(item.raw[j].x + shiftX, item.raw[j].y + shiftY);
+		}
+
+		this.ctx.stroke();
 	}
 
 	drawText(item: Item, shiftX: number, shiftY: number, last: boolean) {

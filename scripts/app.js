@@ -28,6 +28,9 @@ var Director = (function () {
         $('#ellipse').click(this.switchToEllipse.bind(this));
         $('#line').click(this.switchToLine.bind(this));
         $('#line-straight').click(this.switchToStraightLine.bind(this));
+        $('canvas').on('contextmenu', function () {
+            return false;
+        });
         this.source = new Source();
         this.el = document.getElementById('c');
         this.drawer = new Drawer(this.el, this.source);
@@ -54,6 +57,11 @@ var Director = (function () {
                 self.initMoveX = self.source.last().moveX;
                 self.initMoveY = self.source.last().moveY;
             }
+            else if (e.button == 2) {
+                self.source.start(e.clientX, e.clientY);
+                self.source.last().shape = Shape.Eraser;
+                self.mode = Mode.Drawing;
+            }
             else {
                 self.source.start(e.clientX, e.clientY);
                 self.mode = Mode.Drawing;
@@ -77,7 +85,7 @@ var Director = (function () {
             else {
                 self.source.last().record(e.clientX, e.clientY);
             }
-            self.drawer.redraw();
+            self.drawer.redraw(true);
         })
             .mouseup(function () {
             if (self.mode == Mode.None)
@@ -87,13 +95,14 @@ var Director = (function () {
                     self.source.removeLast();
                 }
             }
+            self.drawer.redraw(false);
             self.mode = Mode.None;
             return false;
         })
             .dblclick(function (e) {
             self.source.start(e.clientX, e.clientY);
             self.source.last().shape = Shape.Text;
-            self.drawer.redraw();
+            self.drawer.redraw(true);
             return false;
         });
     };
@@ -118,14 +127,14 @@ var Director = (function () {
             if (last.text.length > 0) {
                 last.text = last.text.substr(0, last.text.length - 1);
             }
-            this.drawer.redraw();
+            this.drawer.redraw(false);
             return;
         }
         var char = String.fromCharCode(e.which).toLowerCase();
         if (e.shiftKey)
             char = char.toUpperCase();
         last.text += char;
-        this.drawer.redraw();
+        this.drawer.redraw(false);
     };
     Director.prototype.generalHotkeys = function (e) {
         if (this.source.last() == null ||
@@ -134,16 +143,16 @@ var Director = (function () {
         var c = String.fromCharCode(e.which).toLowerCase();
         if (e.which == 8 || e.which == 46) {
             this.source.removeLast();
-            this.drawer.redraw();
+            this.drawer.redraw(false);
             return;
         }
         if (e.which == 38) {
             this.source.last().sizeK *= 1.05;
-            this.drawer.redraw();
+            this.drawer.redraw(false);
         }
         if (e.which == 40) {
             this.source.last().sizeK *= 0.95;
-            this.drawer.redraw();
+            this.drawer.redraw(false);
         }
         switch (c) {
             case 'r':
@@ -177,47 +186,47 @@ var Director = (function () {
         if (this.source.isEmpty())
             return;
         this.source.last().shape = Shape.Rectangle;
-        this.drawer.redraw();
+        this.drawer.redraw(false);
     };
     Director.prototype.switchToLine = function () {
         if (this.source.isEmpty())
             return;
         this.source.last().shape = Shape.Line;
-        this.drawer.redraw();
+        this.drawer.redraw(false);
     };
     Director.prototype.switchToSmoothLine = function () {
         if (this.source.isEmpty())
             return;
         this.source.last().shape = Shape.SmoothLine;
-        this.drawer.redraw();
+        this.drawer.redraw(false);
     };
     Director.prototype.switchToStraightLine = function () {
         if (this.source.isEmpty())
             return;
         this.source.last().shape = Shape.StraightLine;
-        this.drawer.redraw();
+        this.drawer.redraw(false);
     };
     Director.prototype.clearAll = function () {
         this.source.items = [];
-        this.drawer.redraw();
+        this.drawer.redraw(false);
     };
     Director.prototype.switchToOriginal = function () {
         if (this.source.isEmpty())
             return;
         this.source.last().shape = Shape.Original;
-        this.drawer.redraw();
+        this.drawer.redraw(false);
     };
     Director.prototype.switchToCircle = function () {
         if (this.source.isEmpty())
             return;
         this.source.last().shape = Shape.Circle;
-        this.drawer.redraw();
+        this.drawer.redraw(false);
     };
     Director.prototype.switchToEllipse = function () {
         if (this.source.isEmpty())
             return;
         this.source.last().shape = Shape.Ellipse;
-        this.drawer.redraw();
+        this.drawer.redraw(false);
     };
     return Director;
 }());
@@ -230,8 +239,9 @@ var Drawer = (function () {
         this.el.width = $('body').width();
         this.el.height = $('body').height();
     }
-    Drawer.prototype.redraw = function () {
+    Drawer.prototype.redraw = function (activeDrawing) {
         this.clear();
+        this.activeDrawing = activeDrawing;
         for (var i = 0; i < this.source.items.length; i++) {
             var item = this.source.items[i];
             var last = i == this.source.items.length - 1;
@@ -272,7 +282,22 @@ var Drawer = (function () {
             case Shape.Text:
                 this.drawText(item, shiftX, shiftY, last);
                 break;
+            case Shape.Eraser:
+                this.drawEraser(item, shiftX, shiftY, last);
+                break;
         }
+    };
+    Drawer.prototype.drawEraser = function (item, shiftX, shiftY, last) {
+        this.ctx.lineWidth = 30;
+        this.ctx.lineJoin = this.ctx.lineCap = 'round';
+        this.ctx.strokeStyle = this.activeDrawing ? '#F9F9F9' : '#FFFFFF';
+        this.ctx.shadowColor = 'transparent';
+        this.ctx.beginPath();
+        this.ctx.moveTo(item.raw[0].x + shiftX, item.raw[0].y + shiftY);
+        for (var j = 1; j < item.raw.length; j++) {
+            this.ctx.lineTo(item.raw[j].x + shiftX, item.raw[j].y + shiftY);
+        }
+        this.ctx.stroke();
     };
     Drawer.prototype.drawText = function (item, shiftX, shiftY, last) {
         this.ctx.font = "30px 	'Permanent Marker'";
@@ -497,5 +522,6 @@ var Shape;
     Shape[Shape["StraightLine"] = 5] = "StraightLine";
     Shape[Shape["Text"] = 6] = "Text";
     Shape[Shape["SmoothLine"] = 7] = "SmoothLine";
+    Shape[Shape["Eraser"] = 8] = "Eraser";
 })(Shape || (Shape = {}));
 //# sourceMappingURL=app.js.map

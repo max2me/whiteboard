@@ -72,5 +72,6 @@ enum Shape {
 	Line,
 	StraightLine,
 	Text,
-	SmoothLine
+	SmoothLine,
+	Eraser
 }

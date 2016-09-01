@@ -38,6 +38,10 @@ class Director {
 		$('#line').click(this.switchToLine.bind(this));
 		$('#line-straight').click(this.switchToStraightLine.bind(this));
 
+		$('canvas').on('contextmenu', () => {
+			return false;
+		});
+
 		this.source = new Source();
 		this.el = document.getElementById('c');
 		this.drawer = new Drawer(this.el, this.source);
@@ -69,6 +73,11 @@ class Director {
 					self.initMoveX = self.source.last().moveX;
 					self.initMoveY = self.source.last().moveY;
 
+				} else if (e.button == 2) {
+					self.source.start(e.clientX, e.clientY);
+					self.source.last().shape = Shape.Eraser;
+					self.mode = Mode.Drawing;
+
 				} else {
 					self.source.start(e.clientX, e.clientY);
 					self.mode = Mode.Drawing;
@@ -96,7 +105,7 @@ class Director {
 					self.source.last().record(e.clientX, e.clientY);
 				}
 
-				self.drawer.redraw();
+				self.drawer.redraw(true);
 			})
 
 			.mouseup(() => {
@@ -108,6 +117,7 @@ class Director {
 					}
 				}
 
+				self.drawer.redraw(false);
 				self.mode = Mode.None;
 
 				return false;
@@ -116,7 +126,7 @@ class Director {
 			.dblclick((e: MouseEvent) => {
 				self.source.start(e.clientX, e.clientY);
 				self.source.last().shape = Shape.Text;
-				self.drawer.redraw();				
+				self.drawer.redraw(true);				
 
 				return false;
 			});
@@ -148,7 +158,7 @@ class Director {
 			if (last.text.length > 0) {
 				last.text = last.text.substr(0, last.text.length - 1);
 			}
-			this.drawer.redraw();
+			this.drawer.redraw(false);
 			return;
 		}
 		
@@ -158,7 +168,7 @@ class Director {
 
 		last.text += char;
 
-		this.drawer.redraw();
+		this.drawer.redraw(false);
 	}
 
 	generalHotkeys(e: KeyboardEvent) {
@@ -169,18 +179,18 @@ class Director {
 
 		if (e.which == 8 || e.which == 46) { // backspace or delete
 			this.source.removeLast();
-			this.drawer.redraw();
+			this.drawer.redraw(false);
 			return;
 		}
 
 		if (e.which == 38) {
 			this.source.last().sizeK *= 1.05;
-			this.drawer.redraw();
+			this.drawer.redraw(false);
 		}
 
 		if (e.which == 40) {
 			this.source.last().sizeK *= 0.95;
-			this.drawer.redraw();
+			this.drawer.redraw(false);
 		}
 
 		// console.log(c, e.which);
@@ -207,7 +217,7 @@ class Director {
 			return;
 
 		this.source.last().shape = Shape.Rectangle;
-		this.drawer.redraw();
+		this.drawer.redraw(false);
 	}
 
 	switchToLine() {
@@ -215,7 +225,7 @@ class Director {
 			return;
 
 		this.source.last().shape = Shape.Line;
-		this.drawer.redraw();
+		this.drawer.redraw(false);
 	}
 
 	switchToSmoothLine() {
@@ -223,7 +233,7 @@ class Director {
 			return;
 
 		this.source.last().shape = Shape.SmoothLine;
-		this.drawer.redraw();
+		this.drawer.redraw(false);
 	}
 
 	switchToStraightLine() {
@@ -231,12 +241,12 @@ class Director {
 			return;
 
 		this.source.last().shape = Shape.StraightLine;
-		this.drawer.redraw();
+		this.drawer.redraw(false);
 	}
 
 	clearAll() {
 		this.source.items = [];
-		this.drawer.redraw();
+		this.drawer.redraw(false);
 	}
 
 	switchToOriginal(){
@@ -244,7 +254,7 @@ class Director {
 			return;
 
 		this.source.last().shape = Shape.Original;
-		this.drawer.redraw();
+		this.drawer.redraw(false);
 	}
 
 	switchToCircle() {
@@ -252,7 +262,7 @@ class Director {
 			return;
 
 		this.source.last().shape = Shape.Circle;
-		this.drawer.redraw();
+		this.drawer.redraw(false);
 	}
 
 	switchToEllipse() {
@@ -260,6 +270,6 @@ class Director {
 			return;
 
 		this.source.last().shape = Shape.Ellipse;
-		this.drawer.redraw();
+		this.drawer.redraw(false);
 	}
 }
