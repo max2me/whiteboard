@@ -46,6 +46,10 @@
 		html.mode-cloning canvas {
 			cursor: copy;
 		}
+
+		html.mode-steps canvas {
+			cursor: crosshair;
+		}
 	</style>
 	
 </head>
@@ -61,7 +65,8 @@
 		<a href="#" id="original"><strong>o</strong>riginal</a> | 
 		hold shift to move |
 		hold ctrl to resize |
-		hold alt to clone
+		hold alt to clone |
+		ctrl+shift to do point drawing
 	</div>
 	<script src='https://code.jquery.com/jquery-2.2.4.min.js'></script>
 	<script src='scripts/simplify.js'></script>

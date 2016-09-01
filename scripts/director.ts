@@ -2,6 +2,7 @@ declare var $:any;
 
 enum Mode {
 	Drawing,
+	DrawingSteps,
 	Scaling,
 	Moving,
 	None
@@ -49,7 +50,16 @@ class Director {
 		$(this.el)
 			.mousedown((e: MouseEvent) => {
 				
-				if (e.ctrlKey && !self.source.isEmpty()) {
+				if (e.ctrlKey && e.shiftKey) {
+					if (self.mode == Mode.None) {
+						self.mode = Mode.DrawingSteps;
+						self.source.start(e.clientX, e.clientY);
+						self.source.last().record(e.clientX, e.clientY);
+					} else if (self.mode == Mode.DrawingSteps) {
+						self.source.last().record(e.clientX, e.clientY);
+					}
+
+				} else if (e.ctrlKey && !self.source.isEmpty()) {
 					self.mode = Mode.Scaling;
 
 					var item = self.source.last();
@@ -89,7 +99,13 @@ class Director {
 			.mousemove((e: MouseEvent) => {
 				if (self.mode == Mode.None) return;
 
-				if (self.mode == Mode.Scaling) {
+				if (self.mode == Mode.DrawingSteps) {
+					var item = self.source.last();
+					item.raw.pop();
+					item.record(e.clientX, e.clientY);
+					self.drawer.redraw(true);
+
+				} else if (self.mode == Mode.Scaling) {
 					var item = self.source.last();
 					var bounds = Drawer.getBounds(item.raw);
 					var distance = self.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
@@ -109,7 +125,7 @@ class Director {
 			})
 
 			.mouseup(() => {
-				if (self.mode == Mode.None) return;
+				if (self.mode == Mode.None || self.mode == Mode.DrawingSteps) return;
 
 				if (self.mode == Mode.Drawing) {
 					if (self.source.last().raw.length == 1) {
@@ -133,17 +149,30 @@ class Director {
 	}
 
 	modifierKeyDown(e:KeyboardEvent) {
-		// console.log('modifiedKeyDown', e.ctrlKey, e.altKey);
-		$('html').toggleClass('mode-scaling', e.ctrlKey);
-		$('html').toggleClass('mode-moving', e.shiftKey);
-		$('html').toggleClass('mode-cloning', e.altKey);
+		this.syncUpHtmlState(e);
 	}
 
 	modifierKeyUp(e:KeyboardEvent) {
-		// console.log('modifiedKeyUp', e.ctrlKey, e.altKey);
-		$('html').toggleClass('mode-scaling', e.ctrlKey);
-		$('html').toggleClass('mode-moving', e.shiftKey);
-		$('html').toggleClass('mode-cloning', e.altKey);
+		this.syncUpHtmlState(e);
+	}
+
+	syncUpHtmlState(e: KeyboardEvent) {
+		var html = '';
+
+		if (this.mode == Mode.DrawingSteps && !e.ctrlKey && !e.shiftKey) {
+			this.mode = Mode.None;
+		}
+
+		if (e.ctrlKey && e.shiftKey)
+			html = 'mode-steps';
+		else if (e.ctrlKey)
+			html = 'mode-scaling';
+		else if (e.shiftKey)
+			html = 'mode-moving';
+		else if (e.altKey)
+			html = 'mode-cloning';
+		
+		$('html').attr('class', html);
 	}
 
 	distance(p1: Point, p2: Point) {

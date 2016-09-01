@@ -6,9 +6,10 @@ $(function () {
 var Mode;
 (function (Mode) {
     Mode[Mode["Drawing"] = 0] = "Drawing";
-    Mode[Mode["Scaling"] = 1] = "Scaling";
-    Mode[Mode["Moving"] = 2] = "Moving";
-    Mode[Mode["None"] = 3] = "None";
+    Mode[Mode["DrawingSteps"] = 1] = "DrawingSteps";
+    Mode[Mode["Scaling"] = 2] = "Scaling";
+    Mode[Mode["Moving"] = 3] = "Moving";
+    Mode[Mode["None"] = 4] = "None";
 })(Mode || (Mode = {}));
 var Director = (function () {
     function Director() {
@@ -36,7 +37,17 @@ var Director = (function () {
         this.drawer = new Drawer(this.el, this.source);
         $(this.el)
             .mousedown(function (e) {
-            if (e.ctrlKey && !self.source.isEmpty()) {
+            if (e.ctrlKey && e.shiftKey) {
+                if (self.mode == Mode.None) {
+                    self.mode = Mode.DrawingSteps;
+                    self.source.start(e.clientX, e.clientY);
+                    self.source.last().record(e.clientX, e.clientY);
+                }
+                else if (self.mode == Mode.DrawingSteps) {
+                    self.source.last().record(e.clientX, e.clientY);
+                }
+            }
+            else if (e.ctrlKey && !self.source.isEmpty()) {
                 self.mode = Mode.Scaling;
                 var item = self.source.last();
                 var bounds = Drawer.getBounds(item.raw);
@@ -71,7 +82,13 @@ var Director = (function () {
             .mousemove(function (e) {
             if (self.mode == Mode.None)
                 return;
-            if (self.mode == Mode.Scaling) {
+            if (self.mode == Mode.DrawingSteps) {
+                var item = self.source.last();
+                item.raw.pop();
+                item.record(e.clientX, e.clientY);
+                self.drawer.redraw(true);
+            }
+            else if (self.mode == Mode.Scaling) {
                 var item = self.source.last();
                 var bounds = Drawer.getBounds(item.raw);
                 var distance = self.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
@@ -88,7 +105,7 @@ var Director = (function () {
             self.drawer.redraw(true);
         })
             .mouseup(function () {
-            if (self.mode == Mode.None)
+            if (self.mode == Mode.None || self.mode == Mode.DrawingSteps)
                 return;
             if (self.mode == Mode.Drawing) {
                 if (self.source.last().raw.length == 1) {
@@ -107,14 +124,25 @@ var Director = (function () {
         });
     };
     Director.prototype.modifierKeyDown = function (e) {
-        $('html').toggleClass('mode-scaling', e.ctrlKey);
-        $('html').toggleClass('mode-moving', e.shiftKey);
-        $('html').toggleClass('mode-cloning', e.altKey);
+        this.syncUpHtmlState(e);
     };
     Director.prototype.modifierKeyUp = function (e) {
-        $('html').toggleClass('mode-scaling', e.ctrlKey);
-        $('html').toggleClass('mode-moving', e.shiftKey);
-        $('html').toggleClass('mode-cloning', e.altKey);
+        this.syncUpHtmlState(e);
+    };
+    Director.prototype.syncUpHtmlState = function (e) {
+        var html = '';
+        if (this.mode == Mode.DrawingSteps && !e.ctrlKey && !e.shiftKey) {
+            this.mode = Mode.None;
+        }
+        if (e.ctrlKey && e.shiftKey)
+            html = 'mode-steps';
+        else if (e.ctrlKey)
+            html = 'mode-scaling';
+        else if (e.shiftKey)
+            html = 'mode-moving';
+        else if (e.altKey)
+            html = 'mode-cloning';
+        $('html').attr('class', html);
     };
     Director.prototype.distance = function (p1, p2) {
         return Math.abs(Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)));
