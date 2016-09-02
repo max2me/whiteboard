@@ -2,10 +2,32 @@
 <html class=''>
 <head>
 	<link href="//fonts.googleapis.com/css?family=Permanent+Marker" rel="stylesheet">
+	<link href="//fonts.googleapis.com/css?family=Lato:300,400,900" rel="stylesheet">
 	<link type="text/css" rel="stylesheet" href="styles/main.css" />	
 </head>
-<body>
+<body class="show-instructions">
 	<canvas id="c" width="1000" height="500"></canvas>
+
+	<div class="instructions text">
+		<div class="toggle">&#x2261;</div>
+
+		<h1>WHITEBOARD</h1>
+		<p>This is an experiment to bring the best parts of whiteboarding to computers that do not have pen or touch input.</p>
+
+		<h2>BASICS</h2>
+		<ul>
+			<li>Draw with left mouse button.</li>
+			<li>Erase with right mouse button.</li>
+			<li>Ctrl+Drag to resize.</li>
+			<li>Shift+Drag to move.</li>
+			<li>Alt+Drag to clone.</li>
+			<li>DEL to delete.</li>
+			<li>Double click and start typing for text.</li>
+		</ul>
+
+		<p>You can only modify most recent object that you've drawn by either resizing/moving/cloning or applying shape or modifiers.</p>   
+
+	</div>
 	<div class="toolbar">
 		<a href="#" id="clear"><strong>x</strong>clear</a> | 
 		<a href="#" id="rectangle"><strong>r</strong>ectangle</a> | 

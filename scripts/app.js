@@ -2,6 +2,9 @@ var director = null;
 $(function () {
     director = new Director();
     director.init();
+    $('.instructions .toggle').click(function () {
+        $('body').toggleClass('show-instructions');
+    });
 });
 var Mode;
 (function (Mode) {
@@ -69,6 +72,8 @@ var Director = (function () {
                 self.initMoveY = self.source.last().moveY;
             }
             else if (e.button == 2) {
+                if (self.source.isEmpty())
+                    return;
                 self.source.start(e.clientX, e.clientY);
                 self.source.last().shape = Shape.Eraser;
                 self.mode = Mode.Drawing;

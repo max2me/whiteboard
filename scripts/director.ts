@@ -84,6 +84,9 @@ class Director {
 					self.initMoveY = self.source.last().moveY;
 
 				} else if (e.button == 2) {
+					if (self.source.isEmpty())
+						return;
+						
 					self.source.start(e.clientX, e.clientY);
 					self.source.last().shape = Shape.Eraser;
 					self.mode = Mode.Drawing;
