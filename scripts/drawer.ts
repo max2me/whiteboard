@@ -33,12 +33,16 @@ class Drawer {
 			
 			this.drawItem(item, -shiftX, -shiftY, last);
 
-			if (item.lineArrowEnd &&
-				(item.shape == Shape.Original ||
+			if (item.shape == Shape.Original ||
 				item.shape == Shape.Line ||
 				item.shape == Shape.SmoothLine || 
-				item.shape == Shape.StraightLine)) {
-				this.drawArrow(item, shiftX, shiftY);
+				item.shape == Shape.StraightLine) {
+
+				var points = item.raw;
+				if (item.shape == Shape.StraightLine) 
+					points = [points[0], points[points.length - 1]];
+
+				this.drawArrow(points, item.lineArrowEnd, item.lineArrowStart, shiftX, shiftY);
 			}
 
 			this.ctx.restore();
@@ -90,7 +94,7 @@ class Drawer {
 	drawEraser(item: Item, shiftX: number, shiftY: number, last: boolean) {
 		this.ctx.lineWidth = 30;
 		this.ctx.lineJoin = this.ctx.lineCap = 'round';
-		this.ctx.strokeStyle = this.activeDrawing ? '#F9F9F9' : '#FFFFFF';
+		this.ctx.strokeStyle = this.activeDrawing && last ? '#F9F9F9' : '#FFFFFF';
 		this.ctx.shadowColor = 'transparent';
 
 		this.ctx.beginPath();
@@ -135,15 +139,42 @@ class Drawer {
 		this.ctx.stroke();
 	}
 
-	drawArrow(item: Item, shiftX: number, shiftY: number) {
-		var p2 = item.raw[item.raw.length - 1];
-		var p1 = item.raw[item.raw.length - 2];
+	drawArrow(points: Point[], to: boolean, fromArrow: boolean, shiftX: number, shiftY: number) {
+		var distance = 10;
 
+		if (to) {
+			var p2 = points[points.length - 1];
+			var p1 = points[points.length - 2];
+
+			for(var i = points.length - 3; i >= 0; i--) {
+				var p = points[i];
+				if (Utility.distance(p2, p) >= distance) {
+					p1 = p;
+					break;
+				}
+			}
+
+			this.drawArrowBetweenPoints(p1, p2, shiftX, shiftY);
+		}
+
+		if (fromArrow) {
+			var p2 = points[0];
+			var p1 = points[1];
+
+			for(var i = 2; i < points.length; i++) {
+				var p = points[i];
+				if (Utility.distance(p2, p) >= distance) {
+					p1 = p;
+					break;
+				}
+			}
+
+			this.drawArrowBetweenPoints(p1, p2, shiftX, shiftY);
+		}
+	}
+
+	drawArrowBetweenPoints(p1: Point, p2: Point, shiftX: number, shiftY: number) {
 		var dist = Utility.distance(p1, p2);
-
-		this.ctx.lineWidth = 2;
-		this.ctx.strokeStyle = '#0000ff';
-
 		var angle = Math.acos((p2.y - p1.y) / dist);
 
 		if (p2.x < p1.x) angle = 2 * Math.PI - angle;
@@ -155,7 +186,7 @@ class Drawer {
 		this.ctx.translate(p2.x - shiftX, p2.y - shiftY);
 		this.ctx.rotate(-angle);
 
-		this.ctx.lineWidth = 4;
+		this.ctx.lineWidth = 6;
 		this.ctx.strokeStyle = '#000000';
 		
 		this.ctx.moveTo(0, 0);

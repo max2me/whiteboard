@@ -245,6 +245,18 @@ class Director {
 			return;
 		}
 
+		if (e.which == 37) { // ARROW LEFT
+			var item = this.source.last();
+			item.lineArrowStart = !item.lineArrowStart;
+
+			if (item.shape != Shape.Line && item.shape != Shape.SmoothLine && item.shape != Shape.StraightLine) {
+				item.shape = Shape.SmoothLine;
+			}
+			
+			this.drawer.redraw(false);
+			return;
+		}
+
 		switch(c) {
 			case 'r': this.switchToRect(); break;
 			case 'x': this.clearAll(); break;
