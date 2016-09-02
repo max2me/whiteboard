@@ -488,14 +488,14 @@ canvas {
 }
 .instructions {
   position: absolute;
-  left: -300px;
+  left: -350px;
   top: 0;
   background: #2967a2;
   color: #FFF;
-  padding: 1.5rem;
+  padding: 0;
   z-index: 1000;
   transition: 0.4s left ease-in-out;
-  width: 300px;
+  width: 350px;
   height: 100%;
 }
 .instructions .toggle {
@@ -525,7 +525,9 @@ canvas {
 }
 .instructions h2 {
   font-size: 20px;
-  margin-top: 3rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dotted white;
 }
 .instructions p,
 .instructions ul {
@@ -557,6 +559,11 @@ canvas {
   font-weight: bold;
   color: #a8f9da;
   border: 1px solid #5290cc;
+}
+.instructions .description {
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 1.5rem;
 }
 .show-instructions .instructions {
   left: 0;
