@@ -76,7 +76,7 @@ class Director {
 				} else if (e.altKey && !self.source.isEmpty()) {
 					self.mode = Mode.Moving;
 
-					var newItem = JSON.parse(JSON.stringify(self.source.last()));
+					var newItem = Utility.clone(self.source.last())
 					self.source.push(newItem);
 
 					self.initMovingPoint = new Point(e.clientX, e.clientY);

@@ -62,7 +62,7 @@ var Director = (function () {
             }
             else if (e.altKey && !self.source.isEmpty()) {
                 self.mode = Mode.Moving;
-                var newItem = JSON.parse(JSON.stringify(self.source.last()));
+                var newItem = Utility.clone(self.source.last());
                 self.source.push(newItem);
                 self.initMovingPoint = new Point(e.clientX, e.clientY);
                 self.initMoveX = self.source.last().moveX;
@@ -360,11 +360,7 @@ var Drawer = (function () {
     };
     Drawer.prototype.drawLine = function (item, shiftX, shiftY) {
         this.ctx.beginPath();
-        var temp = [];
-        for (var i = 0; i < item.raw.length; i++) {
-            var p = item.raw[i];
-            temp.push(new Point(p.x + shiftX, p.y + shiftY));
-        }
+        var temp = Utility.shiftPoints(item.raw, shiftX, shiftY);
         var pts = window.simplify(temp, 20, true);
         this.ctx.moveTo(pts[0].x, pts[0].y);
         for (var j = 1; j < pts.length; j++) {
@@ -373,10 +369,9 @@ var Drawer = (function () {
         this.ctx.stroke();
     };
     Drawer.prototype.drawArrow = function (item, shiftX, shiftY) {
-        console.log('drawing arrow');
         var p2 = item.raw[item.raw.length - 1];
         var p1 = item.raw[item.raw.length - 2];
-        var dist = Drawer.distance(p1, p2);
+        var dist = Utility.distance(p1, p2);
         this.ctx.lineWidth = 2;
         this.ctx.strokeStyle = '#0000ff';
         var angle = Math.acos((p2.y - p1.y) / dist);
@@ -399,32 +394,13 @@ var Drawer = (function () {
     };
     Drawer.prototype.drawSmoothLine = function (item, shiftX, shiftY) {
         this.ctx.beginPath();
-        var temp = [];
-        for (var i = 0; i < item.raw.length; i++) {
-            var p = item.raw[i];
-            temp.push(new Point(p.x + shiftX, p.y + shiftY));
-        }
+        var temp = Utility.shiftPoints(item.raw, shiftX, shiftY);
         var pts = window.simplify(temp, 20, true);
         var cps = [];
         for (var i = 0; i < pts.length - 2; i += 1) {
-            cps = cps.concat(Drawer.controlPoints(pts[i], pts[i + 1], pts[i + 2]));
+            cps = cps.concat(Utility.controlPoints(pts[i], pts[i + 1], pts[i + 2]));
         }
         this.drawCurvedPath(cps, pts);
-    };
-    Drawer.distance = function (p1, p2) {
-        return Math.abs(Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)));
-    };
-    Drawer.va = function (p1, p2) {
-        return [p2.x - p1.x, p2.y - p1.y];
-    };
-    Drawer.controlPoints = function (p1, p2, p3) {
-        var t = 0.5;
-        var v = Drawer.va(p1, p3);
-        var d01 = Drawer.distance(p1, p2);
-        var d12 = Drawer.distance(p2, p3);
-        var d012 = d01 + d12;
-        return [new Point(p2.x - v[0] * t * d01 / d012, p2.y - v[1] * t * d01 / d012),
-            new Point(p2.x + v[0] * t * d12 / d012, p2.y + v[1] * t * d12 / d012)];
     };
     Drawer.prototype.drawCurvedPath = function (cps, pts) {
         var len = pts.length;
@@ -596,4 +572,35 @@ var Shape;
     Shape[Shape["SmoothLine"] = 7] = "SmoothLine";
     Shape[Shape["Eraser"] = 8] = "Eraser";
 })(Shape || (Shape = {}));
+var Utility = (function () {
+    function Utility() {
+    }
+    Utility.distance = function (p1, p2) {
+        return Math.abs(Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)));
+    };
+    Utility.va = function (p1, p2) {
+        return [p2.x - p1.x, p2.y - p1.y];
+    };
+    Utility.clone = function (object) {
+        return JSON.parse(JSON.stringify(object));
+    };
+    Utility.controlPoints = function (p1, p2, p3) {
+        var t = 0.5;
+        var v = Utility.va(p1, p3);
+        var d01 = Utility.distance(p1, p2);
+        var d12 = Utility.distance(p2, p3);
+        var d012 = d01 + d12;
+        return [new Point(p2.x - v[0] * t * d01 / d012, p2.y - v[1] * t * d01 / d012),
+            new Point(p2.x + v[0] * t * d12 / d012, p2.y + v[1] * t * d12 / d012)];
+    };
+    Utility.shiftPoints = function (points, shiftX, shiftY) {
+        var result = [];
+        for (var i = 0; i < points.length; i++) {
+            var p = points[i];
+            result.push(new Point(p.x + shiftX, p.y + shiftY));
+        }
+        return result;
+    };
+    return Utility;
+}());
 //# sourceMappingURL=app.js.map

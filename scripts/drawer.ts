@@ -123,15 +123,11 @@ class Drawer {
 	drawLine(item: Item, shiftX: number, shiftY: number) {
 		this.ctx.beginPath();
 
-		var temp: Point[] = [];
-		for(var i = 0; i < item.raw.length; i++) {
-			var p = item.raw[i];
-			temp.push(new Point(p.x + shiftX, p.y + shiftY));
-		}
-
+		var temp: Point[] = Utility.shiftPoints(item.raw, shiftX, shiftY);		
 		var pts = window.simplify(temp, 20, true);
 
 		this.ctx.moveTo(pts[0].x, pts[0].y);
+
 		for(var j = 1; j < pts.length; j++) {
 			this.ctx.lineTo(pts[j].x, pts[j].y);
 		}
@@ -140,11 +136,10 @@ class Drawer {
 	}
 
 	drawArrow(item: Item, shiftX: number, shiftY: number) {
-		console.log('drawing arrow');
 		var p2 = item.raw[item.raw.length - 1];
 		var p1 = item.raw[item.raw.length - 2];
 
-		var dist = Drawer.distance(p1, p2);
+		var dist = Utility.distance(p1, p2);
 
 		this.ctx.lineWidth = 2;
 		this.ctx.strokeStyle = '#0000ff';
@@ -177,20 +172,14 @@ class Drawer {
 	drawSmoothLine(item: Item, shiftX: number, shiftY: number) {
 		this.ctx.beginPath();
 
-		// Deep clone array so we wouldnt modify original object AND adjust position of poitns
-		var temp: Point[] = [];
-		for(var i = 0; i < item.raw.length; i++) {
-			var p = item.raw[i];
-			temp.push(new Point(p.x + shiftX, p.y + shiftY));
-		}
-
+		var temp: Point[] = Utility.shiftPoints(item.raw, shiftX, shiftY);
 		var pts = window.simplify(temp, 20, true);
 
 		var cps:Point[] = []; // There will be two control points for each "middle" point, 1 ... len-2e
 
 		for (var i = 0; i < pts.length - 2; i += 1) {
 			cps = cps.concat(
-				Drawer.controlPoints(
+				Utility.controlPoints(
 						pts[i], 
 						pts[i+1], 
 						pts[i+2]
@@ -199,27 +188,9 @@ class Drawer {
 		}
 		
 		this.drawCurvedPath(cps, pts);
-	}
+	}	
 
-	static distance(p1: Point, p2: Point) {
-		return Math.abs(Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)));
-	}
-
-	static va(p1: Point, p2: Point){
-		return [p2.x-p1.x, p2.y-p1.y];
-	}
-
-	static controlPoints(p1: Point, p2: Point, p3: Point) : Point[]{
-		var t = 0.5;
-		var v = Drawer.va(p1, p3);
-		var d01 = Drawer.distance(p1, p2);
-		var d12 = Drawer.distance(p2, p3);
-		var d012 = d01 + d12;
-		return [new Point(p2.x - v[0] * t * d01 / d012, p2.y - v[1] * t * d01 / d012),
-				new Point(p2.x + v[0] * t * d12 / d012, p2.y + v[1] * t * d12 / d012) ];
-	}
-
-	drawCurvedPath(cps: Point[], pts: Point[]){
+	private drawCurvedPath(cps: Point[], pts: Point[]){
 		var len = pts.length;
 		if (len < 2) return;
 
