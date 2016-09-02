@@ -193,8 +193,11 @@ var Director = (function () {
         }
         console.log(c, e.which);
         if (e.which == 39) {
-            console.log('arr right');
-            this.source.last().lineArrowEnd = !this.source.last().lineArrowEnd;
+            var item = this.source.last();
+            item.lineArrowEnd = !item.lineArrowEnd;
+            if (item.shape != Shape.Line && item.shape != Shape.SmoothLine && item.shape != Shape.StraightLine) {
+                item.shape = Shape.SmoothLine;
+            }
             this.drawer.redraw(false);
             return;
         }

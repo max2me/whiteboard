@@ -86,7 +86,7 @@ class Director {
 				} else if (e.button == 2) {
 					if (self.source.isEmpty())
 						return;
-						
+
 					self.source.start(e.clientX, e.clientY);
 					self.source.last().shape = Shape.Eraser;
 					self.mode = Mode.Drawing;
@@ -234,8 +234,13 @@ class Director {
 		console.log(c, e.which);
 
 		if (e.which == 39) { // ARROW RIGHT
-			console.log('arr right');
-			this.source.last().lineArrowEnd = !this.source.last().lineArrowEnd;
+			var item = this.source.last();
+			item.lineArrowEnd = !item.lineArrowEnd;
+
+			if (item.shape != Shape.Line && item.shape != Shape.SmoothLine && item.shape != Shape.StraightLine) {
+				item.shape = Shape.SmoothLine;
+			}
+			
 			this.drawer.redraw(false);
 			return;
 		}
