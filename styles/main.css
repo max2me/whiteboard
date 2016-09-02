@@ -525,7 +525,7 @@ canvas {
 }
 .instructions h2 {
   font-size: 20px;
-  margin-top: 2rem;
+  margin-top: 3rem;
 }
 .instructions p,
 .instructions ul {
@@ -540,8 +540,11 @@ canvas {
   margin-bottom: 0.5rem;
 }
 .instructions ul li:before {
-  content: "-";
+  content: "\203A";
   padding-right: 5px;
+}
+.instructions ul .sep {
+  margin-top: 1.5rem;
 }
 .show-instructions .instructions {
   left: 0;
