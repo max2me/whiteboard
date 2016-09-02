@@ -184,7 +184,7 @@ class Drawer {
 			temp.push(new Point(p.x + shiftX, p.y + shiftY));
 		}
 
-		var pts = window.simplify(temp, 30, true);
+		var pts = window.simplify(temp, 20, true);
 
 		var cps:Point[] = []; // There will be two control points for each "middle" point, 1 ... len-2e
 

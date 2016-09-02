@@ -404,7 +404,7 @@ var Drawer = (function () {
             var p = item.raw[i];
             temp.push(new Point(p.x + shiftX, p.y + shiftY));
         }
-        var pts = window.simplify(temp, 30, true);
+        var pts = window.simplify(temp, 20, true);
         var cps = [];
         for (var i = 0; i < pts.length - 2; i += 1) {
             cps = cps.concat(Drawer.controlPoints(pts[i], pts[i + 1], pts[i + 2]));

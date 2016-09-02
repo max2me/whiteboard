@@ -27,7 +27,7 @@ class Source {
 	removeLast() {
 		if (this.isEmpty())
 			return;
-
+ 
 		this.items.pop();
 	}
 }
