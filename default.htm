@@ -2,56 +2,7 @@
 <html class=''>
 <head>
 	<link href="//fonts.googleapis.com/css?family=Permanent+Marker" rel="stylesheet">
-	<style class="cp-pen-styles">
-		html, body {
-			width: 100%;
-			height: 100%;
-			margin: 0;
-			padding: 0;
-		}
-
-		canvas { 
-			padding: 0;
-			margin: 0;
-			position: absolute;
-			top: 0;
-			left: 0;
-			z-index: 100;
-		}
-
-		.toolbar {
-			position: absolute;
-			top: 0;
-			right: 0;
-			background: #EFEFEF;
-			padding: 0.5rem;
-		}
-
-		.fontloader {
-			position: absolute;
-			top: -100px;
-			left: -100px;
-			font-family: 'Permanent Marker';
-			z-index: 0;
-		}
-
-		html.mode-scaling canvas {
-			cursor: nwse-resize;
-		}
-
-		html.mode-moving canvas {
-			cursor: move;
-		}
-
-		html.mode-cloning canvas {
-			cursor: copy;
-		}
-
-		html.mode-steps canvas {
-			cursor: crosshair;
-		}
-	</style>
-	
+	<link type="text/css" rel="stylesheet" href="styles/main.css" />	
 </head>
 <body>
 	<canvas id="c" width="1000" height="500"></canvas>
