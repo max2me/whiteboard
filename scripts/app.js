@@ -161,6 +161,11 @@ var Director = (function () {
         if (last == null || last.shape != Shape.Text)
             return;
         if (e.which == 8 || e.which == 46) {
+            if (last.text == '') {
+                this.source.removeLast();
+                this.drawer.redraw(false);
+                return;
+            }
             if (last.text.length > 0) {
                 last.text = last.text.substr(0, last.text.length - 1);
             }
@@ -509,10 +514,10 @@ var Drawer = (function () {
         this.ctx.lineJoin = this.ctx.lineCap = 'round';
         this.ctx.strokeStyle = '#000';
         if (last) {
-            this.ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            this.ctx.shadowColor = '#2967a2';
             this.ctx.shadowOffsetX = 0;
             this.ctx.shadowOffsetY = 0;
-            this.ctx.shadowBlur = 10;
+            this.ctx.shadowBlur = 5;
         }
         else {
             this.ctx.shadowColor = 'transparent';

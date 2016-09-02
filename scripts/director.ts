@@ -193,6 +193,12 @@ class Director {
 		if (last == null || last.shape != Shape.Text) return;
 
 		if (e.which == 8 || e.which == 46) {
+			if (last.text == '') {
+				this.source.removeLast();
+				this.drawer.redraw(false);
+				return;
+			}
+
 			if (last.text.length > 0) {
 				last.text = last.text.substr(0, last.text.length - 1);
 			}

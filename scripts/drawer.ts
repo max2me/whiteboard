@@ -312,10 +312,10 @@ class Drawer {
 		this.ctx.strokeStyle = '#000';
 
 		if (last) {
-			this.ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+			this.ctx.shadowColor = '#2967a2';
 			this.ctx.shadowOffsetX = 0; 
 			this.ctx.shadowOffsetY = 0;
-			this.ctx.shadowBlur = 10;
+			this.ctx.shadowBlur = 5;
 		} else {
 			this.ctx.shadowColor = 'transparent';
 		}
