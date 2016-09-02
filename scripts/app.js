@@ -320,7 +320,7 @@ var Drawer = (function () {
                 var points = item.raw;
                 if (item.shape == Shape.StraightLine)
                     points = [points[0], points[points.length - 1]];
-                this.drawArrow(points, item.lineArrowEnd, item.lineArrowStart, shiftX, shiftY);
+                this.drawArrow(points, item.lineArrowEnd, item.lineArrowStart, shiftX, shiftY, last);
             }
             this.ctx.restore();
         }
@@ -392,7 +392,7 @@ var Drawer = (function () {
         }
         this.ctx.stroke();
     };
-    Drawer.prototype.drawArrow = function (points, to, fromArrow, shiftX, shiftY) {
+    Drawer.prototype.drawArrow = function (points, to, fromArrow, shiftX, shiftY, last) {
         var distance = 10;
         if (to) {
             var p2 = points[points.length - 1];
@@ -404,7 +404,7 @@ var Drawer = (function () {
                     break;
                 }
             }
-            this.drawArrowBetweenPoints(p1, p2, shiftX, shiftY);
+            this.drawArrowBetweenPoints(p1, p2, shiftX, shiftY, last);
         }
         if (fromArrow) {
             var p2 = points[0];
@@ -416,10 +416,10 @@ var Drawer = (function () {
                     break;
                 }
             }
-            this.drawArrowBetweenPoints(p1, p2, shiftX, shiftY);
+            this.drawArrowBetweenPoints(p1, p2, shiftX, shiftY, last);
         }
     };
-    Drawer.prototype.drawArrowBetweenPoints = function (p1, p2, shiftX, shiftY) {
+    Drawer.prototype.drawArrowBetweenPoints = function (p1, p2, shiftX, shiftY, last) {
         var dist = Utility.distance(p1, p2);
         var angle = Math.acos((p2.y - p1.y) / dist);
         if (p2.x < p1.x)
@@ -430,7 +430,7 @@ var Drawer = (function () {
         this.ctx.translate(p2.x - shiftX, p2.y - shiftY);
         this.ctx.rotate(-angle);
         this.ctx.lineWidth = 6;
-        this.ctx.strokeStyle = '#000000';
+        this.ctx.strokeStyle = last ? '#777' : '#000000';
         this.ctx.moveTo(0, 0);
         this.ctx.lineTo(size / 2, -size);
         this.ctx.stroke();
@@ -514,13 +514,7 @@ var Drawer = (function () {
         this.ctx.lineJoin = this.ctx.lineCap = 'round';
         this.ctx.strokeStyle = '#000';
         if (last) {
-            this.ctx.shadowColor = '#2967a2';
-            this.ctx.shadowOffsetX = 0;
-            this.ctx.shadowOffsetY = 0;
-            this.ctx.shadowBlur = 5;
-        }
-        else {
-            this.ctx.shadowColor = 'transparent';
+            this.ctx.strokeStyle = '#777';
         }
     };
     Drawer.getBounds = function (coords) {

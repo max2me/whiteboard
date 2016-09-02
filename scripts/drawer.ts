@@ -42,7 +42,7 @@ class Drawer {
 				if (item.shape == Shape.StraightLine) 
 					points = [points[0], points[points.length - 1]];
 
-				this.drawArrow(points, item.lineArrowEnd, item.lineArrowStart, shiftX, shiftY);
+				this.drawArrow(points, item.lineArrowEnd, item.lineArrowStart, shiftX, shiftY, last);
 			}
 
 			this.ctx.restore();
@@ -139,7 +139,7 @@ class Drawer {
 		this.ctx.stroke();
 	}
 
-	drawArrow(points: Point[], to: boolean, fromArrow: boolean, shiftX: number, shiftY: number) {
+	drawArrow(points: Point[], to: boolean, fromArrow: boolean, shiftX: number, shiftY: number, last: boolean) {
 		var distance = 10;
 
 		if (to) {
@@ -154,7 +154,7 @@ class Drawer {
 				}
 			}
 
-			this.drawArrowBetweenPoints(p1, p2, shiftX, shiftY);
+			this.drawArrowBetweenPoints(p1, p2, shiftX, shiftY, last);
 		}
 
 		if (fromArrow) {
@@ -169,11 +169,11 @@ class Drawer {
 				}
 			}
 
-			this.drawArrowBetweenPoints(p1, p2, shiftX, shiftY);
+			this.drawArrowBetweenPoints(p1, p2, shiftX, shiftY, last);
 		}
 	}
 
-	drawArrowBetweenPoints(p1: Point, p2: Point, shiftX: number, shiftY: number) {
+	drawArrowBetweenPoints(p1: Point, p2: Point, shiftX: number, shiftY: number, last: boolean) {
 		var dist = Utility.distance(p1, p2);
 		var angle = Math.acos((p2.y - p1.y) / dist);
 
@@ -187,7 +187,7 @@ class Drawer {
 		this.ctx.rotate(-angle);
 
 		this.ctx.lineWidth = 6;
-		this.ctx.strokeStyle = '#000000';
+		this.ctx.strokeStyle = last? '#777' : '#000000';
 		
 		this.ctx.moveTo(0, 0);
 		this.ctx.lineTo(size/2, -size);
@@ -312,12 +312,7 @@ class Drawer {
 		this.ctx.strokeStyle = '#000';
 
 		if (last) {
-			this.ctx.shadowColor = '#2967a2';
-			this.ctx.shadowOffsetX = 0; 
-			this.ctx.shadowOffsetY = 0;
-			this.ctx.shadowBlur = 5;
-		} else {
-			this.ctx.shadowColor = 'transparent';
+			this.ctx.strokeStyle = '#777';
 		}
 	}
 
