@@ -47,8 +47,9 @@ class Director {
 		$('html')
 			.keydown(self.generalHotkeys.bind(this))
 			.keydown(self.textTyping.bind(this))
-			.keydown(self.modifierKeyDown.bind(this))
-			.keyup(self.modifierKeyUp.bind(this));
+			
+			.keydown(self.syncUpHtmlState.bind(this))
+			.keyup(self.syncUpHtmlState.bind(this));
 
 		$('canvas').on('contextmenu', () => {
 			return false;
@@ -62,49 +63,22 @@ class Director {
 			.mousedown((e: MouseEvent) => {
 				
 				if (e.ctrlKey && e.shiftKey) {
-					if (self.mode == Mode.None) {
-						self.mode = Mode.DrawingSteps;
-						self.source.start(e.clientX, e.clientY);
-						self.source.last().record(e.clientX, e.clientY);
-					} else if (self.mode == Mode.DrawingSteps) {
-						self.source.last().record(e.clientX, e.clientY);
-					}
+					self.startDrawingSteps(e.clientX, e.clientY);
 
 				} else if (e.ctrlKey && !self.source.isEmpty()) {
-					self.mode = Mode.Scaling;
-
-					var item = self.source.last();
-					var bounds = Drawer.getBounds(item.raw);
-					self.initScaleDistance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
-					self.initScale = self.source.last().sizeK;
+					self.startScaling(e.clientX, e.clientY);
 
 				} else if (e.shiftKey && !self.source.isEmpty()) {
-					self.mode = Mode.Moving;
-					self.initMovingPoint = new Point(e.clientX, e.clientY);
-					self.initMoveX = self.source.last().moveX;
-					self.initMoveY = self.source.last().moveY;
+					self.startMoving(e.clientX, e.clientY);
 
 				} else if (e.altKey && !self.source.isEmpty()) {
-					self.mode = Mode.Moving;
-
-					var newItem = Utility.clone(self.source.last())
-					self.source.push(newItem);
-
-					self.initMovingPoint = new Point(e.clientX, e.clientY);
-					self.initMoveX = self.source.last().moveX;
-					self.initMoveY = self.source.last().moveY;
+					self.startCloning(e.clientX, e.clientY);
 
 				} else if (e.button == 2) {
-					if (self.source.isEmpty())
-						return;
-
-					self.source.start(e.clientX, e.clientY);
-					self.source.last().shape = Shape.Eraser;
-					self.mode = Mode.Drawing;
+					self.startErasing(e.clientX, e.clientY);
 
 				} else {
-					self.source.start(e.clientX, e.clientY);
-					self.mode = Mode.Drawing;
+					self.startDrawing(e.clientX, e.clientY);
 				}
 
 				return false;
@@ -139,12 +113,9 @@ class Director {
 			})
 
 			.mouseup(() => {
-				if (self.mode == Mode.DrawingSteps) {
-					//self.source.last().raw.pop();
+				if (self.mode == Mode.DrawingSteps || self.mode == Mode.None) {
 					return;
 				}
-
-				if (self.mode == Mode.None) return;
 
 				if (self.mode == Mode.Drawing) {
 					if (self.source.last().raw.length == 1) {
@@ -159,20 +130,65 @@ class Director {
 			})
 
 			.dblclick((e: MouseEvent) => {
-				self.source.start(e.clientX, e.clientY);
-				self.source.last().shape = Shape.Text;
-				self.drawer.redraw(true);				
-
+				self.startTyping(e.clientX, e.clientY);
 				return false;
 			});
 	}
 
-	modifierKeyDown(e:KeyboardEvent) {
-		this.syncUpHtmlState(e);
+	
+
+	startTyping(clientX: number, clientY: number) {
+		this.source.start(clientX, clientY);
+		this.source.last().shape = Shape.Text;
+		this.drawer.redraw(true);
+	}
+	
+	startDrawing(clientX: number, clientY: number) {
+		this.source.start(clientX, clientY);
+		this.mode = Mode.Drawing;
 	}
 
-	modifierKeyUp(e:KeyboardEvent) {
-		this.syncUpHtmlState(e);
+	startErasing(clientX: number, clientY: number) {
+		if (this.source.isEmpty())
+			return;
+
+		this.source.start(clientX, clientY);
+		this.source.last().shape = Shape.Eraser;
+		this.mode = Mode.Drawing;
+	}
+
+	startCloning(clientX: number, clientY: number) {
+		var newItem = Utility.clone(this.source.last())
+		this.source.push(newItem);
+		
+		this.startMoving(clientX, clientY);
+	}
+
+	startDrawingSteps(clientX: number, clientY: number) {
+		if (this.mode == Mode.None) {
+			this.mode = Mode.DrawingSteps;
+			this.source.start(clientX, clientY);
+			this.source.last().record(clientX, clientY);
+
+		} else if (this.mode == Mode.DrawingSteps) {
+			this.source.last().record(clientX, clientY);
+		}
+	}
+
+	startMoving(clientX: number, clientY: number) {
+		this.mode = Mode.Moving;
+		this.initMovingPoint = new Point(clientX, clientY);
+		this.initMoveX = this.source.last().moveX;
+		this.initMoveY = this.source.last().moveY;
+	}
+
+	startScaling(clientX: number, clientY: number) {
+		this.mode = Mode.Scaling;
+
+		var item = this.source.last();
+		var bounds = Drawer.getBounds(item.raw);
+		this.initScaleDistance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(clientX, clientY));
+		this.initScale = this.source.last().sizeK;
 	}
 
 	syncUpHtmlState(e: KeyboardEvent) {
