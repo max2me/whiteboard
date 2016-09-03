@@ -8,6 +8,25 @@ enum Mode {
 	None
 }
 
+class Keyboard {
+	static backspace = 8;
+	static delete = 46;
+	static arrowRight = 39;
+	static arrowLeft = 37;
+
+	static isDelete(char: number) {
+		return char == Keyboard.backspace || char == Keyboard.delete;
+	}
+
+	static isArrowRight(char: number) {
+		return char == Keyboard.arrowRight;
+	}
+
+	static isArrowLeft(char: number) {
+		return char == Keyboard.arrowLeft;
+	}
+}
+
 class Director {
 	el: HTMLElement;
 	source: Source;
@@ -56,7 +75,7 @@ class Director {
 
 					var item = self.source.last();
 					var bounds = Drawer.getBounds(item.raw);
-					self.initScaleDistance = self.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
+					self.initScaleDistance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
 					self.initScale = self.source.last().sizeK;
 
 				} else if (e.shiftKey && !self.source.isEmpty()) {
@@ -103,7 +122,7 @@ class Director {
 				} else if (self.mode == Mode.Scaling) {
 					var item = self.source.last();
 					var bounds = Drawer.getBounds(item.raw);
-					var distance = self.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
+					var distance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
 					
 					item.sizeK = self.initScale * distance / self.initScaleDistance;
 				
@@ -176,15 +195,11 @@ class Director {
 		$('html').attr('class', html);
 	}
 
-	distance(p1: Point, p2: Point) {
-		return Math.abs(Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)));
-	}
-
 	textTyping(e: KeyboardEvent) {
 		var last = this.source.last();
 		if (last == null || last.shape != Shape.Text) return;
 
-		if (e.which == 8 || e.which == 46) {
+		if (Keyboard.isDelete(e.which)) {
 			if (last.text == '') {
 				this.source.removeLast();
 				this.drawer.redraw(false);
@@ -213,42 +228,27 @@ class Director {
 
 		var c = String.fromCharCode(e.which).toLowerCase();
 
-		if (e.which == 8 || e.which == 46) { // backspace or delete
+		if (Keyboard.isDelete(e.which)) { // backspace or delete
 			this.source.removeLast();
 			this.drawer.redraw(false);
 			return;
 		}
 
-		if (e.which == 38) {
-			this.source.last().sizeK *= 1.05;
-			this.drawer.redraw(false);
-		}
-
-		if (e.which == 40) {
-			this.source.last().sizeK *= 0.95;
-			this.drawer.redraw(false);
-		}
-
 		console.log(c, e.which);
 
-		if (e.which == 39) { // ARROW RIGHT
+		if (Keyboard.isArrowLeft(e.which) || Keyboard.isArrowRight(e.which)) { // ARROW RIGHT
 			var item = this.source.last();
-			item.lineArrowEnd = !item.lineArrowEnd;
 
-			if (item.shape != Shape.Line && item.shape != Shape.SmoothLine && item.shape != Shape.StraightLine) {
-				item.shape = Shape.SmoothLine;
+			if (Keyboard.isArrowRight(e.which)) {
+				item.lineArrowEnd = !item.lineArrowEnd;
 			}
-			
-			this.drawer.redraw(false);
-			return;
-		}
 
-		if (e.which == 37) { // ARROW LEFT
-			var item = this.source.last();
-			item.lineArrowStart = !item.lineArrowStart;
+			if (Keyboard.isArrowLeft(e.which)) {
+				item.lineArrowStart = !item.lineArrowStart;
+			}
 
 			if (item.shape != Shape.Line && item.shape != Shape.SmoothLine && item.shape != Shape.StraightLine) {
-				item.shape = Shape.SmoothLine;
+				this.switchShape(Shape.SmoothLine);
 			}
 			
 			this.drawer.redraw(false);

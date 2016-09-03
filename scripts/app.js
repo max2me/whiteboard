@@ -14,6 +14,24 @@ var Mode;
     Mode[Mode["Moving"] = 3] = "Moving";
     Mode[Mode["None"] = 4] = "None";
 })(Mode || (Mode = {}));
+var Keyboard = (function () {
+    function Keyboard() {
+    }
+    Keyboard.isDelete = function (char) {
+        return char == Keyboard.backspace || char == Keyboard.delete;
+    };
+    Keyboard.isArrowRight = function (char) {
+        return char == Keyboard.arrowRight;
+    };
+    Keyboard.isArrowLeft = function (char) {
+        return char == Keyboard.arrowLeft;
+    };
+    Keyboard.backspace = 8;
+    Keyboard.delete = 46;
+    Keyboard.arrowRight = 39;
+    Keyboard.arrowLeft = 37;
+    return Keyboard;
+}());
 var Director = (function () {
     function Director() {
     }
@@ -47,7 +65,7 @@ var Director = (function () {
                 self.mode = Mode.Scaling;
                 var item = self.source.last();
                 var bounds = Drawer.getBounds(item.raw);
-                self.initScaleDistance = self.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
+                self.initScaleDistance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
                 self.initScale = self.source.last().sizeK;
             }
             else if (e.shiftKey && !self.source.isEmpty()) {
@@ -89,7 +107,7 @@ var Director = (function () {
             else if (self.mode == Mode.Scaling) {
                 var item = self.source.last();
                 var bounds = Drawer.getBounds(item.raw);
-                var distance = self.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
+                var distance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
                 item.sizeK = self.initScale * distance / self.initScaleDistance;
             }
             else if (self.mode == Mode.Moving) {
@@ -146,14 +164,11 @@ var Director = (function () {
             html = 'mode-cloning';
         $('html').attr('class', html);
     };
-    Director.prototype.distance = function (p1, p2) {
-        return Math.abs(Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)));
-    };
     Director.prototype.textTyping = function (e) {
         var last = this.source.last();
         if (last == null || last.shape != Shape.Text)
             return;
-        if (e.which == 8 || e.which == 46) {
+        if (Keyboard.isDelete(e.which)) {
             if (last.text == '') {
                 this.source.removeLast();
                 this.drawer.redraw(false);
@@ -176,34 +191,22 @@ var Director = (function () {
             this.source.last().shape == Shape.Text)
             return;
         var c = String.fromCharCode(e.which).toLowerCase();
-        if (e.which == 8 || e.which == 46) {
+        if (Keyboard.isDelete(e.which)) {
             this.source.removeLast();
             this.drawer.redraw(false);
             return;
         }
-        if (e.which == 38) {
-            this.source.last().sizeK *= 1.05;
-            this.drawer.redraw(false);
-        }
-        if (e.which == 40) {
-            this.source.last().sizeK *= 0.95;
-            this.drawer.redraw(false);
-        }
         console.log(c, e.which);
-        if (e.which == 39) {
+        if (Keyboard.isArrowLeft(e.which) || Keyboard.isArrowRight(e.which)) {
             var item = this.source.last();
-            item.lineArrowEnd = !item.lineArrowEnd;
-            if (item.shape != Shape.Line && item.shape != Shape.SmoothLine && item.shape != Shape.StraightLine) {
-                item.shape = Shape.SmoothLine;
+            if (Keyboard.isArrowRight(e.which)) {
+                item.lineArrowEnd = !item.lineArrowEnd;
             }
-            this.drawer.redraw(false);
-            return;
-        }
-        if (e.which == 37) {
-            var item = this.source.last();
-            item.lineArrowStart = !item.lineArrowStart;
+            if (Keyboard.isArrowLeft(e.which)) {
+                item.lineArrowStart = !item.lineArrowStart;
+            }
             if (item.shape != Shape.Line && item.shape != Shape.SmoothLine && item.shape != Shape.StraightLine) {
-                item.shape = Shape.SmoothLine;
+                this.switchShape(Shape.SmoothLine);
             }
             this.drawer.redraw(false);
             return;
