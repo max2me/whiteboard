@@ -31,14 +31,6 @@ class Director {
 			.keydown(self.modifierKeyDown.bind(this))
 			.keyup(self.modifierKeyUp.bind(this));
 
-		$('#clear').click(this.clearAll.bind(this));
-		$('#rectangle').click(this.switchToRect.bind(this));
-		$('#original').click(this.switchToOriginal.bind(this));
-		$('#circle').click(this.switchToCircle.bind(this));
-		$('#ellipse').click(this.switchToEllipse.bind(this));
-		$('#line').click(this.switchToLine.bind(this));
-		$('#line-straight').click(this.switchToStraightLine.bind(this));
-
 		$('canvas').on('contextmenu', () => {
 			return false;
 		});
@@ -264,80 +256,32 @@ class Director {
 		}
 
 		switch(c) {
-			case 'r': this.switchToRect(); break;
 			case 'x': this.clearAll(); break;
-			case 'o': this.switchToOriginal(); break;
-			case 'c': this.switchToCircle(); break;
-			case 'e': this.switchToEllipse(); break;
-			case 'k': this.switchToStraightLine(); break; 
+			case 'r': this.switchShape(Shape.Rectangle); break;
+			case 'o': this.switchShape(Shape.Original); break;
+			case 'c': this.switchShape(Shape.Circle); break;
+			case 'e': this.switchShape(Shape.Ellipse); break;
+			case 'k': this.switchShape(Shape.StraightLine); break; 
 			case 'l':
 				var item = this.source.last();
 				if (item.shape == Shape.SmoothLine || e.shiftKey)
-					this.switchToLine();
+					this.switchShape(Shape.Line);
 				else
-					this.switchToSmoothLine();
+					this.switchShape(Shape.SmoothLine);
 				break;
 		}
 	}
 
-	switchToRect() {
+	switchShape(shape: Shape) {
 		if (this.source.isEmpty())
 			return;
 
-		this.source.last().shape = Shape.Rectangle;
-		this.drawer.redraw(false);
-	}
-
-	switchToLine() {
-		if (this.source.isEmpty()) 
-			return;
-
-		this.source.last().shape = Shape.Line;
-		this.drawer.redraw(false);
-	}
-
-	switchToSmoothLine() {
-		if (this.source.isEmpty())
-			return;
-
-		this.source.last().shape = Shape.SmoothLine;
-		this.drawer.redraw(false);
-	}
-
-	switchToStraightLine() {
-		if (this.source.isEmpty())
-			return;
-
-		this.source.last().shape = Shape.StraightLine;
+		this.source.last().shape = shape;
 		this.drawer.redraw(false);
 	}
 
 	clearAll() {
 		this.source.items = [];
-		this.drawer.redraw(false);
-	}
-
-	switchToOriginal(){
-		if (this.source.isEmpty())
-			return;
-
-		this.source.last().shape = Shape.Original;
-		this.drawer.redraw(false);
-	}
-
-	switchToCircle() {
-		if (this.source.isEmpty())
-			return;
-
-		this.source.last().shape = Shape.Circle;
-		this.drawer.redraw(false);
-	}
-
-	switchToEllipse() {
-		if (this.source.isEmpty())
-			return;
-
-		this.source.last().shape = Shape.Ellipse;
 		this.drawer.redraw(false);
 	}
 }

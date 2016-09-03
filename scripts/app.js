@@ -25,13 +25,6 @@ var Director = (function () {
             .keydown(self.textTyping.bind(this))
             .keydown(self.modifierKeyDown.bind(this))
             .keyup(self.modifierKeyUp.bind(this));
-        $('#clear').click(this.clearAll.bind(this));
-        $('#rectangle').click(this.switchToRect.bind(this));
-        $('#original').click(this.switchToOriginal.bind(this));
-        $('#circle').click(this.switchToCircle.bind(this));
-        $('#ellipse').click(this.switchToEllipse.bind(this));
-        $('#line').click(this.switchToLine.bind(this));
-        $('#line-straight').click(this.switchToStraightLine.bind(this));
         $('canvas').on('contextmenu', function () {
             return false;
         });
@@ -216,77 +209,41 @@ var Director = (function () {
             return;
         }
         switch (c) {
-            case 'r':
-                this.switchToRect();
-                break;
             case 'x':
                 this.clearAll();
                 break;
+            case 'r':
+                this.switchShape(Shape.Rectangle);
+                break;
             case 'o':
-                this.switchToOriginal();
+                this.switchShape(Shape.Original);
                 break;
             case 'c':
-                this.switchToCircle();
+                this.switchShape(Shape.Circle);
                 break;
             case 'e':
-                this.switchToEllipse();
+                this.switchShape(Shape.Ellipse);
                 break;
             case 'k':
-                this.switchToStraightLine();
+                this.switchShape(Shape.StraightLine);
                 break;
             case 'l':
                 var item = this.source.last();
                 if (item.shape == Shape.SmoothLine || e.shiftKey)
-                    this.switchToLine();
+                    this.switchShape(Shape.Line);
                 else
-                    this.switchToSmoothLine();
+                    this.switchShape(Shape.SmoothLine);
                 break;
         }
     };
-    Director.prototype.switchToRect = function () {
+    Director.prototype.switchShape = function (shape) {
         if (this.source.isEmpty())
             return;
-        this.source.last().shape = Shape.Rectangle;
-        this.drawer.redraw(false);
-    };
-    Director.prototype.switchToLine = function () {
-        if (this.source.isEmpty())
-            return;
-        this.source.last().shape = Shape.Line;
-        this.drawer.redraw(false);
-    };
-    Director.prototype.switchToSmoothLine = function () {
-        if (this.source.isEmpty())
-            return;
-        this.source.last().shape = Shape.SmoothLine;
-        this.drawer.redraw(false);
-    };
-    Director.prototype.switchToStraightLine = function () {
-        if (this.source.isEmpty())
-            return;
-        this.source.last().shape = Shape.StraightLine;
+        this.source.last().shape = shape;
         this.drawer.redraw(false);
     };
     Director.prototype.clearAll = function () {
         this.source.items = [];
-        this.drawer.redraw(false);
-    };
-    Director.prototype.switchToOriginal = function () {
-        if (this.source.isEmpty())
-            return;
-        this.source.last().shape = Shape.Original;
-        this.drawer.redraw(false);
-    };
-    Director.prototype.switchToCircle = function () {
-        if (this.source.isEmpty())
-            return;
-        this.source.last().shape = Shape.Circle;
-        this.drawer.redraw(false);
-    };
-    Director.prototype.switchToEllipse = function () {
-        if (this.source.isEmpty())
-            return;
-        this.source.last().shape = Shape.Ellipse;
         this.drawer.redraw(false);
     };
     return Director;
