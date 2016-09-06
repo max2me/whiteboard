@@ -16,7 +16,7 @@
 		{
 			"taskName": "tsc",
 			"args": ["-w", "-p", "typescript/"],
-			"isBuildCommand": true,
+			"isBuildCommand": false,
 			"showOutput": "silent",
 			"isWatching": true,
 			"problemMatcher": "$tsc-watch"
