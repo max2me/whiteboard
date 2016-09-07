@@ -38,6 +38,42 @@ var Director = (function () {
         this.source = new Source();
         this.el = document.getElementById('c');
         this.drawer = new Drawer(this.el, this.source);
+        this.connection = $.connection('/r');
+        this.connection.received(function (data) {
+            var item = JSON.parse(data.Json);
+            if (data.Type == 'Delete') {
+                var indexToDelete = -1;
+                for (var i = 0; i < self.source.items.length; i++) {
+                    if (self.source.items[i].id == item.id) {
+                        indexToDelete = i;
+                        break;
+                    }
+                }
+                if (indexToDelete != -1) {
+                    self.source.items.splice(indexToDelete, 1);
+                    self.drawer.redraw(false);
+                    return;
+                }
+            }
+            var replaced = false;
+            for (var i = 0; i < self.source.items.length; i++) {
+                var k = self.source.items[i];
+                if (k.id == item.id) {
+                    self.source.items[i] = item;
+                    replaced = true;
+                    break;
+                }
+            }
+            if (!replaced) {
+                self.source.push(item);
+            }
+            self.drawer.redraw(false);
+        });
+        this.connection.error(function (error) {
+            console.warn(error);
+        });
+        this.connection.start(function () {
+        });
         $(this.el)
             .mousedown(function (e) {
             if (e.ctrlKey && e.shiftKey) {
@@ -65,7 +101,7 @@ var Director = (function () {
             }
             else if (e.altKey && !self.source.isEmpty()) {
                 self.mode = Mode.Moving;
-                var newItem = Utility.clone(self.source.last());
+                var newItem = self.source.last().clone();
                 self.source.push(newItem);
                 self.initMovingPoint = new Point(e.clientX, e.clientY);
                 self.initMoveX = self.source.last().moveX;
@@ -82,6 +118,7 @@ var Director = (function () {
                 self.source.start(e.clientX, e.clientY);
                 self.mode = Mode.Drawing;
             }
+            self.send();
             return false;
         })
             .mousemove(function (e) {
@@ -107,6 +144,7 @@ var Director = (function () {
             else {
                 self.source.last().record(e.clientX, e.clientY);
             }
+            self.send();
             self.drawer.redraw(true);
         })
             .mouseup(function () {
@@ -122,14 +160,29 @@ var Director = (function () {
             }
             self.drawer.redraw(false);
             self.mode = Mode.None;
+            self.send();
             return false;
         })
             .dblclick(function (e) {
             self.source.start(e.clientX, e.clientY);
             self.source.last().shape = Shape.Text;
+            self.send();
             self.drawer.redraw(true);
             return false;
         });
+    };
+    Director.prototype.send = function () {
+        this.connection.send({
+            Type: 'Broadcast',
+            Json: JSON.stringify(this.source.last())
+        });
+    };
+    Director.prototype.deleteAndSend = function () {
+        this.connection.send({
+            Type: 'Delete',
+            Json: JSON.stringify(this.source.last())
+        });
+        this.source.removeLast();
     };
     Director.prototype.modifierKeyDown = function (e) {
         this.syncUpHtmlState(e);
@@ -163,12 +216,14 @@ var Director = (function () {
         if (e.which == 8 || e.which == 46) {
             if (last.text == '') {
                 this.source.removeLast();
+                this.send();
                 this.drawer.redraw(false);
                 return;
             }
             if (last.text.length > 0) {
                 last.text = last.text.substr(0, last.text.length - 1);
             }
+            this.send();
             this.drawer.redraw(false);
             return;
         }
@@ -176,6 +231,7 @@ var Director = (function () {
         if (e.shiftKey)
             char = char.toUpperCase();
         last.text += char;
+        this.send();
         this.drawer.redraw(false);
     };
     Director.prototype.generalHotkeys = function (e) {
@@ -184,25 +240,27 @@ var Director = (function () {
             return;
         var c = String.fromCharCode(e.which).toLowerCase();
         if (e.which == 8 || e.which == 46) {
-            this.source.removeLast();
+            this.deleteAndSend();
             this.drawer.redraw(false);
             return;
         }
         if (e.which == 38) {
             this.source.last().sizeK *= 1.05;
+            this.send();
             this.drawer.redraw(false);
         }
         if (e.which == 40) {
             this.source.last().sizeK *= 0.95;
+            this.send();
             this.drawer.redraw(false);
         }
-        console.log(c, e.which);
         if (e.which == 39) {
             var item = this.source.last();
             item.lineArrowEnd = !item.lineArrowEnd;
             if (item.shape != Shape.Line && item.shape != Shape.SmoothLine && item.shape != Shape.StraightLine) {
                 item.shape = Shape.SmoothLine;
             }
+            this.send();
             this.drawer.redraw(false);
             return;
         }
@@ -212,6 +270,7 @@ var Director = (function () {
             if (item.shape != Shape.Line && item.shape != Shape.SmoothLine && item.shape != Shape.StraightLine) {
                 item.shape = Shape.SmoothLine;
             }
+            this.send();
             this.drawer.redraw(false);
             return;
         }
@@ -242,6 +301,7 @@ var Director = (function () {
                     this.switchToSmoothLine();
                 break;
         }
+        this.send();
     };
     Director.prototype.switchToRect = function () {
         if (this.source.isEmpty())
@@ -581,6 +641,7 @@ var Source = (function () {
 }());
 var Item = (function () {
     function Item() {
+        this.id = this.generateNewId();
         this.raw = [];
         this.shape = Shape.Original;
         this.text = '';
@@ -590,8 +651,16 @@ var Item = (function () {
         this.lineArrowEnd = false;
         this.lineArrowStart = false;
     }
+    Item.prototype.generateNewId = function () {
+        return 'id' + Math.round(Math.random() * 1000000);
+    };
     Item.prototype.record = function (x, y) {
         this.raw.push(new Point(x, y));
+    };
+    Item.prototype.clone = function () {
+        var result = JSON.parse(JSON.stringify(this));
+        result.id = this.generateNewId();
+        return result;
     };
     return Item;
 }());

@@ -21,6 +21,8 @@ class Director {
 	initMoveX: number;
 	initMoveY: number;
 
+	connection: any;
+
 	init() {
 		var self = this;
 		self.mode = Mode.None;
@@ -46,6 +48,49 @@ class Director {
 		this.source = new Source();
 		this.el = document.getElementById('c');
 		this.drawer = new Drawer(this.el, this.source);
+
+		this.connection = $.connection('/r');
+		this.connection.received(function(data: any) {
+			var item = JSON.parse(data.Json);
+			if (data.Type == 'Delete') {
+				var indexToDelete = -1;
+				for(var i = 0; i < self.source.items.length; i++) {
+					if (self.source.items[i].id == item.id) {
+						indexToDelete = i;
+						break;
+					}
+				}
+
+				if (indexToDelete != -1) {
+					self.source.items.splice(indexToDelete, 1);
+					self.drawer.redraw(false);
+					return;
+				}
+			}
+			
+			var replaced = false;
+			for(var i = 0; i < self.source.items.length; i++) {
+				var k = self.source.items[i];
+				if (k.id == item.id) {
+					self.source.items[i] = item;
+					replaced = true;
+					break;
+				}
+			}
+
+			if (!replaced) {
+				self.source.push(item);
+			}
+
+			self.drawer.redraw(false);
+		});
+
+		this.connection.error(function(error: any) {
+			console.warn(error);
+		});
+
+		this.connection.start(function() {
+		});
 
 		$(this.el)
 			.mousedown((e: MouseEvent) => {
@@ -76,7 +121,7 @@ class Director {
 				} else if (e.altKey && !self.source.isEmpty()) {
 					self.mode = Mode.Moving;
 
-					var newItem = Utility.clone(self.source.last())
+					var newItem = self.source.last().clone();
 					self.source.push(newItem);
 
 					self.initMovingPoint = new Point(e.clientX, e.clientY);
@@ -95,6 +140,8 @@ class Director {
 					self.source.start(e.clientX, e.clientY);
 					self.mode = Mode.Drawing;
 				}
+
+				self.send();
 
 				return false;
 			})
@@ -124,12 +171,12 @@ class Director {
 					self.source.last().record(e.clientX, e.clientY);
 				}
 
+				self.send();
 				self.drawer.redraw(true);
 			})
 
 			.mouseup(() => {
 				if (self.mode == Mode.DrawingSteps) {
-					//self.source.last().raw.pop();
 					return;
 				}
 
@@ -141,19 +188,38 @@ class Director {
 					}
 				}
 
+				
+			
 				self.drawer.redraw(false);
 				self.mode = Mode.None;
-
+				self.send();
 				return false;
 			})
 
 			.dblclick((e: MouseEvent) => {
 				self.source.start(e.clientX, e.clientY);
 				self.source.last().shape = Shape.Text;
+				self.send();
 				self.drawer.redraw(true);				
 
 				return false;
 			});
+	}
+
+	send() {
+		this.connection.send({
+			Type: 'Broadcast',
+			Json: JSON.stringify(this.source.last())
+		});
+	}
+
+	deleteAndSend() {
+		this.connection.send({
+			Type: 'Delete',
+			Json: JSON.stringify(this.source.last())
+		});
+
+		this.source.removeLast();
 	}
 
 	modifierKeyDown(e:KeyboardEvent) {
@@ -195,6 +261,7 @@ class Director {
 		if (e.which == 8 || e.which == 46) {
 			if (last.text == '') {
 				this.source.removeLast();
+				this.send();
 				this.drawer.redraw(false);
 				return;
 			}
@@ -202,6 +269,8 @@ class Director {
 			if (last.text.length > 0) {
 				last.text = last.text.substr(0, last.text.length - 1);
 			}
+
+			this.send();
 			this.drawer.redraw(false);
 			return;
 		}
@@ -212,6 +281,7 @@ class Director {
 
 		last.text += char;
 
+		this.send();
 		this.drawer.redraw(false);
 	}
 
@@ -222,22 +292,24 @@ class Director {
 		var c = String.fromCharCode(e.which).toLowerCase();
 
 		if (e.which == 8 || e.which == 46) { // backspace or delete
-			this.source.removeLast();
+			this.deleteAndSend();
 			this.drawer.redraw(false);
 			return;
 		}
 
 		if (e.which == 38) {
 			this.source.last().sizeK *= 1.05;
+			this.send();
 			this.drawer.redraw(false);
 		}
 
 		if (e.which == 40) {
 			this.source.last().sizeK *= 0.95;
+			this.send();
 			this.drawer.redraw(false);
 		}
 
-		console.log(c, e.which);
+		//console.log(c, e.which);
 
 		if (e.which == 39) { // ARROW RIGHT
 			var item = this.source.last();
@@ -247,6 +319,7 @@ class Director {
 				item.shape = Shape.SmoothLine;
 			}
 			
+			this.send();
 			this.drawer.redraw(false);
 			return;
 		}
@@ -259,6 +332,7 @@ class Director {
 				item.shape = Shape.SmoothLine;
 			}
 			
+			this.send();
 			this.drawer.redraw(false);
 			return;
 		}
@@ -278,6 +352,8 @@ class Director {
 					this.switchToSmoothLine();
 				break;
 		}
+
+		this.send();
 	}
 
 	switchToRect() {
