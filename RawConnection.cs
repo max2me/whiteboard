@@ -52,13 +52,12 @@ namespace wsweb
             {
                 case IncomingMessage.Broadcast:
 				case IncomingMessage.Delete:
-                    Connection.Broadcast(new
+                    return Connection.Broadcast(new
                     {
                         Type = message.Type.ToString(),
                         Json = message.Json
                     },
                     connectionId);
-					break;
                 default:
                     break;
             }

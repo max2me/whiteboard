@@ -274,6 +274,9 @@ var Director = (function () {
             this.drawer.redraw(false);
             return;
         }
+        if (c == 'r' && e.ctrlKey) {
+            return;
+        }
         switch (c) {
             case 'r':
                 this.switchToRect();

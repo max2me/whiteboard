@@ -337,6 +337,10 @@ class Director {
 			return;
 		}
 
+		if (c == 'r' && e.ctrlKey) {
+			return;
+		}
+
 		switch(c) {
 			case 'r': this.switchToRect(); break;
 			case 'x': this.clearAll(); break;
