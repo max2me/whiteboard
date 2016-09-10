@@ -353,6 +353,7 @@ class Director {
 			case 'o': this.switchShape(Shape.Original); break;
 			case 'c': this.switchShape(Shape.Circle); break;
 			case 'e': this.switchShape(Shape.Ellipse); break;
+			case 'h': this.switchShape(Shape.Human); break;
 			case 'k': this.switchShape(Shape.StraightLine); break; 
 			case 'l':
 				var item = this.source.last();

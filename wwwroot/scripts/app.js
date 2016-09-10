@@ -299,6 +299,9 @@ var Director = (function () {
             case 'e':
                 this.switchShape(Shape.Ellipse);
                 break;
+            case 'h':
+                this.switchShape(Shape.Human);
+                break;
             case 'k':
                 this.switchShape(Shape.StraightLine);
                 break;
@@ -387,6 +390,9 @@ var Drawer = (function () {
                 break;
             case Shape.Eraser:
                 this.drawEraser(item, shiftX, shiftY, last);
+                break;
+            case Shape.Human:
+                this.drawHuman(item, shiftX, shiftY);
                 break;
         }
     };
@@ -517,6 +523,36 @@ var Drawer = (function () {
         this.ctx.lineTo(b.xmax + shiftX - 0, b.ymax + shiftY);
         this.ctx.lineTo(b.xmin + shiftX - 0, b.ymax + shiftY);
         this.ctx.lineTo(b.xmin + shiftX, b.ymin + shiftY);
+        this.ctx.stroke();
+    };
+    Drawer.prototype.drawHuman = function (item, shiftX, shiftY) {
+        var b = Drawer.getBounds(item.raw);
+        var height = b.ymax - b.ymin;
+        var headSize = height / 3 / 2;
+        var headCenterX = b.centerX + shiftX;
+        var headCenterY = b.ymin + headSize + shiftY;
+        var bodyHeight = height / 3;
+        var legsHeight = height / 3;
+        var bodyStartY = headCenterY + headSize;
+        var bodyEndY = headCenterY + headSize + bodyHeight;
+        this.ctx.beginPath();
+        this.ctx.arc(headCenterX, headCenterY, headSize, 0, 2 * Math.PI, false);
+        this.ctx.stroke();
+        this.ctx.beginPath();
+        this.ctx.moveTo(headCenterX, bodyStartY);
+        this.ctx.lineTo(headCenterX, bodyEndY);
+        this.ctx.stroke();
+        this.ctx.beginPath();
+        this.ctx.moveTo(headCenterX - headSize * 0.8, bodyEndY + legsHeight);
+        this.ctx.lineTo(headCenterX, bodyEndY);
+        this.ctx.lineTo(headCenterX + headSize * 0.8, bodyEndY + legsHeight);
+        this.ctx.stroke();
+        var armsKX = 1.1;
+        var armsKY = 0.5;
+        this.ctx.beginPath();
+        this.ctx.moveTo(headCenterX - headSize * armsKX, bodyStartY + bodyHeight * armsKY);
+        this.ctx.lineTo(headCenterX, bodyStartY + bodyHeight * armsKY / 2);
+        this.ctx.lineTo(headCenterX + headSize * armsKX, bodyStartY + bodyHeight * armsKY);
         this.ctx.stroke();
     };
     Drawer.prototype.drawCircle = function (item, shiftX, shiftY) {
