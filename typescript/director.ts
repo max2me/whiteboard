@@ -11,6 +11,25 @@ enum Mode {
 	None
 }
 
+class Keyboard {
+	static backspace = 8;
+	static delete = 46;
+	static arrowRight = 39;
+	static arrowLeft = 37;
+
+	static isDelete(char: number) {
+		return char == Keyboard.backspace || char == Keyboard.delete;
+	}
+
+	static isArrowRight(char: number) {
+		return char == Keyboard.arrowRight;
+	}
+
+	static isArrowLeft(char: number) {
+		return char == Keyboard.arrowLeft;
+	}
+}
+
 class Director {
 	el: HTMLElement;
 	source: Source;
@@ -33,8 +52,8 @@ class Director {
 		$('html')
 			.keydown(self.generalHotkeys.bind(this))
 			.keydown(self.textTyping.bind(this))
-			.keydown(self.modifierKeyDown.bind(this))
-			.keyup(self.modifierKeyUp.bind(this));
+			.keydown(self.syncUpHtmlState.bind(this))
+			.keyup(self.syncUpHtmlState.bind(this));
 
 		$('canvas').on('contextmenu', () => {
 			return false;
@@ -91,49 +110,22 @@ class Director {
 			.mousedown((e: MouseEvent) => {
 				
 				if (e.ctrlKey && e.shiftKey) {
-					if (self.mode == Mode.None) {
-						self.mode = Mode.DrawingSteps;
-						self.source.start(e.clientX, e.clientY);
-						self.source.last().record(e.clientX, e.clientY);
-					} else if (self.mode == Mode.DrawingSteps) {
-						self.source.last().record(e.clientX, e.clientY);
-					}
+					self.startDrawingSteps(e.clientX, e.clientY);
 
 				} else if (e.ctrlKey && !self.source.isEmpty()) {
-					self.mode = Mode.Scaling;
-
-					var item = self.source.last();
-					var bounds = Drawer.getBounds(item.raw);
-					self.initScaleDistance = self.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
-					self.initScale = self.source.last().sizeK;
+					self.startScaling(e.clientX, e.clientY);
 
 				} else if (e.shiftKey && !self.source.isEmpty()) {
-					self.mode = Mode.Moving;
-					self.initMovingPoint = new Point(e.clientX, e.clientY);
-					self.initMoveX = self.source.last().moveX;
-					self.initMoveY = self.source.last().moveY;
+					self.startMoving(e.clientX, e.clientY);
 
 				} else if (e.altKey && !self.source.isEmpty()) {
-					self.mode = Mode.Moving;
-
-					var newItem = self.source.last().clone();
-					self.source.push(newItem);
-
-					self.initMovingPoint = new Point(e.clientX, e.clientY);
-					self.initMoveX = self.source.last().moveX;
-					self.initMoveY = self.source.last().moveY;
+					self.startCloning(e.clientX, e.clientY);
 
 				} else if (e.button == 2) {
-					if (self.source.isEmpty())
-						return;
-
-					self.source.start(e.clientX, e.clientY);
-					self.source.last().shape = Shape.Eraser;
-					self.mode = Mode.Drawing;
+					self.startErasing(e.clientX, e.clientY);
 
 				} else {
-					self.source.start(e.clientX, e.clientY);
-					self.mode = Mode.Drawing;
+					self.startDrawing(e.clientX, e.clientY);
 				}
 
 				self.send();
@@ -153,7 +145,7 @@ class Director {
 				} else if (self.mode == Mode.Scaling) {
 					var item = self.source.last();
 					var bounds = Drawer.getBounds(item.raw);
-					var distance = self.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
+					var distance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
 					
 					item.sizeK = self.initScale * distance / self.initScaleDistance;
 				
@@ -171,11 +163,9 @@ class Director {
 			})
 
 			.mouseup(() => {
-				if (self.mode == Mode.DrawingSteps) {
+				if (self.mode == Mode.DrawingSteps || self.mode == Mode.None) {
 					return;
 				}
-
-				if (self.mode == Mode.None) return;
 
 				if (self.mode == Mode.Drawing) {
 					if (self.source.last().raw.length == 1) {
@@ -192,11 +182,7 @@ class Director {
 			})
 
 			.dblclick((e: MouseEvent) => {
-				self.source.start(e.clientX, e.clientY);
-				self.source.last().shape = Shape.Text;
-				self.send();
-				self.drawer.redraw(true);				
-
+				self.startTyping(e.clientX, e.clientY);
 				return false;
 			});
 	}
@@ -217,12 +203,58 @@ class Director {
 		this.source.removeLast();
 	}
 
-	modifierKeyDown(e:KeyboardEvent) {
-		this.syncUpHtmlState(e);
+	startTyping(clientX: number, clientY: number) {
+		this.source.start(clientX, clientY);
+		this.source.last().shape = Shape.Text;
+		this.drawer.redraw(true);
+	}
+	
+	startDrawing(clientX: number, clientY: number) {
+		this.source.start(clientX, clientY);
+		this.mode = Mode.Drawing;
 	}
 
-	modifierKeyUp(e:KeyboardEvent) {
-		this.syncUpHtmlState(e);
+	startErasing(clientX: number, clientY: number) {
+		if (this.source.isEmpty())
+			return;
+
+		this.source.start(clientX, clientY);
+		this.source.last().shape = Shape.Eraser;
+		this.mode = Mode.Drawing;
+	}
+
+	startCloning(clientX: number, clientY: number) {
+		var newItem = Utility.clone(this.source.last())
+		this.source.push(newItem);
+		
+		this.startMoving(clientX, clientY);
+	}
+
+	startDrawingSteps(clientX: number, clientY: number) {
+		if (this.mode == Mode.None) {
+			this.mode = Mode.DrawingSteps;
+			this.source.start(clientX, clientY);
+			this.source.last().record(clientX, clientY);
+
+		} else if (this.mode == Mode.DrawingSteps) {
+			this.source.last().record(clientX, clientY);
+		}
+	}
+
+	startMoving(clientX: number, clientY: number) {
+		this.mode = Mode.Moving;
+		this.initMovingPoint = new Point(clientX, clientY);
+		this.initMoveX = this.source.last().moveX;
+		this.initMoveY = this.source.last().moveY;
+	}
+
+	startScaling(clientX: number, clientY: number) {
+		this.mode = Mode.Scaling;
+
+		var item = this.source.last();
+		var bounds = Drawer.getBounds(item.raw);
+		this.initScaleDistance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(clientX, clientY));
+		this.initScale = this.source.last().sizeK;
 	}
 
 	syncUpHtmlState(e: KeyboardEvent) {
@@ -243,10 +275,6 @@ class Director {
 			html = 'mode-cloning';
 		
 		$('html').attr('class', html);
-	}
-
-	distance(p1: Point, p2: Point) {
-		return Math.abs(Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)));
 	}
 
 	textTyping(e: KeyboardEvent) {
@@ -295,39 +323,19 @@ class Director {
 			return;
 		}
 
-		if (e.which == 38) {
-			this.source.last().sizeK *= 1.05;
-			this.send();
-			this.drawer.redraw(false);
-		}
-
-		if (e.which == 40) {
-			this.source.last().sizeK *= 0.95;
-			this.send();
-			this.drawer.redraw(false);
-		}
-
-		//console.log(c, e.which);
-
-		if (e.which == 39) { // ARROW RIGHT
+		if (Keyboard.isArrowLeft(e.which) || Keyboard.isArrowRight(e.which)) { // ARROW RIGHT
 			var item = this.source.last();
-			item.lineArrowEnd = !item.lineArrowEnd;
 
-			if (item.shape != Shape.Line && item.shape != Shape.SmoothLine && item.shape != Shape.StraightLine) {
-				item.shape = Shape.SmoothLine;
+			if (Keyboard.isArrowRight(e.which)) {
+				item.lineArrowEnd = !item.lineArrowEnd;
 			}
-			
-			this.send();
-			this.drawer.redraw(false);
-			return;
-		}
 
-		if (e.which == 37) { // ARROW LEFT
-			var item = this.source.last();
-			item.lineArrowStart = !item.lineArrowStart;
+			if (Keyboard.isArrowLeft(e.which)) {
+				item.lineArrowStart = !item.lineArrowStart;
+			}
 
 			if (item.shape != Shape.Line && item.shape != Shape.SmoothLine && item.shape != Shape.StraightLine) {
-				item.shape = Shape.SmoothLine;
+				this.switchShape(Shape.SmoothLine);
 			}
 			
 			this.send();
@@ -340,82 +348,34 @@ class Director {
 		}
 
 		switch(c) {
-			case 'r': this.switchToRect(); break;
 			case 'x': this.clearAll(); break;
-			case 'o': this.switchToOriginal(); break;
-			case 'c': this.switchToCircle(); break;
-			case 'e': this.switchToEllipse(); break;
-			case 'k': this.switchToStraightLine(); break; 
+			case 'r': this.switchShape(Shape.Rectangle); break;
+			case 'o': this.switchShape(Shape.Original); break;
+			case 'c': this.switchShape(Shape.Circle); break;
+			case 'e': this.switchShape(Shape.Ellipse); break;
+			case 'k': this.switchShape(Shape.StraightLine); break; 
 			case 'l':
 				var item = this.source.last();
 				if (item.shape == Shape.SmoothLine || e.shiftKey)
-					this.switchToLine();
+					this.switchShape(Shape.Line);
 				else
-					this.switchToSmoothLine();
+					this.switchShape(Shape.SmoothLine);
 				break;
 		}
 
 		this.send();
 	}
 
-	switchToRect() {
+	switchShape(shape: Shape) {
 		if (this.source.isEmpty())
 			return;
 
-		this.source.last().shape = Shape.Rectangle;
-		this.drawer.redraw(false);
-	}
-
-	switchToLine() {
-		if (this.source.isEmpty()) 
-			return;
-
-		this.source.last().shape = Shape.Line;
-		this.drawer.redraw(false);
-	}
-
-	switchToSmoothLine() {
-		if (this.source.isEmpty())
-			return;
-
-		this.source.last().shape = Shape.SmoothLine;
-		this.drawer.redraw(false);
-	}
-
-	switchToStraightLine() {
-		if (this.source.isEmpty())
-			return;
-
-		this.source.last().shape = Shape.StraightLine;
+		this.source.last().shape = shape;
 		this.drawer.redraw(false);
 	}
 
 	clearAll() {
 		this.source.items = [];
-		this.drawer.redraw(false);
-	}
-
-	switchToOriginal(){
-		if (this.source.isEmpty())
-			return;
-
-		this.source.last().shape = Shape.Original;
-		this.drawer.redraw(false);
-	}
-
-	switchToCircle() {
-		if (this.source.isEmpty())
-			return;
-
-		this.source.last().shape = Shape.Circle;
-		this.drawer.redraw(false);
-	}
-
-	switchToEllipse() {
-		if (this.source.isEmpty())
-			return;
-
-		this.source.last().shape = Shape.Ellipse;
 		this.drawer.redraw(false);
 	}
 }

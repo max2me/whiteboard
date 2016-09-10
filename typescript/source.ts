@@ -90,5 +90,6 @@ enum Shape {
 	StraightLine,
 	Text,
 	SmoothLine,
-	Eraser
+	Eraser,
+	Human
 }

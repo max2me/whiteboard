@@ -312,7 +312,7 @@ class Drawer {
 		this.ctx.strokeStyle = '#000';
 
 		if (last) {
-			this.ctx.strokeStyle = '#777';
+			this.ctx.strokeStyle = '#555';
 		}
 	}
 
