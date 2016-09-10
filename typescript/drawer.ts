@@ -140,7 +140,7 @@ class Drawer {
 	}
 
 	drawArrow(points: Point[], to: boolean, fromArrow: boolean, shiftX: number, shiftY: number, last: boolean) {
-		var distance = 10;
+		var distance = 20;
 
 		if (to) {
 			var p2 = points[points.length - 1];

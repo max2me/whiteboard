@@ -453,7 +453,7 @@ var Drawer = (function () {
         this.ctx.stroke();
     };
     Drawer.prototype.drawArrow = function (points, to, fromArrow, shiftX, shiftY, last) {
-        var distance = 10;
+        var distance = 20;
         if (to) {
             var p2 = points[points.length - 1];
             var p1 = points[points.length - 2];
