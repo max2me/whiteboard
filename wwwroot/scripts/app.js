@@ -25,13 +25,6 @@ var Director = (function () {
             .keydown(self.textTyping.bind(this))
             .keydown(self.modifierKeyDown.bind(this))
             .keyup(self.modifierKeyUp.bind(this));
-        $('#clear').click(this.clearAll.bind(this));
-        $('#rectangle').click(this.switchToRect.bind(this));
-        $('#original').click(this.switchToOriginal.bind(this));
-        $('#circle').click(this.switchToCircle.bind(this));
-        $('#ellipse').click(this.switchToEllipse.bind(this));
-        $('#line').click(this.switchToLine.bind(this));
-        $('#line-straight').click(this.switchToStraightLine.bind(this));
         $('canvas').on('contextmenu', function () {
             return false;
         });
@@ -213,7 +206,8 @@ var Director = (function () {
         var last = this.source.last();
         if (last == null || last.shape != Shape.Text)
             return;
-        if (e.which == 8 || e.which == 46) {
+        var char = window.keysight(e).char;
+        if (char == '\b' || char == 'delete') {
             if (last.text == '') {
                 this.source.removeLast();
                 this.send();
@@ -227,9 +221,12 @@ var Director = (function () {
             this.drawer.redraw(false);
             return;
         }
-        var char = String.fromCharCode(e.which).toLowerCase();
-        if (e.shiftKey)
+        else if (window.keysight.unprintableKeys.indexOf(char) != -1) {
+            return;
+        }
+        if (e.shiftKey) {
             char = char.toUpperCase();
+        }
         last.text += char;
         this.send();
         this.drawer.redraw(false);
