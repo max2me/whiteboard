@@ -219,7 +219,7 @@ var Director = (function () {
         this.mode = Mode.Drawing;
     };
     Director.prototype.startCloning = function (clientX, clientY) {
-        var newItem = Utility.clone(this.source.last());
+        var newItem = this.source.last().clone();
         this.source.push(newItem);
         this.startMoving(clientX, clientY);
     };

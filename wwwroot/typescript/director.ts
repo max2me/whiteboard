@@ -270,10 +270,9 @@ class Director {
 	}
 
 	startCloning(clientX: number, clientY: number) {
-		var newItem = Utility.clone(this.source.last())
+		var newItem = this.source.last().clone();
 		this.source.push(newItem);
-		this.send();
-		
+
 		this.startMoving(clientX, clientY);
 	}
 
