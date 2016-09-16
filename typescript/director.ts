@@ -63,48 +63,7 @@ class Director {
 		this.el = document.getElementById('c');
 		this.drawer = new Drawer(this.el, this.source);
 
-		this.connection = $.connection('/r');
-		this.connection.received(function(data: any) {
-			var item = JSON.parse(data.Json);
-			if (data.Type == 'Delete') {
-				var indexToDelete = -1;
-				for(var i = 0; i < self.source.items.length; i++) {
-					if (self.source.items[i].id == item.id) {
-						indexToDelete = i;
-						break;
-					}
-				}
-
-				if (indexToDelete != -1) {
-					self.source.items.splice(indexToDelete, 1);
-					self.drawer.redraw(false);
-					return;
-				}
-			}
-			
-			var replaced = false;
-			for(var i = 0; i < self.source.items.length; i++) {
-				var k = self.source.items[i];
-				if (k.id == item.id) {
-					self.source.items[i] = item;
-					replaced = true;
-					break;
-				}
-			}
-
-			if (!replaced) {
-				self.source.push(item);
-			}
-
-			self.drawer.redraw(false);
-		});
-
-		this.connection.error(function(error: any) {
-			console.warn(error);
-		});
-
-		this.connection.start(function() {
-		});
+		this.setupConnection();
 
 		$(this.el)
 			.mousedown((e: MouseEvent) => {
@@ -121,10 +80,70 @@ class Director {
 				self.interactionUp();
 			})
 
+			.on('touchstart', (e: TouchEvent) => {
+				e.preventDefault();
+				self.interactionDown(e.touches[0].clientX, e.touches[0].clientY, e.ctrlKey, e.altKey, e.shiftKey, 1);
+			})
+
+			.on('touchmove', (e: TouchEvent) => {
+				e.preventDefault();
+				self.interactionMove(e.touches[0].clientX, e.touches[0].clientY, e.ctrlKey, e.altKey, e.shiftKey, 1);
+			})
+
+			.on('touchup', (e: TouchEvent) => {
+				e.preventDefault();
+				self.interactionUp();
+			})
+
 			.dblclick((e: MouseEvent) => {
 				self.startTyping(e.clientX, e.clientY);
 				return false;
 			});
+	}
+
+	setupConnection(){
+		this.connection = $.connection('/r');
+		this.connection.received(function(data: any) {
+			var item = JSON.parse(data.Json);
+			if (data.Type == 'Delete') {
+				var indexToDelete = -1;
+				for(var i = 0; i < this.source.items.length; i++) {
+					if (this.source.items[i].id == item.id) {
+						indexToDelete = i;
+						break;
+					}
+				}
+
+				if (indexToDelete != -1) {
+					this.source.items.splice(indexToDelete, 1);
+					this.drawer.redraw(false);
+					return;
+				}
+			}
+			
+			var replaced = false;
+			for(var i = 0; i < this.source.items.length; i++) {
+				var k = this.source.items[i];
+				if (k.id == item.id) {
+					this.source.items[i] = item;
+					replaced = true;
+					break;
+				}
+			}
+
+			if (!replaced) {
+				this.source.push(item);
+			}
+
+			this.drawer.redraw(false);
+		});
+
+		this.connection.error(function(error: any) {
+			console.warn(error);
+		});
+
+		this.connection.start(function() {
+		});
 	}
 
 	interactionUp() {

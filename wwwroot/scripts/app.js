@@ -49,42 +49,7 @@ var Director = (function () {
         this.source = new Source();
         this.el = document.getElementById('c');
         this.drawer = new Drawer(this.el, this.source);
-        this.connection = $.connection('/r');
-        this.connection.received(function (data) {
-            var item = JSON.parse(data.Json);
-            if (data.Type == 'Delete') {
-                var indexToDelete = -1;
-                for (var i = 0; i < self.source.items.length; i++) {
-                    if (self.source.items[i].id == item.id) {
-                        indexToDelete = i;
-                        break;
-                    }
-                }
-                if (indexToDelete != -1) {
-                    self.source.items.splice(indexToDelete, 1);
-                    self.drawer.redraw(false);
-                    return;
-                }
-            }
-            var replaced = false;
-            for (var i = 0; i < self.source.items.length; i++) {
-                var k = self.source.items[i];
-                if (k.id == item.id) {
-                    self.source.items[i] = item;
-                    replaced = true;
-                    break;
-                }
-            }
-            if (!replaced) {
-                self.source.push(item);
-            }
-            self.drawer.redraw(false);
-        });
-        this.connection.error(function (error) {
-            console.warn(error);
-        });
-        this.connection.start(function () {
-        });
+        this.setupConnection();
         $(this.el)
             .mousedown(function (e) {
             e.preventDefault();
@@ -97,9 +62,59 @@ var Director = (function () {
             e.preventDefault();
             self.interactionUp();
         })
+            .on('touchstart', function (e) {
+            e.preventDefault();
+            self.interactionDown(e.touches[0].clientX, e.touches[0].clientY, e.ctrlKey, e.altKey, e.shiftKey, 1);
+        })
+            .on('touchmove', function (e) {
+            e.preventDefault();
+            self.interactionMove(e.touches[0].clientX, e.touches[0].clientY, e.ctrlKey, e.altKey, e.shiftKey, 1);
+        })
+            .on('touchup', function (e) {
+            e.preventDefault();
+            self.interactionUp();
+        })
             .dblclick(function (e) {
             self.startTyping(e.clientX, e.clientY);
             return false;
+        });
+    };
+    Director.prototype.setupConnection = function () {
+        this.connection = $.connection('/r');
+        this.connection.received(function (data) {
+            var item = JSON.parse(data.Json);
+            if (data.Type == 'Delete') {
+                var indexToDelete = -1;
+                for (var i = 0; i < this.source.items.length; i++) {
+                    if (this.source.items[i].id == item.id) {
+                        indexToDelete = i;
+                        break;
+                    }
+                }
+                if (indexToDelete != -1) {
+                    this.source.items.splice(indexToDelete, 1);
+                    this.drawer.redraw(false);
+                    return;
+                }
+            }
+            var replaced = false;
+            for (var i = 0; i < this.source.items.length; i++) {
+                var k = this.source.items[i];
+                if (k.id == item.id) {
+                    this.source.items[i] = item;
+                    replaced = true;
+                    break;
+                }
+            }
+            if (!replaced) {
+                this.source.push(item);
+            }
+            this.drawer.redraw(false);
+        });
+        this.connection.error(function (error) {
+            console.warn(error);
+        });
+        this.connection.start(function () {
         });
     };
     Director.prototype.interactionUp = function () {
