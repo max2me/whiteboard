@@ -2,6 +2,7 @@ var director = null;
 $(function () {
     director = new Director();
     director.init();
+    $('body').removeClass('show-instructions');
     $('.instructions .toggle').click(function () {
         $('body').toggleClass('show-instructions');
     });
