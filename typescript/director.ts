@@ -108,83 +108,91 @@ class Director {
 
 		$(this.el)
 			.mousedown((e: MouseEvent) => {
-				
-				if (e.ctrlKey && e.shiftKey) {
-					self.startDrawingSteps(e.clientX, e.clientY);
-
-				} else if (e.ctrlKey && !self.source.isEmpty()) {
-					self.startScaling(e.clientX, e.clientY);
-
-				} else if (e.shiftKey && !self.source.isEmpty()) {
-					self.startMoving(e.clientX, e.clientY);
-
-				} else if (e.altKey && !self.source.isEmpty()) {
-					self.startCloning(e.clientX, e.clientY);
-
-				} else if (e.button == 2) {
-					self.startErasing(e.clientX, e.clientY);
-
-				} else {
-					self.startDrawing(e.clientX, e.clientY);
-				}
-
-				self.send();
-
-				return false;
+				e.preventDefault();
+				self.interactionDown(e.clientX, e.clientY, e.ctrlKey, e.altKey, e.shiftKey, e.button);
 			})
 
 			.mousemove((e: MouseEvent) => {
-				if (self.mode == Mode.None) return;
-
-				if (self.mode == Mode.DrawingSteps) {
-					var item = self.source.last();
-					item.raw.pop();
-					item.record(e.clientX, e.clientY);
-					self.drawer.redraw(true);
-
-				} else if (self.mode == Mode.Scaling) {
-					var item = self.source.last();
-					var bounds = Drawer.getBounds(item.raw);
-					var distance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(e.clientX, e.clientY));
-					
-					item.sizeK = self.initScale * distance / self.initScaleDistance;
-				
-				} else if (self.mode == Mode.Moving) {
-					var current = new Point(e.clientX, e.clientY);
-					self.source.last().moveX = self.initMoveX + current.x - self.initMovingPoint.x;
-					self.source.last().moveY = self.initMoveY + current.y - self.initMovingPoint.y;
-
-				} else {
-					self.source.last().record(e.clientX, e.clientY);
-				}
-
-				self.send();
-				self.drawer.redraw(true);
+				self.interactionMove(e.clientX, e.clientY, e.ctrlKey, e.altKey, e.shiftKey, e.button);
 			})
 
-			.mouseup(() => {
-				if (self.mode == Mode.DrawingSteps || self.mode == Mode.None) {
-					return;
-				}
-
-				if (self.mode == Mode.Drawing) {
-					if (self.source.last().raw.length == 1) {
-						self.source.removeLast();
-					}
-				}
-
-				
-			
-				self.drawer.redraw(false);
-				self.mode = Mode.None;
-				self.send();
-				return false;
+			.mouseup((e: MouseEvent) => {
+				e.preventDefault();
+				self.interactionUp();
 			})
 
 			.dblclick((e: MouseEvent) => {
 				self.startTyping(e.clientX, e.clientY);
 				return false;
 			});
+	}
+
+	interactionUp() {
+		if (this.mode == Mode.DrawingSteps || this.mode == Mode.None) {
+			return;
+		}
+
+		if (this.mode == Mode.Drawing) {
+			if (this.source.last().raw.length == 1) {
+				this.source.removeLast();
+			}
+		}
+	
+		this.drawer.redraw(false);
+		this.mode = Mode.None;
+		this.send();
+	}
+
+	interactionMove(clientX: number, clientY: number, ctrlKey: boolean, altKey: boolean, shiftKey: boolean, button: number = 1) {
+		if (this.mode == Mode.None) return;
+
+		if (this.mode == Mode.DrawingSteps) {
+			var item = this.source.last();
+			item.raw.pop();
+			item.record(clientX, clientY);
+			this.drawer.redraw(true);
+
+		} else if (this.mode == Mode.Scaling) {
+			var item = this.source.last();
+			var bounds = Drawer.getBounds(item.raw);
+			var distance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(clientX, clientY));
+			
+			item.sizeK = this.initScale * distance / this.initScaleDistance;
+		
+		} else if (this.mode == Mode.Moving) {
+			var current = new Point(clientX, clientY);
+			this.source.last().moveX = this.initMoveX + current.x - this.initMovingPoint.x;
+			this.source.last().moveY = this.initMoveY + current.y - this.initMovingPoint.y;
+
+		} else {
+			this.source.last().record(clientX, clientY);
+		}
+
+		this.send();
+		this.drawer.redraw(true);
+	}
+
+	interactionDown(clientX: number, clientY: number, ctrlKey: boolean, altKey: boolean, shiftKey: boolean, button: number = 1) {
+		if (ctrlKey && shiftKey) {
+			this.startDrawingSteps(clientX, clientY);
+
+		} else if (ctrlKey && !this.source.isEmpty()) {
+			this.startScaling(clientX, clientY);
+
+		} else if (shiftKey && !this.source.isEmpty()) {
+			this.startMoving(clientX, clientY);
+
+		} else if (altKey && !this.source.isEmpty()) {
+			this.startCloning(clientX, clientY);
+
+		} else if (button == 2) {
+			this.startErasing(clientX, clientY);
+
+		} else {
+			this.startDrawing(clientX, clientY);
+		}
+
+		this.send();
 	}
 
 	send() {
