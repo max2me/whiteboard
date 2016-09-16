@@ -80,25 +80,40 @@ class Director {
 				self.interactionUp();
 			})
 
-			.on('touchstart', (e: TouchEvent) => {
-				e.preventDefault();
-				self.interactionDown(e.touches[0].clientX, e.touches[0].clientY, e.ctrlKey, e.altKey, e.shiftKey, 1);
-			})
-
-			.on('touchmove', (e: TouchEvent) => {
-				e.preventDefault();
-				self.interactionMove(e.touches[0].clientX, e.touches[0].clientY, e.ctrlKey, e.altKey, e.shiftKey, 1);
-			})
-
-			.on('touchup', (e: TouchEvent) => {
-				e.preventDefault();
-				self.interactionUp();
-			})
-
 			.dblclick((e: MouseEvent) => {
 				self.startTyping(e.clientX, e.clientY);
 				return false;
 			});
+
+		this.el.addEventListener('touchstart', (e: TouchEvent) => {
+			console.log(e);
+			e.preventDefault();
+
+			if (e.changedTouches.length > 1)
+				return;
+
+			self.interactionDown(e.changedTouches[0].clientX, e.changedTouches[0].clientY, e.ctrlKey, e.altKey, e.shiftKey, 1);
+		});
+
+		this.el.addEventListener('touchmove', (e: TouchEvent) => {
+			e.preventDefault();
+
+			if (e.changedTouches.length > 1)
+				return;
+
+			self.interactionMove(e.changedTouches[0].clientX, e.changedTouches[0].clientY, e.ctrlKey, e.altKey, e.shiftKey, 1);
+		});
+
+		this.el.addEventListener('touchup', (e: TouchEvent) => {
+			e.preventDefault();
+
+			if (e.changedTouches.length > 1)
+				return;
+
+			self.interactionUp();
+		});
+
+			
 	}
 
 	setupConnection(){

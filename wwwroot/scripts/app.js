@@ -62,21 +62,28 @@ var Director = (function () {
             e.preventDefault();
             self.interactionUp();
         })
-            .on('touchstart', function (e) {
-            e.preventDefault();
-            self.interactionDown(e.touches[0].clientX, e.touches[0].clientY, e.ctrlKey, e.altKey, e.shiftKey, 1);
-        })
-            .on('touchmove', function (e) {
-            e.preventDefault();
-            self.interactionMove(e.touches[0].clientX, e.touches[0].clientY, e.ctrlKey, e.altKey, e.shiftKey, 1);
-        })
-            .on('touchup', function (e) {
-            e.preventDefault();
-            self.interactionUp();
-        })
             .dblclick(function (e) {
             self.startTyping(e.clientX, e.clientY);
             return false;
+        });
+        this.el.addEventListener('touchstart', function (e) {
+            console.log(e);
+            e.preventDefault();
+            if (e.changedTouches.length > 1)
+                return;
+            self.interactionDown(e.changedTouches[0].clientX, e.changedTouches[0].clientY, e.ctrlKey, e.altKey, e.shiftKey, 1);
+        });
+        this.el.addEventListener('touchmove', function (e) {
+            e.preventDefault();
+            if (e.changedTouches.length > 1)
+                return;
+            self.interactionMove(e.changedTouches[0].clientX, e.changedTouches[0].clientY, e.ctrlKey, e.altKey, e.shiftKey, 1);
+        });
+        this.el.addEventListener('touchup', function (e) {
+            e.preventDefault();
+            if (e.changedTouches.length > 1)
+                return;
+            self.interactionUp();
         });
     };
     Director.prototype.setupConnection = function () {
