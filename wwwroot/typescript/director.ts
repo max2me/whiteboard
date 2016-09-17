@@ -192,7 +192,7 @@ class Director {
 
 		} else if (this.mode == Mode.Scaling) {
 			var item = this.source.last();
-			var bounds = Drawer.getBounds(item.raw);
+			var bounds = Utility.getBounds(item.raw);
 			var distance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(clientX, clientY));
 			
 			item.sizeK = this.initScale * distance / this.initScaleDistance;
@@ -298,7 +298,7 @@ class Director {
 		this.mode = Mode.Scaling;
 
 		var item = this.source.last();
-		var bounds = Drawer.getBounds(item.raw);
+		var bounds = Utility.getBounds(item.raw);
 		this.initScaleDistance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(clientX, clientY));
 		this.initScale = this.source.last().sizeK;
 	}

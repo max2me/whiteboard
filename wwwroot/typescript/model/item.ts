@@ -35,4 +35,8 @@ class Item {
 
 		return result;
 	}
-}
+
+	isLine(): boolean {
+		return ;
+	}
+};

@@ -1,8 +1,12 @@
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
 var director = null;
 $(function () {
     director = new Director();
     director.init();
-    $('body').removeClass('show-instructions');
     $('.instructions .toggle').click(function () {
         $('body').toggleClass('show-instructions');
     });
@@ -153,7 +157,7 @@ var Director = (function () {
         }
         else if (this.mode == Mode.Scaling) {
             var item = this.source.last();
-            var bounds = Drawer.getBounds(item.raw);
+            var bounds = Utility.getBounds(item.raw);
             var distance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(clientX, clientY));
             item.sizeK = this.initScale * distance / this.initScaleDistance;
         }
@@ -243,7 +247,7 @@ var Director = (function () {
     Director.prototype.startScaling = function (clientX, clientY) {
         this.mode = Mode.Scaling;
         var item = this.source.last();
-        var bounds = Drawer.getBounds(item.raw);
+        var bounds = Utility.getBounds(item.raw);
         this.initScaleDistance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(clientX, clientY));
         this.initScale = this.source.last().sizeK;
     };
@@ -372,6 +376,10 @@ var Drawer = (function () {
         this.ctx.lineJoin = this.ctx.lineCap = 'round';
         this.el.width = $('body').width();
         this.el.height = $('body').height();
+        this.original = new Drawers.Original(this.ctx);
+        this.shapes = new Drawers.Shapes(this.ctx);
+        this.lines = new Drawers.Lines(this.ctx);
+        this.text = new Drawers.Text(this.ctx);
     }
     Drawer.prototype.redraw = function (activeDrawing) {
         this.clear();
@@ -379,51 +387,42 @@ var Drawer = (function () {
         for (var i = 0; i < this.source.items.length; i++) {
             var item = Utility.clone(this.source.items[i]);
             var last = i == this.source.items.length - 1;
-            var b = Drawer.getBounds(item.raw);
+            var b = Utility.getBounds(item.raw);
             item.raw = Transform.scale(item.raw, new Point(b.centerX, b.centerY), item.sizeK, item.sizeK);
             item.raw = Transform.move(item.raw, item.moveX, item.moveY);
-            this.setupStroke(item, last);
             switch (item.shape) {
                 case Shape.Original:
-                    this.drawOriginal(item);
+                    this.original.original(item, last);
                     break;
                 case Shape.Rectangle:
-                    this.drawRect(item);
+                    this.shapes.rectangle(item, last);
                     break;
                 case Shape.Circle:
-                    this.drawCircle(item);
+                    this.shapes.circle(item, last);
                     break;
                 case Shape.Ellipse:
-                    this.drawEllipse(item);
+                    this.shapes.ellipse(item, last);
+                    break;
+                case Shape.Human:
+                    this.shapes.human(item, last);
                     break;
                 case Shape.Line:
-                    this.drawLine(item);
+                    this.lines.segment(item, last);
                     break;
                 case Shape.SmoothLine:
-                    this.drawSmoothLine(item);
+                    this.lines.smooth(item, last);
                     break;
                 case Shape.StraightLine:
-                    this.drawStraightLine(item);
+                    this.lines.straight(item, last);
                     break;
                 case Shape.Text:
-                    this.drawText(item, last);
+                    this.text.text(item, last);
                     break;
                 case Shape.Eraser:
                     this.drawEraser(item, last);
                     break;
-                case Shape.Human:
-                    this.drawHuman(item);
-                    break;
             }
-            if (item.shape == Shape.Original ||
-                item.shape == Shape.Line ||
-                item.shape == Shape.SmoothLine ||
-                item.shape == Shape.StraightLine) {
-                var points = item.raw;
-                if (item.shape == Shape.StraightLine)
-                    points = [points[0], points[points.length - 1]];
-                this.drawArrow(points, item.lineArrowEnd, item.lineArrowStart, last);
-            }
+            this.lines.drawArrowsIfNeeded(item, last);
         }
     };
     Drawer.prototype.drawEraser = function (item, last) {
@@ -438,219 +437,260 @@ var Drawer = (function () {
         }
         this.ctx.stroke();
     };
-    Drawer.prototype.drawText = function (item, last) {
-        this.ctx.font = "30px 	'Permanent Marker'";
-        this.ctx.fillStyle = 'black';
-        this.ctx.fillText(item.text + (last ? '_' : ''), item.raw[0].x, item.raw[0].y);
-    };
-    Drawer.prototype.drawOriginal = function (item) {
-        this.ctx.beginPath();
-        this.ctx.moveTo(item.raw[0].x, item.raw[0].y);
-        for (var j = 1; j < item.raw.length; j++) {
-            this.ctx.lineTo(item.raw[j].x, item.raw[j].y);
-        }
-        this.ctx.stroke();
-    };
-    Drawer.prototype.drawLine = function (item) {
-        this.ctx.beginPath();
-        var pts = window.simplify(item.raw, 20, true);
-        this.ctx.moveTo(pts[0].x, pts[0].y);
-        for (var j = 1; j < pts.length; j++) {
-            this.ctx.lineTo(pts[j].x, pts[j].y);
-        }
-        this.ctx.stroke();
-    };
-    Drawer.prototype.drawArrow = function (points, to, fromArrow, last) {
-        var distance = 20;
-        if (to) {
-            var p2 = points[points.length - 1];
-            var p1 = points[points.length - 2];
-            for (var i = points.length - 3; i >= 0; i--) {
-                var p = points[i];
-                if (Utility.distance(p2, p) >= distance) {
-                    p1 = p;
-                    break;
-                }
-            }
-            this.drawArrowBetweenPoints(p1, p2, last);
-        }
-        if (fromArrow) {
-            var p2 = points[0];
-            var p1 = points[1];
-            for (var i = 2; i < points.length; i++) {
-                var p = points[i];
-                if (Utility.distance(p2, p) >= distance) {
-                    p1 = p;
-                    break;
-                }
-            }
-            this.drawArrowBetweenPoints(p1, p2, last);
-        }
-    };
-    Drawer.prototype.drawArrowBetweenPoints = function (p1, p2, last) {
-        var dist = Utility.distance(p1, p2);
-        var angle = Math.acos((p2.y - p1.y) / dist);
-        if (p2.x < p1.x)
-            angle = 2 * Math.PI - angle;
-        var size = 15;
-        this.ctx.save();
-        this.ctx.beginPath();
-        this.ctx.translate(p2.x, p2.y);
-        this.ctx.rotate(-angle);
-        this.ctx.lineWidth = 6;
-        this.ctx.strokeStyle = last ? '#777' : '#000000';
-        this.ctx.moveTo(0, 0);
-        this.ctx.lineTo(size / 2, -size);
-        this.ctx.stroke();
-        this.ctx.moveTo(0, 0);
-        this.ctx.lineTo(-size / 2, -size);
-        this.ctx.stroke();
-        this.ctx.restore();
-    };
-    Drawer.prototype.drawSmoothLine = function (item) {
-        this.ctx.beginPath();
-        var pts = window.simplify(item.raw, 20, true);
-        var cps = [];
-        for (var i = 0; i < pts.length - 2; i += 1) {
-            cps = cps.concat(Utility.controlPoints(pts[i], pts[i + 1], pts[i + 2]));
-        }
-        this.drawCurvedPath(cps, pts);
-    };
-    Drawer.prototype.drawCurvedPath = function (cps, pts) {
-        var len = pts.length;
-        if (len < 2)
-            return;
-        if (len == 2) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(pts[0].x, pts[0].y);
-            this.ctx.lineTo(pts[1].x, pts[1].y);
-            this.ctx.stroke();
-        }
-        else {
-            this.ctx.beginPath();
-            this.ctx.moveTo(pts[0].x, pts[0].y);
-            this.ctx.quadraticCurveTo(cps[0].x, cps[0].y, pts[1].x, pts[1].y);
-            for (var i = 2; i < len - 1; i += 1) {
-                this.ctx.bezierCurveTo(cps[2 * (i - 1) - 1].x, cps[2 * (i - 1) - 1].y, cps[2 * (i - 1)].x, cps[2 * (i - 1)].y, pts[i].x, pts[i].y);
-            }
-            this.ctx.quadraticCurveTo(cps[(2 * (i - 1) - 1)].x, cps[(2 * (i - 1) - 1)].y, pts[i].x, pts[i].y);
-            this.ctx.stroke();
-        }
-    };
-    Drawer.prototype.drawStraightLine = function (item) {
-        this.ctx.beginPath();
-        this.ctx.moveTo(item.raw[0].x, item.raw[0].y);
-        this.ctx.lineTo(item.raw[item.raw.length - 1].x, item.raw[item.raw.length - 1].y);
-        this.ctx.stroke();
-    };
-    Drawer.prototype.drawRect = function (item) {
-        var b = Drawer.getBounds(item.raw);
-        this.ctx.beginPath();
-        this.ctx.moveTo(b.xmin, b.ymin);
-        this.ctx.lineTo(b.xmax, b.ymin);
-        this.ctx.lineTo(b.xmax - 0, b.ymax);
-        this.ctx.lineTo(b.xmin - 0, b.ymax);
-        this.ctx.lineTo(b.xmin, b.ymin);
-        this.ctx.stroke();
-    };
-    Drawer.prototype.drawHuman = function (item) {
-        var b = Drawer.getBounds(item.raw);
-        var height = b.ymax - b.ymin;
-        var headSize = height / 3 / 2;
-        var headCenterX = b.centerX;
-        var headCenterY = b.ymin + headSize;
-        var bodyHeight = height / 3;
-        var legsHeight = height / 3;
-        var bodyStartY = headCenterY + headSize;
-        var bodyEndY = headCenterY + headSize + bodyHeight;
-        this.ctx.beginPath();
-        this.ctx.arc(headCenterX, headCenterY, headSize, 0, 2 * Math.PI, false);
-        this.ctx.stroke();
-        this.ctx.beginPath();
-        this.ctx.moveTo(headCenterX, bodyStartY);
-        this.ctx.lineTo(headCenterX, bodyEndY);
-        this.ctx.stroke();
-        this.ctx.beginPath();
-        this.ctx.moveTo(headCenterX - headSize * 0.8, bodyEndY + legsHeight);
-        this.ctx.lineTo(headCenterX, bodyEndY);
-        this.ctx.lineTo(headCenterX + headSize * 0.8, bodyEndY + legsHeight);
-        this.ctx.stroke();
-        var armsKX = 1.1;
-        var armsKY = 0.5;
-        this.ctx.beginPath();
-        this.ctx.moveTo(headCenterX - headSize * armsKX, bodyStartY + bodyHeight * armsKY);
-        this.ctx.lineTo(headCenterX, bodyStartY + bodyHeight * armsKY / 2);
-        this.ctx.lineTo(headCenterX + headSize * armsKX, bodyStartY + bodyHeight * armsKY);
-        this.ctx.stroke();
-    };
-    Drawer.prototype.drawCircle = function (item) {
-        var b = Drawer.getBounds(item.raw);
-        this.ctx.beginPath();
-        var x = (b.xmax - b.xmin) / 2 + b.xmin;
-        var y = (b.ymax - b.ymin) / 2 + b.ymin;
-        var radiusX = (b.xmax - b.xmin) / 2;
-        var radiusY = (b.ymax - b.ymin) / 2;
-        var radius = Math.min(radiusX, radiusY);
-        this.ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
-        this.ctx.stroke();
-    };
-    Drawer.prototype.drawEllipse = function (item) {
-        var b = Drawer.getBounds(item.raw);
-        var x = (b.xmax - b.xmin) / 2 + b.xmin;
-        var y = (b.ymax - b.ymin) / 2 + b.ymin;
-        var radiusX = (b.xmax - b.xmin) / 2;
-        var radiusY = (b.ymax - b.ymin) / 2;
-        var radius = Math.min(radiusX, radiusY);
-        this.ctx.beginPath();
-        this.ctx.ellipse(x, y, radiusX, radiusY, 0, 0, 2 * Math.PI, false);
-        this.ctx.stroke();
-    };
-    Drawer.prototype.setupStroke = function (item, last) {
-        this.ctx.globalAlpha = 1;
-        this.ctx.lineWidth = item.shape == Shape.Original ? 4 : 6;
-        this.ctx.lineJoin = this.ctx.lineCap = 'round';
-        this.ctx.strokeStyle = '#000';
-        if (last) {
-            this.ctx.strokeStyle = '#555';
-        }
-    };
-    Drawer.getBounds = function (coords) {
-        if (coords.length == 1) {
-            return {
-                xmin: coords[0].x,
-                xmax: coords[0].x,
-                ymin: coords[0].y,
-                ymax: coords[0].y,
-                centerX: coords[0].x,
-                centerY: coords[0].y
-            };
-        }
-        var xmin = 1000000, xmax = 0, ymin = 1000000, ymax = 0;
-        for (var i = 0; i < coords.length; i++) {
-            var p = coords[i];
-            if (p.x < xmin)
-                xmin = p.x;
-            if (p.x > xmax)
-                xmax = p.x;
-            if (p.y < ymin)
-                ymin = p.y;
-            if (p.y > ymax)
-                ymax = p.y;
-        }
-        return {
-            xmin: xmin,
-            xmax: xmax,
-            ymin: ymin,
-            ymax: ymax,
-            centerX: xmin + (xmax - xmin) / 2,
-            centerY: ymin + (ymax - ymin) / 2
-        };
-    };
     Drawer.prototype.clear = function () {
         this.ctx.clearRect(0, 0, this.el.width, this.el.height);
     };
     return Drawer;
 }());
+var Drawers;
+(function (Drawers) {
+    var Base = (function () {
+        function Base(ctx) {
+            this.ctx = ctx;
+        }
+        Base.prototype.setupStroke = function (item, last) {
+            this.ctx.globalAlpha = 1;
+            this.ctx.lineWidth = item.shape == Shape.Original ? 4 : 6;
+            this.ctx.lineJoin = this.ctx.lineCap = 'round';
+            this.ctx.strokeStyle = '#000';
+            if (last) {
+                this.ctx.strokeStyle = '#555';
+            }
+        };
+        return Base;
+    }());
+    Drawers.Base = Base;
+})(Drawers || (Drawers = {}));
+var Drawers;
+(function (Drawers) {
+    var Lines = (function (_super) {
+        __extends(Lines, _super);
+        function Lines() {
+            _super.apply(this, arguments);
+        }
+        Lines.prototype.segment = function (item, last) {
+            this.setupStroke(item, last);
+            this.ctx.beginPath();
+            var pts = window.simplify(item.raw, 20, true);
+            this.ctx.moveTo(pts[0].x, pts[0].y);
+            for (var j = 1; j < pts.length; j++) {
+                this.ctx.lineTo(pts[j].x, pts[j].y);
+            }
+            this.ctx.stroke();
+        };
+        Lines.prototype.arrow = function (points, to, fromArrow, last) {
+            var distance = 20;
+            if (to) {
+                var p2 = points[points.length - 1];
+                var p1 = points[points.length - 2];
+                for (var i = points.length - 3; i >= 0; i--) {
+                    var p = points[i];
+                    if (Utility.distance(p2, p) >= distance) {
+                        p1 = p;
+                        break;
+                    }
+                }
+                this.drawArrowBetweenPoints(p1, p2, last);
+            }
+            if (fromArrow) {
+                var p2 = points[0];
+                var p1 = points[1];
+                for (var i = 2; i < points.length; i++) {
+                    var p = points[i];
+                    if (Utility.distance(p2, p) >= distance) {
+                        p1 = p;
+                        break;
+                    }
+                }
+                this.drawArrowBetweenPoints(p1, p2, last);
+            }
+        };
+        Lines.prototype.smooth = function (item, last) {
+            this.setupStroke(item, last);
+            this.ctx.beginPath();
+            var pts = window.simplify(item.raw, 20 * item.sizeK, true);
+            var cps = [];
+            for (var i = 0; i < pts.length - 2; i += 1) {
+                cps = cps.concat(Utility.controlPoints(pts[i], pts[i + 1], pts[i + 2]));
+            }
+            this.drawCurvedPath(cps, pts);
+        };
+        Lines.prototype.straight = function (item, last) {
+            this.setupStroke(item, last);
+            this.ctx.beginPath();
+            this.ctx.moveTo(item.raw[0].x, item.raw[0].y);
+            this.ctx.lineTo(item.raw[item.raw.length - 1].x, item.raw[item.raw.length - 1].y);
+            this.ctx.stroke();
+        };
+        Lines.prototype.drawArrowsIfNeeded = function (item, last) {
+            if (item.shape == Shape.Original ||
+                item.shape == Shape.Line ||
+                item.shape == Shape.SmoothLine ||
+                item.shape == Shape.StraightLine) {
+                var points = item.raw;
+                if (item.shape == Shape.StraightLine)
+                    points = [points[0], points[points.length - 1]];
+                this.arrow(points, item.lineArrowEnd, item.lineArrowStart, last);
+            }
+        };
+        Lines.prototype.drawArrowBetweenPoints = function (p1, p2, last) {
+            var dist = Utility.distance(p1, p2);
+            var angle = Math.acos((p2.y - p1.y) / dist);
+            if (p2.x < p1.x)
+                angle = 2 * Math.PI - angle;
+            var size = 15;
+            this.ctx.save();
+            this.ctx.beginPath();
+            this.ctx.translate(p2.x, p2.y);
+            this.ctx.rotate(-angle);
+            this.ctx.lineWidth = 6;
+            this.ctx.strokeStyle = last ? '#777' : '#000000';
+            this.ctx.moveTo(0, 0);
+            this.ctx.lineTo(size / 2, -size);
+            this.ctx.stroke();
+            this.ctx.moveTo(0, 0);
+            this.ctx.lineTo(-size / 2, -size);
+            this.ctx.stroke();
+            this.ctx.restore();
+        };
+        Lines.prototype.drawCurvedPath = function (cps, pts) {
+            var len = pts.length;
+            if (len < 2)
+                return;
+            if (len == 2) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(pts[0].x, pts[0].y);
+                this.ctx.lineTo(pts[1].x, pts[1].y);
+                this.ctx.stroke();
+            }
+            else {
+                this.ctx.beginPath();
+                this.ctx.moveTo(pts[0].x, pts[0].y);
+                this.ctx.quadraticCurveTo(cps[0].x, cps[0].y, pts[1].x, pts[1].y);
+                for (var i = 2; i < len - 1; i += 1) {
+                    this.ctx.bezierCurveTo(cps[2 * (i - 1) - 1].x, cps[2 * (i - 1) - 1].y, cps[2 * (i - 1)].x, cps[2 * (i - 1)].y, pts[i].x, pts[i].y);
+                }
+                this.ctx.quadraticCurveTo(cps[(2 * (i - 1) - 1)].x, cps[(2 * (i - 1) - 1)].y, pts[i].x, pts[i].y);
+                this.ctx.stroke();
+            }
+        };
+        return Lines;
+    }(Drawers.Base));
+    Drawers.Lines = Lines;
+})(Drawers || (Drawers = {}));
+var Drawers;
+(function (Drawers) {
+    var Original = (function (_super) {
+        __extends(Original, _super);
+        function Original() {
+            _super.apply(this, arguments);
+        }
+        Original.prototype.original = function (item, last) {
+            this.setupStroke(item, last);
+            this.ctx.beginPath();
+            this.ctx.moveTo(item.raw[0].x, item.raw[0].y);
+            for (var j = 1; j < item.raw.length; j++) {
+                this.ctx.lineTo(item.raw[j].x, item.raw[j].y);
+            }
+            this.ctx.stroke();
+        };
+        return Original;
+    }(Drawers.Base));
+    Drawers.Original = Original;
+})(Drawers || (Drawers = {}));
+var Drawers;
+(function (Drawers) {
+    var Shapes = (function (_super) {
+        __extends(Shapes, _super);
+        function Shapes() {
+            _super.apply(this, arguments);
+        }
+        Shapes.prototype.rectangle = function (item, last) {
+            this.setupStroke(item, last);
+            var b = Utility.getBounds(item.raw);
+            this.ctx.beginPath();
+            this.ctx.moveTo(b.xmin, b.ymin);
+            this.ctx.lineTo(b.xmax, b.ymin);
+            this.ctx.lineTo(b.xmax - 0, b.ymax);
+            this.ctx.lineTo(b.xmin - 0, b.ymax);
+            this.ctx.lineTo(b.xmin, b.ymin);
+            this.ctx.stroke();
+        };
+        Shapes.prototype.human = function (item, last) {
+            this.setupStroke(item, last);
+            var b = Utility.getBounds(item.raw);
+            var height = b.ymax - b.ymin;
+            var headSize = height / 3 / 2;
+            var headCenterX = b.centerX;
+            var headCenterY = b.ymin + headSize;
+            var bodyHeight = height / 3;
+            var legsHeight = height / 3;
+            var bodyStartY = headCenterY + headSize;
+            var bodyEndY = headCenterY + headSize + bodyHeight;
+            this.ctx.beginPath();
+            this.ctx.arc(headCenterX, headCenterY, headSize, 0, 2 * Math.PI, false);
+            this.ctx.stroke();
+            this.ctx.beginPath();
+            this.ctx.moveTo(headCenterX, bodyStartY);
+            this.ctx.lineTo(headCenterX, bodyEndY);
+            this.ctx.stroke();
+            this.ctx.beginPath();
+            this.ctx.moveTo(headCenterX - headSize * 0.8, bodyEndY + legsHeight);
+            this.ctx.lineTo(headCenterX, bodyEndY);
+            this.ctx.lineTo(headCenterX + headSize * 0.8, bodyEndY + legsHeight);
+            this.ctx.stroke();
+            var armsKX = 1.1;
+            var armsKY = 0.5;
+            this.ctx.beginPath();
+            this.ctx.moveTo(headCenterX - headSize * armsKX, bodyStartY + bodyHeight * armsKY);
+            this.ctx.lineTo(headCenterX, bodyStartY + bodyHeight * armsKY / 2);
+            this.ctx.lineTo(headCenterX + headSize * armsKX, bodyStartY + bodyHeight * armsKY);
+            this.ctx.stroke();
+        };
+        Shapes.prototype.circle = function (item, last) {
+            this.setupStroke(item, last);
+            var b = Utility.getBounds(item.raw);
+            this.ctx.beginPath();
+            var x = (b.xmax - b.xmin) / 2 + b.xmin;
+            var y = (b.ymax - b.ymin) / 2 + b.ymin;
+            var radiusX = (b.xmax - b.xmin) / 2;
+            var radiusY = (b.ymax - b.ymin) / 2;
+            var radius = Math.min(radiusX, radiusY);
+            this.ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
+            this.ctx.stroke();
+        };
+        Shapes.prototype.ellipse = function (item, last) {
+            this.setupStroke(item, last);
+            var b = Utility.getBounds(item.raw);
+            var x = (b.xmax - b.xmin) / 2 + b.xmin;
+            var y = (b.ymax - b.ymin) / 2 + b.ymin;
+            var radiusX = (b.xmax - b.xmin) / 2;
+            var radiusY = (b.ymax - b.ymin) / 2;
+            var radius = Math.min(radiusX, radiusY);
+            this.ctx.beginPath();
+            this.ctx.ellipse(x, y, radiusX, radiusY, 0, 0, 2 * Math.PI, false);
+            this.ctx.stroke();
+        };
+        return Shapes;
+    }(Drawers.Base));
+    Drawers.Shapes = Shapes;
+})(Drawers || (Drawers = {}));
+var Drawers;
+(function (Drawers) {
+    var Text = (function (_super) {
+        __extends(Text, _super);
+        function Text() {
+            _super.apply(this, arguments);
+        }
+        Text.prototype.text = function (item, last) {
+            this.ctx.font = "30px 	'Permanent Marker'";
+            this.ctx.fillStyle = 'black';
+            this.ctx.fillText(item.text + (last ? '_' : ''), item.raw[0].x, item.raw[0].y);
+        };
+        return Text;
+    }(Drawers.Base));
+    Drawers.Text = Text;
+})(Drawers || (Drawers = {}));
 var Item = (function () {
     function Item() {
         this.id = this.generateNewId();
@@ -674,8 +714,12 @@ var Item = (function () {
         result.id = this.generateNewId();
         return result;
     };
+    Item.prototype.isLine = function () {
+        return;
+    };
     return Item;
 }());
+;
 var Point = (function () {
     function Point(x, y) {
         this.x = x;
@@ -762,6 +806,38 @@ var Utility = (function () {
         var d012 = d01 + d12;
         return [new Point(p2.x - v[0] * t * d01 / d012, p2.y - v[1] * t * d01 / d012),
             new Point(p2.x + v[0] * t * d12 / d012, p2.y + v[1] * t * d12 / d012)];
+    };
+    Utility.getBounds = function (coords) {
+        if (coords.length == 1) {
+            return {
+                xmin: coords[0].x,
+                xmax: coords[0].x,
+                ymin: coords[0].y,
+                ymax: coords[0].y,
+                centerX: coords[0].x,
+                centerY: coords[0].y
+            };
+        }
+        var xmin = 1000000, xmax = 0, ymin = 1000000, ymax = 0;
+        for (var i = 0; i < coords.length; i++) {
+            var p = coords[i];
+            if (p.x < xmin)
+                xmin = p.x;
+            if (p.x > xmax)
+                xmax = p.x;
+            if (p.y < ymin)
+                ymin = p.y;
+            if (p.y > ymax)
+                ymax = p.y;
+        }
+        return {
+            xmin: xmin,
+            xmax: xmax,
+            ymin: ymin,
+            ymax: ymax,
+            centerX: xmin + (xmax - xmin) / 2,
+            centerY: ymin + (ymax - ymin) / 2
+        };
     };
     return Utility;
 }());

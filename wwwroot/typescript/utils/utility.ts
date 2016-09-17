@@ -19,5 +19,37 @@ class Utility {
 		var d012 = d01 + d12;
 		return [new Point(p2.x - v[0] * t * d01 / d012, p2.y - v[1] * t * d01 / d012),
 				new Point(p2.x + v[0] * t * d12 / d012, p2.y + v[1] * t * d12 / d012) ];
-	}	
+	}
+
+	static getBounds(coords: Point[]){
+		if (coords.length == 1) {
+			return {
+				xmin: coords[0].x,
+				xmax: coords[0].x,
+				ymin: coords[0].y,
+				ymax: coords[0].y,
+				centerX: coords[0].x,
+				centerY: coords[0].y
+			}
+		}
+
+		var xmin = 1000000, xmax = 0, ymin = 1000000, ymax = 0;
+		
+		for(var i = 0; i < coords.length; i++) {
+			var p = coords[i];
+			if (p.x < xmin) xmin = p.x;
+			if (p.x > xmax) xmax = p.x;
+			if (p.y < ymin) ymin = p.y;
+			if (p.y > ymax) ymax = p.y;
+		}
+		
+		return {
+			xmin: xmin,
+			xmax: xmax,
+			ymin: ymin,
+			ymax: ymax,
+			centerX: xmin + (xmax - xmin) / 2,
+			centerY: ymin + (ymax - ymin) / 2
+		}
+	}
 }
