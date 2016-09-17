@@ -587,3 +587,8 @@ html.mode-cloning canvas {
 html.mode-steps canvas {
   cursor: crosshair;
 }
+html.mode-panning canvas {
+  cursor: -moz-grab;
+  cursor: -webkit-grab;
+  cursor: grab;
+}

@@ -17,25 +17,16 @@ var Mode;
     Mode[Mode["DrawingSteps"] = 1] = "DrawingSteps";
     Mode[Mode["Scaling"] = 2] = "Scaling";
     Mode[Mode["Moving"] = 3] = "Moving";
-    Mode[Mode["None"] = 4] = "None";
+    Mode[Mode["PreparingToPan"] = 4] = "PreparingToPan";
+    Mode[Mode["Panning"] = 5] = "Panning";
+    Mode[Mode["None"] = 6] = "None";
 })(Mode || (Mode = {}));
-var Keyboard = (function () {
-    function Keyboard() {
+var View = (function () {
+    function View() {
+        this.panX = 0;
+        this.panY = 0;
     }
-    Keyboard.isDelete = function (char) {
-        return char == Keyboard.backspace || char == Keyboard.delete;
-    };
-    Keyboard.isArrowRight = function (char) {
-        return char == Keyboard.arrowRight;
-    };
-    Keyboard.isArrowLeft = function (char) {
-        return char == Keyboard.arrowLeft;
-    };
-    Keyboard.backspace = 8;
-    Keyboard.delete = 46;
-    Keyboard.arrowRight = 39;
-    Keyboard.arrowLeft = 37;
-    return Keyboard;
+    return View;
 }());
 var Director = (function () {
     function Director() {
@@ -46,16 +37,17 @@ var Director = (function () {
         $('html')
             .keydown(self.generalHotkeys.bind(this))
             .keydown(self.textTyping.bind(this))
-            .keydown(self.syncUpHtmlState.bind(this))
-            .keyup(self.syncUpHtmlState.bind(this));
+            .keydown(self.syncUpHtmlStateDown.bind(this))
+            .keyup(self.syncUpHtmlStateUp.bind(this));
         $('canvas').on('contextmenu', function () {
             return false;
         });
         this.source = new Source();
-        this.el = document.getElementById('c');
-        this.drawer = new Drawer(this.el, this.source);
-        this.setupConnection();
-        $(this.el)
+        this.view = new View();
+        this.canvas = document.getElementById('c');
+        this.drawer = new Drawer(this.canvas, this.source, this.view);
+        this.syncer = new Syncer(this.source, this.drawer);
+        $(this.canvas)
             .mousedown(function (e) {
             e.preventDefault();
             self.interactionDown(e.clientX, e.clientY, e.ctrlKey, e.altKey, e.shiftKey, e.button);
@@ -71,106 +63,25 @@ var Director = (function () {
             self.startTyping(e.clientX, e.clientY);
             return false;
         });
-        this.el.addEventListener('touchstart', function (e) {
+        this.canvas.addEventListener('touchstart', function (e) {
             console.log(e);
             e.preventDefault();
             if (e.changedTouches.length > 1)
                 return;
             self.interactionDown(e.changedTouches[0].clientX, e.changedTouches[0].clientY, e.ctrlKey, e.altKey, e.shiftKey, 1);
         });
-        this.el.addEventListener('touchmove', function (e) {
+        this.canvas.addEventListener('touchmove', function (e) {
             e.preventDefault();
             if (e.changedTouches.length > 1)
                 return;
             self.interactionMove(e.changedTouches[0].clientX, e.changedTouches[0].clientY, e.ctrlKey, e.altKey, e.shiftKey, 1);
         });
-        this.el.addEventListener('touchup', function (e) {
+        this.canvas.addEventListener('touchup', function (e) {
             e.preventDefault();
             if (e.changedTouches.length > 1)
                 return;
             self.interactionUp();
         });
-    };
-    Director.prototype.setupConnection = function () {
-        var self = this;
-        this.connection = $.connection('/r');
-        this.connection.received(function (data) {
-            var item = JSON.parse(data.Json);
-            if (data.Type == 'Delete') {
-                var indexToDelete = -1;
-                for (var i = 0; i < self.source.items.length; i++) {
-                    if (self.source.items[i].id == item.id) {
-                        indexToDelete = i;
-                        break;
-                    }
-                }
-                if (indexToDelete != -1) {
-                    self.source.items.splice(indexToDelete, 1);
-                    self.drawer.redraw(false);
-                    return;
-                }
-            }
-            if (item != null) {
-                var replaced = false;
-                for (var i = 0; i < self.source.items.length; i++) {
-                    var k = self.source.items[i];
-                    if (k.id == item.id) {
-                        self.source.items[i] = item;
-                        replaced = true;
-                        break;
-                    }
-                }
-                if (!replaced) {
-                    self.source.push(item);
-                }
-                self.drawer.redraw(false);
-            }
-        });
-        this.connection.error(function (error) {
-            console.warn(error);
-        });
-        this.connection.start(function () {
-        });
-    };
-    Director.prototype.interactionUp = function () {
-        if (this.mode == Mode.DrawingSteps || this.mode == Mode.None) {
-            return;
-        }
-        if (this.mode == Mode.Drawing) {
-            if (this.source.last().raw.length == 1) {
-                this.source.removeLast();
-            }
-        }
-        this.drawer.redraw(false);
-        this.mode = Mode.None;
-        this.send();
-    };
-    Director.prototype.interactionMove = function (clientX, clientY, ctrlKey, altKey, shiftKey, button) {
-        if (button === void 0) { button = 1; }
-        if (this.mode == Mode.None)
-            return;
-        if (this.mode == Mode.DrawingSteps) {
-            var item = this.source.last();
-            item.raw.pop();
-            item.record(clientX, clientY);
-            this.drawer.redraw(true);
-        }
-        else if (this.mode == Mode.Scaling) {
-            var item = this.source.last();
-            var bounds = Utility.getBounds(item.raw);
-            var distance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(clientX, clientY));
-            item.sizeK = this.initScale * distance / this.initScaleDistance;
-        }
-        else if (this.mode == Mode.Moving) {
-            var current = new Point(clientX, clientY);
-            this.source.last().moveX = this.initMoveX + current.x - this.initMovingPoint.x;
-            this.source.last().moveY = this.initMoveY + current.y - this.initMovingPoint.y;
-        }
-        else {
-            this.source.last().record(clientX, clientY);
-        }
-        this.send();
-        this.drawer.redraw(true);
     };
     Director.prototype.interactionDown = function (clientX, clientY, ctrlKey, altKey, shiftKey, button) {
         if (button === void 0) { button = 1; }
@@ -189,37 +100,75 @@ var Director = (function () {
         else if (button == 2) {
             this.startErasing(clientX, clientY);
         }
+        else if (this.mode == Mode.PreparingToPan) {
+            this.startPanning(clientX, clientY);
+        }
         else {
             this.startDrawing(clientX, clientY);
         }
-        this.send();
+        this.syncer.send();
     };
-    Director.prototype.send = function () {
-        this.connection.send({
-            Type: 'Broadcast',
-            Json: JSON.stringify(this.source.last())
-        });
+    Director.prototype.interactionUp = function () {
+        if (this.mode == Mode.DrawingSteps || this.mode == Mode.None) {
+            return;
+        }
+        if (this.mode == Mode.Panning) {
+            this.mode = Mode.None;
+            return;
+        }
+        if (this.mode == Mode.Drawing) {
+            if (this.source.last().raw.length == 1) {
+                this.source.removeLast();
+            }
+        }
+        this.drawer.redraw(false);
+        this.mode = Mode.None;
+        this.syncer.send();
     };
-    Director.prototype.deleteAndSend = function () {
-        this.connection.send({
-            Type: 'Delete',
-            Json: JSON.stringify(this.source.last())
-        });
-        this.source.removeLast();
+    Director.prototype.interactionMove = function (clientX, clientY, ctrlKey, altKey, shiftKey, button) {
+        if (button === void 0) { button = 1; }
+        if (this.mode == Mode.None || this.mode == Mode.PreparingToPan)
+            return;
+        if (this.mode == Mode.DrawingSteps) {
+            var item = this.source.last();
+            item.raw.pop();
+            item.record(clientX - this.view.panX, clientY - this.view.panY);
+            this.drawer.redraw(true);
+        }
+        else if (this.mode == Mode.Scaling) {
+            var item = this.source.last();
+            var bounds = Utility.getBounds(item.raw);
+            var distance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(clientX, clientY));
+            item.sizeK = this.initScale * distance / this.initScaleDistance;
+        }
+        else if (this.mode == Mode.Moving) {
+            var current = new Point(clientX, clientY);
+            this.source.last().moveX = this.initMoveX + current.x - this.initMovingPoint.x;
+            this.source.last().moveY = this.initMoveY + current.y - this.initMovingPoint.y;
+        }
+        else if (this.mode == Mode.Panning) {
+            this.view.panX = this.initPanningX + (clientX - this.initPanningPoint.x);
+            this.view.panY = this.initPanningY + (clientY - this.initPanningPoint.y);
+        }
+        else {
+            this.source.last().record(clientX - this.view.panX, clientY - this.view.panY);
+        }
+        this.syncer.send();
+        this.drawer.redraw(true);
     };
     Director.prototype.startTyping = function (clientX, clientY) {
-        this.source.start(clientX, clientY);
+        this.source.start(clientX - this.view.panX, clientY - this.view.panY);
         this.source.last().shape = Shape.Text;
         this.drawer.redraw(true);
     };
     Director.prototype.startDrawing = function (clientX, clientY) {
-        this.source.start(clientX, clientY);
+        this.source.start(clientX - this.view.panX, clientY - this.view.panY);
         this.mode = Mode.Drawing;
     };
     Director.prototype.startErasing = function (clientX, clientY) {
         if (this.source.isEmpty())
             return;
-        this.source.start(clientX, clientY);
+        this.source.start(clientX - this.view.panX, clientY - this.view.panY);
         this.source.last().shape = Shape.Eraser;
         this.mode = Mode.Drawing;
     };
@@ -231,11 +180,11 @@ var Director = (function () {
     Director.prototype.startDrawingSteps = function (clientX, clientY) {
         if (this.mode == Mode.None) {
             this.mode = Mode.DrawingSteps;
-            this.source.start(clientX, clientY);
-            this.source.last().record(clientX, clientY);
+            this.source.start(clientX - this.view.panX, clientY - this.view.panY);
+            this.source.last().record(clientX - this.view.panX, clientY - this.view.panY);
         }
         else if (this.mode == Mode.DrawingSteps) {
-            this.source.last().record(clientX, clientY);
+            this.source.last().record(clientX - this.view.panX, clientY - this.view.panY);
         }
     };
     Director.prototype.startMoving = function (clientX, clientY) {
@@ -244,6 +193,12 @@ var Director = (function () {
         this.initMoveX = this.source.last().moveX;
         this.initMoveY = this.source.last().moveY;
     };
+    Director.prototype.startPanning = function (clientX, clientY) {
+        this.mode = Mode.Panning;
+        this.initPanningPoint = new Point(clientX, clientY);
+        this.initPanningX = this.view.panX;
+        this.initPanningY = this.view.panY;
+    };
     Director.prototype.startScaling = function (clientX, clientY) {
         this.mode = Mode.Scaling;
         var item = this.source.last();
@@ -251,12 +206,32 @@ var Director = (function () {
         this.initScaleDistance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(clientX, clientY));
         this.initScale = this.source.last().sizeK;
     };
-    Director.prototype.syncUpHtmlState = function (e) {
-        var html = '';
-        if (this.mode == Mode.DrawingSteps && !e.ctrlKey && !e.shiftKey) {
+    Director.prototype.syncUpHtmlStateDown = function (e) {
+        var char = String.fromCharCode(e.which).toLowerCase();
+        if (char == ' ' && this.mode == Mode.None) {
+            this.mode = Mode.PreparingToPan;
+        }
+        else if (this.mode == Mode.DrawingSteps && !e.ctrlKey && !e.shiftKey) {
             this.source.last().raw.pop();
             this.mode = Mode.None;
         }
+        $('html').attr('class', this.getHtmlClass(e));
+    };
+    Director.prototype.syncUpHtmlStateUp = function (e) {
+        var char = String.fromCharCode(e.which).toLowerCase();
+        if (char == ' ' && this.mode == Mode.PreparingToPan) {
+            this.mode = Mode.None;
+        }
+        else if (this.mode == Mode.DrawingSteps && !e.ctrlKey && !e.shiftKey) {
+            this.source.last().raw.pop();
+            this.mode = Mode.None;
+        }
+        $('html').attr('class', this.getHtmlClass(e));
+    };
+    Director.prototype.getHtmlClass = function (e) {
+        var html = '';
+        if (this.mode == Mode.PreparingToPan)
+            html = 'mode-panning';
         if (e.ctrlKey && e.shiftKey)
             html = 'mode-steps';
         else if (e.ctrlKey)
@@ -265,7 +240,7 @@ var Director = (function () {
             html = 'mode-moving';
         else if (e.altKey)
             html = 'mode-cloning';
-        $('html').attr('class', html);
+        return html;
     };
     Director.prototype.textTyping = function (e) {
         var last = this.source.last();
@@ -275,14 +250,14 @@ var Director = (function () {
         if (char == '\b' || char == 'delete') {
             if (last.text == '') {
                 this.source.removeLast();
-                this.send();
+                this.syncer.send();
                 this.drawer.redraw(false);
                 return;
             }
             if (last.text.length > 0) {
                 last.text = last.text.substr(0, last.text.length - 1);
             }
-            this.send();
+            this.syncer.send();
             this.drawer.redraw(false);
             return;
         }
@@ -293,7 +268,7 @@ var Director = (function () {
             char = char.toUpperCase();
         }
         last.text += char;
-        this.send();
+        this.syncer.send();
         this.drawer.redraw(false);
     };
     Director.prototype.generalHotkeys = function (e) {
@@ -302,7 +277,7 @@ var Director = (function () {
             return;
         var c = String.fromCharCode(e.which).toLowerCase();
         if (e.which == 8 || e.which == 46) {
-            this.deleteAndSend();
+            this.syncer.deleteAndSend();
             this.drawer.redraw(false);
             return;
         }
@@ -317,7 +292,7 @@ var Director = (function () {
             if (item.shape != Shape.Line && item.shape != Shape.SmoothLine && item.shape != Shape.StraightLine) {
                 this.switchShape(Shape.SmoothLine);
             }
-            this.send();
+            this.syncer.send();
             this.drawer.redraw(false);
             return;
         }
@@ -354,7 +329,7 @@ var Director = (function () {
                     this.switchShape(Shape.SmoothLine);
                 break;
         }
-        this.send();
+        this.syncer.send();
     };
     Director.prototype.switchShape = function (shape) {
         if (this.source.isEmpty())
@@ -369,9 +344,10 @@ var Director = (function () {
     return Director;
 }());
 var Drawer = (function () {
-    function Drawer(el, source) {
+    function Drawer(el, source, view) {
         this.el = el;
         this.source = source;
+        this.view = view;
         this.ctx = el.getContext('2d');
         this.ctx.lineJoin = this.ctx.lineCap = 'round';
         this.el.width = $('body').width();
@@ -389,7 +365,7 @@ var Drawer = (function () {
             var last = i == this.source.items.length - 1;
             var b = Utility.getBounds(item.raw);
             item.raw = Transform.scale(item.raw, new Point(b.centerX, b.centerY), item.sizeK, item.sizeK);
-            item.raw = Transform.move(item.raw, item.moveX, item.moveY);
+            item.raw = Transform.move(item.raw, item.moveX + this.view.panX, item.moveY + this.view.panY);
             switch (item.shape) {
                 case Shape.Original:
                     this.original.original(item, last);
@@ -441,6 +417,65 @@ var Drawer = (function () {
         this.ctx.clearRect(0, 0, this.el.width, this.el.height);
     };
     return Drawer;
+}());
+var Syncer = (function () {
+    function Syncer(source, drawer) {
+        this.source = source;
+        this.drawer = drawer;
+        var self = this;
+        this.connection = $.connection('/r');
+        this.connection.received(function (data) {
+            var item = JSON.parse(data.Json);
+            if (data.Type == 'Delete') {
+                var indexToDelete = -1;
+                for (var i = 0; i < self.source.items.length; i++) {
+                    if (self.source.items[i].id == item.id) {
+                        indexToDelete = i;
+                        break;
+                    }
+                }
+                if (indexToDelete != -1) {
+                    self.source.items.splice(indexToDelete, 1);
+                    self.drawer.redraw(false);
+                    return;
+                }
+            }
+            if (item != null) {
+                var replaced = false;
+                for (var i = 0; i < self.source.items.length; i++) {
+                    var k = self.source.items[i];
+                    if (k.id == item.id) {
+                        self.source.items[i] = item;
+                        replaced = true;
+                        break;
+                    }
+                }
+                if (!replaced) {
+                    self.source.push(item);
+                }
+                self.drawer.redraw(false);
+            }
+        });
+        this.connection.error(function (error) {
+            console.warn(error);
+        });
+        this.connection.start(function () {
+        });
+    }
+    Syncer.prototype.send = function () {
+        this.connection.send({
+            Type: 'Broadcast',
+            Json: JSON.stringify(this.source.last())
+        });
+    };
+    Syncer.prototype.deleteAndSend = function () {
+        this.connection.send({
+            Type: 'Delete',
+            Json: JSON.stringify(this.source.last())
+        });
+        this.source.removeLast();
+    };
+    return Syncer;
 }());
 var Drawers;
 (function (Drawers) {
@@ -764,6 +799,24 @@ var Source = (function () {
         this.items.pop();
     };
     return Source;
+}());
+var Keyboard = (function () {
+    function Keyboard() {
+    }
+    Keyboard.isDelete = function (char) {
+        return char == Keyboard.backspace || char == Keyboard.delete;
+    };
+    Keyboard.isArrowRight = function (char) {
+        return char == Keyboard.arrowRight;
+    };
+    Keyboard.isArrowLeft = function (char) {
+        return char == Keyboard.arrowLeft;
+    };
+    Keyboard.backspace = 8;
+    Keyboard.delete = 46;
+    Keyboard.arrowRight = 39;
+    Keyboard.arrowLeft = 37;
+    return Keyboard;
 }());
 var Transform = (function () {
     function Transform() {

@@ -2,6 +2,7 @@ class Drawer {
 	ctx: CanvasRenderingContext2D;
 	el: HTMLCanvasElement;
 	source: Source;
+	view: View;
 	activeDrawing: boolean;
 
 	original: Drawers.Original;
@@ -9,9 +10,10 @@ class Drawer {
 	lines: Drawers.Lines;
 	text: Drawers.Text;
 
-	constructor(el: any, source: Source) {
+	constructor(el: any, source: Source, view: View) {
 		this.el = el;
 		this.source = source;
+		this.view = view;
 
 		this.ctx = el.getContext('2d');
 		this.ctx.lineJoin = this.ctx.lineCap = 'round';
@@ -35,7 +37,7 @@ class Drawer {
 
 			var b = Utility.getBounds(item.raw);
 			item.raw = Transform.scale(item.raw, new Point(b.centerX, b.centerY), item.sizeK, item.sizeK);
-			item.raw = Transform.move(item.raw, item.moveX, item.moveY);
+			item.raw = Transform.move(item.raw, item.moveX + this.view.panX, item.moveY + this.view.panY);
 			
 			switch(item.shape) {
 				case Shape.Original: 

@@ -8,33 +8,28 @@ enum Mode {
 	DrawingSteps,
 	Scaling,
 	Moving,
+	PreparingToPan,
+	Panning,
 	None
 }
 
-class Keyboard {
-	static backspace = 8;
-	static delete = 46;
-	static arrowRight = 39;
-	static arrowLeft = 37;
+class View {
+	panX: number;
+	panY: number;
 
-	static isDelete(char: number) {
-		return char == Keyboard.backspace || char == Keyboard.delete;
-	}
-
-	static isArrowRight(char: number) {
-		return char == Keyboard.arrowRight;
-	}
-
-	static isArrowLeft(char: number) {
-		return char == Keyboard.arrowLeft;
+	constructor() {
+		this.panX = 0;
+		this.panY = 0;
 	}
 }
 
 class Director {
-	el: HTMLElement;
+	canvas: HTMLElement;
 	source: Source;
 	drawer: Drawer;
+	syncer: Syncer;
 	mode: Mode;
+	view: View;
 
 	initScaleDistance: number;
 	initScale: number;
@@ -43,7 +38,9 @@ class Director {
 	initMoveX: number;
 	initMoveY: number;
 
-	connection: any;
+	initPanningPoint: Point;
+	initPanningX: number;
+	initPanningY: number;
 
 	init() {
 		var self = this;
@@ -52,20 +49,20 @@ class Director {
 		$('html')
 			.keydown(self.generalHotkeys.bind(this))
 			.keydown(self.textTyping.bind(this))
-			.keydown(self.syncUpHtmlState.bind(this))
-			.keyup(self.syncUpHtmlState.bind(this));
+			.keydown(self.syncUpHtmlStateDown.bind(this))
+			.keyup(self.syncUpHtmlStateUp.bind(this));
 
 		$('canvas').on('contextmenu', () => {
 			return false;
 		});
 
 		this.source = new Source();
-		this.el = document.getElementById('c');
-		this.drawer = new Drawer(this.el, this.source);
+		this.view = new View();
+		this.canvas = document.getElementById('c');
+		this.drawer = new Drawer(this.canvas, this.source, this.view);
+		this.syncer = new Syncer(this.source, this.drawer);		
 
-		this.setupConnection();
-
-		$(this.el)
+		$(this.canvas)
 			.mousedown((e: MouseEvent) => {
 				e.preventDefault();
 				self.interactionDown(e.clientX, e.clientY, e.ctrlKey, e.altKey, e.shiftKey, e.button);
@@ -85,7 +82,7 @@ class Director {
 				return false;
 			});
 
-		this.el.addEventListener('touchstart', (e: TouchEvent) => {
+		this.canvas.addEventListener('touchstart', (e: TouchEvent) => {
 			console.log(e);
 			e.preventDefault();
 
@@ -95,7 +92,7 @@ class Director {
 			self.interactionDown(e.changedTouches[0].clientX, e.changedTouches[0].clientY, e.ctrlKey, e.altKey, e.shiftKey, 1);
 		});
 
-		this.el.addEventListener('touchmove', (e: TouchEvent) => {
+		this.canvas.addEventListener('touchmove', (e: TouchEvent) => {
 			e.preventDefault();
 
 			if (e.changedTouches.length > 1)
@@ -104,7 +101,7 @@ class Director {
 			self.interactionMove(e.changedTouches[0].clientX, e.changedTouches[0].clientY, e.ctrlKey, e.altKey, e.shiftKey, 1);
 		});
 
-		this.el.addEventListener('touchup', (e: TouchEvent) => {
+		this.canvas.addEventListener('touchup', (e: TouchEvent) => {
 			e.preventDefault();
 
 			if (e.changedTouches.length > 1)
@@ -114,100 +111,6 @@ class Director {
 		});
 
 			
-	}
-
-	setupConnection(){
-		var self = this;
-
-		this.connection = $.connection('/r');
-		this.connection.received(function(data: any) {
-			var item = JSON.parse(data.Json);
-			if (data.Type == 'Delete') {
-				var indexToDelete = -1;
-				for(var i = 0; i < self.source.items.length; i++) {
-					if (self.source.items[i].id == item.id) {
-						indexToDelete = i;
-						break;
-					}
-				}
-
-				if (indexToDelete != -1) {
-					self.source.items.splice(indexToDelete, 1);
-					self.drawer.redraw(false);
-					return;
-				}
-			}
-			
-			if (item != null) {
-				var replaced = false;
-				for(var i = 0; i < self.source.items.length; i++) {
-					var k = self.source.items[i];
-					if (k.id == item.id) {
-						self.source.items[i] = item;
-						replaced = true;
-						break;
-					}
-				}
-
-				if (!replaced) {
-					self.source.push(item);
-				}
-
-				self.drawer.redraw(false);
-			}
-		});
-
-		this.connection.error(function(error: any) {
-			console.warn(error);
-		});
-
-		this.connection.start(function() {
-		});
-	}
-
-	interactionUp() {
-		if (this.mode == Mode.DrawingSteps || this.mode == Mode.None) {
-			return;
-		}
-
-		if (this.mode == Mode.Drawing) {
-			if (this.source.last().raw.length == 1) {
-				this.source.removeLast();
-			}
-		}
-	
-		this.drawer.redraw(false);
-		this.mode = Mode.None;
-		this.send();
-	}
-
-	interactionMove(clientX: number, clientY: number, ctrlKey: boolean, altKey: boolean, shiftKey: boolean, button: number = 1) {
-		if (this.mode == Mode.None) return;
-
-		if (this.mode == Mode.DrawingSteps) {
-			var item = this.source.last();
-			item.raw.pop();
-			item.record(clientX, clientY);
-			this.drawer.redraw(true);
-
-		} else if (this.mode == Mode.Scaling) {
-			var item = this.source.last();
-			var bounds = Utility.getBounds(item.raw);
-			var distance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(clientX, clientY));
-			
-			item.sizeK = this.initScale * distance / this.initScaleDistance;
-		
-		} else if (this.mode == Mode.Moving) {
-			var current = new Point(clientX, clientY);
-			this.source.last().moveX = this.initMoveX + current.x - this.initMovingPoint.x;
-			this.source.last().moveY = this.initMoveY + current.y - this.initMovingPoint.y;
-
-		} else {
-			this.source.last().record(clientX, clientY);
-		}
-
-		this.send();
-		this.drawer.redraw(true);
 	}
 
 	interactionDown(clientX: number, clientY: number, ctrlKey: boolean, altKey: boolean, shiftKey: boolean, button: number = 1) {
@@ -226,37 +129,78 @@ class Director {
 		} else if (button == 2) {
 			this.startErasing(clientX, clientY);
 
+		} else if (this.mode == Mode.PreparingToPan) {
+			this.startPanning(clientX, clientY);
+
 		} else {
 			this.startDrawing(clientX, clientY);
 		}
 
-		this.send();
+		this.syncer.send();
 	}
 
-	send() {
-		this.connection.send({
-			Type: 'Broadcast',
-			Json: JSON.stringify(this.source.last())
-		});
+	interactionUp() {
+		if (this.mode == Mode.DrawingSteps || this.mode == Mode.None) {
+			return;
+		}
+
+		if (this.mode == Mode.Panning) {
+			this.mode = Mode.None;
+			return;
+		}
+
+		if (this.mode == Mode.Drawing) {
+			if (this.source.last().raw.length == 1) {
+				this.source.removeLast();
+			}
+		}
+	
+		this.drawer.redraw(false);
+		this.mode = Mode.None;
+		this.syncer.send();
 	}
 
-	deleteAndSend() {
-		this.connection.send({
-			Type: 'Delete',
-			Json: JSON.stringify(this.source.last())
-		});
+	interactionMove(clientX: number, clientY: number, ctrlKey: boolean, altKey: boolean, shiftKey: boolean, button: number = 1) {
+		if (this.mode == Mode.None || this.mode == Mode.PreparingToPan) return;
 
-		this.source.removeLast();
+		if (this.mode == Mode.DrawingSteps) {
+			var item = this.source.last();
+			item.raw.pop();
+			item.record(clientX - this.view.panX, clientY - this.view.panY);
+			this.drawer.redraw(true);
+
+		} else if (this.mode == Mode.Scaling) {
+			var item = this.source.last();
+			var bounds = Utility.getBounds(item.raw);
+			var distance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(clientX, clientY));
+			
+			item.sizeK = this.initScale * distance / this.initScaleDistance;
+		
+		} else if (this.mode == Mode.Moving) {
+			var current = new Point(clientX, clientY);
+			this.source.last().moveX = this.initMoveX + current.x - this.initMovingPoint.x;
+			this.source.last().moveY = this.initMoveY + current.y - this.initMovingPoint.y;
+
+		} else if (this.mode == Mode.Panning) {
+			this.view.panX = this.initPanningX + (clientX - this.initPanningPoint.x); 
+			this.view.panY = this.initPanningY + (clientY - this.initPanningPoint.y); 
+
+		} else {
+			this.source.last().record(clientX - this.view.panX, clientY - this.view.panY);
+		}
+
+		this.syncer.send();
+		this.drawer.redraw(true);
 	}
 
 	startTyping(clientX: number, clientY: number) {
-		this.source.start(clientX, clientY);
+		this.source.start(clientX - this.view.panX, clientY - this.view.panY);
 		this.source.last().shape = Shape.Text;
 		this.drawer.redraw(true);
 	}
 	
 	startDrawing(clientX: number, clientY: number) {
-		this.source.start(clientX, clientY);
+		this.source.start(clientX - this.view.panX, clientY - this.view.panY);
 		this.mode = Mode.Drawing;
 	}
 
@@ -264,7 +208,7 @@ class Director {
 		if (this.source.isEmpty())
 			return;
 
-		this.source.start(clientX, clientY);
+		this.source.start(clientX - this.view.panX, clientY - this.view.panY);
 		this.source.last().shape = Shape.Eraser;
 		this.mode = Mode.Drawing;
 	}
@@ -279,11 +223,11 @@ class Director {
 	startDrawingSteps(clientX: number, clientY: number) {
 		if (this.mode == Mode.None) {
 			this.mode = Mode.DrawingSteps;
-			this.source.start(clientX, clientY);
-			this.source.last().record(clientX, clientY);
+			this.source.start(clientX - this.view.panX, clientY - this.view.panY);
+			this.source.last().record(clientX - this.view.panX, clientY - this.view.panY);
 
 		} else if (this.mode == Mode.DrawingSteps) {
-			this.source.last().record(clientX, clientY);
+			this.source.last().record(clientX - this.view.panX, clientY - this.view.panY);
 		}
 	}
 
@@ -292,6 +236,13 @@ class Director {
 		this.initMovingPoint = new Point(clientX, clientY);
 		this.initMoveX = this.source.last().moveX;
 		this.initMoveY = this.source.last().moveY;
+	}
+
+	startPanning(clientX: number, clientY: number) {
+		this.mode = Mode.Panning;
+		this.initPanningPoint = new Point(clientX, clientY);
+		this.initPanningX = this.view.panX;
+		this.initPanningY = this.view.panY;
 	}
 
 	startScaling(clientX: number, clientY: number) {
@@ -303,14 +254,40 @@ class Director {
 		this.initScale = this.source.last().sizeK;
 	}
 
-	syncUpHtmlState(e: KeyboardEvent) {
-		var html = '';
+	syncUpHtmlStateDown(e: KeyboardEvent) {
+		var char = String.fromCharCode(e.which).toLowerCase();
 
-		if (this.mode == Mode.DrawingSteps && !e.ctrlKey && !e.shiftKey) {
-			this.source.last().raw.pop(); // Clean up after moving
-			this.mode = Mode.None;
+		if (char == ' ' && this.mode == Mode.None) {
+			this.mode = Mode.PreparingToPan;
 		}
 
+		else if (this.mode == Mode.DrawingSteps && !e.ctrlKey && !e.shiftKey) {
+			this.source.last().raw.pop(); // Clean up after moving
+			this.mode = Mode.None;
+		}		
+
+		$('html').attr('class', this.getHtmlClass(e));
+	}
+
+	syncUpHtmlStateUp(e: KeyboardEvent) {
+		var char = String.fromCharCode(e.which).toLowerCase();
+
+		if (char == ' ' && this.mode == Mode.PreparingToPan) {
+			this.mode = Mode.None;
+		}
+		else if (this.mode == Mode.DrawingSteps && !e.ctrlKey && !e.shiftKey) {
+			this.source.last().raw.pop(); // Clean up after moving
+			this.mode = Mode.None;
+		}		
+
+		$('html').attr('class', this.getHtmlClass(e));
+	}
+
+	getHtmlClass(e: KeyboardEvent): string {
+		var html = '';
+
+		if (this.mode == Mode.PreparingToPan) 
+			html = 'mode-panning';
 		if (e.ctrlKey && e.shiftKey)
 			html = 'mode-steps';
 		else if (e.ctrlKey)
@@ -319,8 +296,8 @@ class Director {
 			html = 'mode-moving';
 		else if (e.altKey)
 			html = 'mode-cloning';
-		
-		$('html').attr('class', html);
+
+		return html;
 	}
 
 	textTyping(e: KeyboardEvent) {
@@ -331,7 +308,7 @@ class Director {
 		if (char == '\b' || char == 'delete') {
 			if (last.text == '') {
 				this.source.removeLast();
-				this.send();
+				this.syncer.send();
 				this.drawer.redraw(false);
 				return;
 			}
@@ -340,7 +317,7 @@ class Director {
 				last.text = last.text.substr(0, last.text.length - 1);
 			}
 
-			this.send();
+			this.syncer.send();
 			this.drawer.redraw(false);
 			return;
 		} else if (window.keysight.unprintableKeys.indexOf(char) != -1) {
@@ -353,7 +330,7 @@ class Director {
 
 		last.text += char;
 
-		this.send();
+		this.syncer.send();
 		this.drawer.redraw(false);
 	}
 
@@ -364,7 +341,7 @@ class Director {
 		var c = String.fromCharCode(e.which).toLowerCase();
 
 		if (e.which == 8 || e.which == 46) { // backspace or delete
-			this.deleteAndSend();
+			this.syncer.deleteAndSend();
 			this.drawer.redraw(false);
 			return;
 		}
@@ -384,7 +361,7 @@ class Director {
 				this.switchShape(Shape.SmoothLine);
 			}
 			
-			this.send();
+			this.syncer.send();
 			this.drawer.redraw(false);
 			return;
 		}
@@ -410,7 +387,7 @@ class Director {
 				break;
 		}
 
-		this.send();
+		this.syncer.send();
 	}
 
 	switchShape(shape: Shape) {
