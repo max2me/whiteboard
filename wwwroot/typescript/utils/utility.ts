@@ -19,16 +19,5 @@ class Utility {
 		var d012 = d01 + d12;
 		return [new Point(p2.x - v[0] * t * d01 / d012, p2.y - v[1] * t * d01 / d012),
 				new Point(p2.x + v[0] * t * d12 / d012, p2.y + v[1] * t * d12 / d012) ];
-	}
-
-	static shiftPoints(points: Point[], shiftX: number, shiftY: number): Point[] {
-		var result: Point[] = [];
-		
-		for(var i = 0; i < points.length; i++) {
-			var p = points[i];
-			result.push(new Point(p.x + shiftX, p.y + shiftY));
-		}
-
-		return result;
-	}
+	}	
 }

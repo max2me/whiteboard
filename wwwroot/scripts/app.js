@@ -383,8 +383,12 @@ var Drawer = (function () {
             var b = Drawer.getBounds(item.raw);
             var shiftX = b.centerX;
             var shiftY = b.centerY;
-            this.ctx.translate(shiftX + item.moveX, shiftY + item.moveY);
-            this.ctx.scale(item.sizeK, item.sizeK);
+            if (item.shape == Shape.Rectangle) {
+                var points = Transform.scale(item.raw, new Point(shiftX, shiftY), item.sizeK, item.sizeK);
+                points = Transform.move(points, item.moveX, item.moveY);
+                this.drawRectPoints(points);
+                continue;
+            }
             this.drawItem(item, -shiftX, -shiftY, last);
             if (item.shape == Shape.Original ||
                 item.shape == Shape.Line ||
@@ -460,7 +464,7 @@ var Drawer = (function () {
     };
     Drawer.prototype.drawLine = function (item, shiftX, shiftY) {
         this.ctx.beginPath();
-        var temp = Utility.shiftPoints(item.raw, shiftX, shiftY);
+        var temp = Transform.move(item.raw, shiftX, shiftY);
         var pts = window.simplify(temp, 20, true);
         this.ctx.moveTo(pts[0].x, pts[0].y);
         for (var j = 1; j < pts.length; j++) {
@@ -517,7 +521,7 @@ var Drawer = (function () {
     };
     Drawer.prototype.drawSmoothLine = function (item, shiftX, shiftY) {
         this.ctx.beginPath();
-        var temp = Utility.shiftPoints(item.raw, shiftX, shiftY);
+        var temp = Transform.move(item.raw, shiftX, shiftY);
         var pts = window.simplify(temp, 20, true);
         var cps = [];
         for (var i = 0; i < pts.length - 2; i += 1) {
@@ -550,6 +554,16 @@ var Drawer = (function () {
         this.ctx.beginPath();
         this.ctx.moveTo(item.raw[0].x + shiftX, item.raw[0].y + shiftY);
         this.ctx.lineTo(item.raw[item.raw.length - 1].x + shiftX, item.raw[item.raw.length - 1].y + shiftY);
+        this.ctx.stroke();
+    };
+    Drawer.prototype.drawRectPoints = function (points) {
+        var b = Drawer.getBounds(points);
+        this.ctx.beginPath();
+        this.ctx.moveTo(b.xmin, b.ymin);
+        this.ctx.lineTo(b.xmax, b.ymin);
+        this.ctx.lineTo(b.xmax, b.ymax);
+        this.ctx.lineTo(b.xmin, b.ymax);
+        this.ctx.lineTo(b.xmin, b.ymin);
         this.ctx.stroke();
     };
     Drawer.prototype.drawRect = function (item, shiftX, shiftY) {
@@ -660,31 +674,6 @@ var Drawer = (function () {
     };
     return Drawer;
 }());
-var Source = (function () {
-    function Source() {
-        this.items = [];
-    }
-    Source.prototype.last = function () {
-        return this.items.length ? this.items[this.items.length - 1] : null;
-    };
-    Source.prototype.push = function (item) {
-        this.items.push(item);
-    };
-    Source.prototype.start = function (x, y) {
-        var item = new Item();
-        item.record(x, y);
-        this.items.push(item);
-    };
-    Source.prototype.isEmpty = function () {
-        return this.items.length == 0;
-    };
-    Source.prototype.removeLast = function () {
-        if (this.isEmpty())
-            return;
-        this.items.pop();
-    };
-    return Source;
-}());
 var Item = (function () {
     function Item() {
         this.id = this.generateNewId();
@@ -730,6 +719,52 @@ var Shape;
     Shape[Shape["Eraser"] = 8] = "Eraser";
     Shape[Shape["Human"] = 9] = "Human";
 })(Shape || (Shape = {}));
+var Source = (function () {
+    function Source() {
+        this.items = [];
+    }
+    Source.prototype.last = function () {
+        return this.items.length ? this.items[this.items.length - 1] : null;
+    };
+    Source.prototype.push = function (item) {
+        this.items.push(item);
+    };
+    Source.prototype.start = function (x, y) {
+        var item = new Item();
+        item.record(x, y);
+        this.items.push(item);
+    };
+    Source.prototype.isEmpty = function () {
+        return this.items.length == 0;
+    };
+    Source.prototype.removeLast = function () {
+        if (this.isEmpty())
+            return;
+        this.items.pop();
+    };
+    return Source;
+}());
+var Transform = (function () {
+    function Transform() {
+    }
+    Transform.move = function (points, shiftX, shiftY) {
+        var result = [];
+        for (var i = 0; i < points.length; i++) {
+            var p = points[i];
+            result.push(new Point(p.x + shiftX, p.y + shiftY));
+        }
+        return result;
+    };
+    Transform.scale = function (points, origin, scaleX, scaleY) {
+        var result = [];
+        for (var i = 0; i < points.length; i++) {
+            var p = points[i];
+            result.push(new Point(origin.x + (p.x - origin.x) * scaleX, origin.y + (p.y - origin.y) * scaleY));
+        }
+        return result;
+    };
+    return Transform;
+}());
 var Utility = (function () {
     function Utility() {
     }
@@ -750,14 +785,6 @@ var Utility = (function () {
         var d012 = d01 + d12;
         return [new Point(p2.x - v[0] * t * d01 / d012, p2.y - v[1] * t * d01 / d012),
             new Point(p2.x + v[0] * t * d12 / d012, p2.y + v[1] * t * d12 / d012)];
-    };
-    Utility.shiftPoints = function (points, shiftX, shiftY) {
-        var result = [];
-        for (var i = 0; i < points.length; i++) {
-            var p = points[i];
-            result.push(new Point(p.x + shiftX, p.y + shiftY));
-        }
-        return result;
     };
     return Utility;
 }());

@@ -28,8 +28,17 @@ class Drawer {
 			var shiftX = b.centerX;
 			var shiftY = b.centerY;
 			
-			this.ctx.translate(shiftX + item.moveX, shiftY + item.moveY);
-			this.ctx.scale(item.sizeK, item.sizeK);
+			if (item.shape == Shape.Rectangle) {
+				
+				var points = Transform.scale(item.raw, new Point(shiftX, shiftY), item.sizeK, item.sizeK);
+				points = Transform.move(points, item.moveX, item.moveY);
+				
+				this.drawRectPoints(points);
+				continue;
+			}
+
+			//this.ctx.translate(shiftX + item.moveX, shiftY + item.moveY);
+			//this.ctx.scale(item.sizeK, item.sizeK);
 			
 			this.drawItem(item, -shiftX, -shiftY, last);
 
@@ -131,7 +140,7 @@ class Drawer {
 	drawLine(item: Item, shiftX: number, shiftY: number) {
 		this.ctx.beginPath();
 
-		var temp: Point[] = Utility.shiftPoints(item.raw, shiftX, shiftY);		
+		var temp: Point[] = Transform.move(item.raw, shiftX, shiftY);		
 		var pts = window.simplify(temp, 20, true);
 
 		this.ctx.moveTo(pts[0].x, pts[0].y);
@@ -207,7 +216,7 @@ class Drawer {
 	drawSmoothLine(item: Item, shiftX: number, shiftY: number) {
 		this.ctx.beginPath();
 
-		var temp: Point[] = Utility.shiftPoints(item.raw, shiftX, shiftY);
+		var temp: Point[] = Transform.move(item.raw, shiftX, shiftY);
 		var pts = window.simplify(temp, 20, true);
 
 		var cps:Point[] = []; // There will be two control points for each "middle" point, 1 ... len-2e
@@ -263,6 +272,18 @@ class Drawer {
 		this.ctx.moveTo(item.raw[0].x + shiftX, item.raw[0].y + shiftY);
 		this.ctx.lineTo(item.raw[item.raw.length - 1].x + shiftX, item.raw[item.raw.length - 1].y + shiftY);
 
+		this.ctx.stroke();
+	}
+
+	drawRectPoints(points: Point[]) {
+		var b = Drawer.getBounds(points);
+  
+		this.ctx.beginPath();
+		this.ctx.moveTo(b.xmin, b.ymin);
+		this.ctx.lineTo(b.xmax, b.ymin);
+		this.ctx.lineTo(b.xmax, b.ymax);
+		this.ctx.lineTo(b.xmin, b.ymax);
+		this.ctx.lineTo(b.xmin, b.ymin);
 		this.ctx.stroke();
 	}
 
