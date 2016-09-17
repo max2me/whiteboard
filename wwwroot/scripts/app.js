@@ -377,19 +377,44 @@ var Drawer = (function () {
         this.clear();
         this.activeDrawing = activeDrawing;
         for (var i = 0; i < this.source.items.length; i++) {
-            var item = this.source.items[i];
+            var item = Utility.clone(this.source.items[i]);
             var last = i == this.source.items.length - 1;
-            this.ctx.save();
             var b = Drawer.getBounds(item.raw);
-            var shiftX = b.centerX;
-            var shiftY = b.centerY;
-            if (item.shape == Shape.Rectangle) {
-                var points = Transform.scale(item.raw, new Point(shiftX, shiftY), item.sizeK, item.sizeK);
-                points = Transform.move(points, item.moveX, item.moveY);
-                this.drawRectPoints(points);
-                continue;
+            item.raw = Transform.scale(item.raw, new Point(b.centerX, b.centerY), item.sizeK, item.sizeK);
+            item.raw = Transform.move(item.raw, item.moveX, item.moveY);
+            this.setupStroke(item, last);
+            switch (item.shape) {
+                case Shape.Original:
+                    this.drawOriginal(item);
+                    break;
+                case Shape.Rectangle:
+                    this.drawRect(item);
+                    break;
+                case Shape.Circle:
+                    this.drawCircle(item);
+                    break;
+                case Shape.Ellipse:
+                    this.drawEllipse(item);
+                    break;
+                case Shape.Line:
+                    this.drawLine(item);
+                    break;
+                case Shape.SmoothLine:
+                    this.drawSmoothLine(item);
+                    break;
+                case Shape.StraightLine:
+                    this.drawStraightLine(item);
+                    break;
+                case Shape.Text:
+                    this.drawText(item, last);
+                    break;
+                case Shape.Eraser:
+                    this.drawEraser(item, last);
+                    break;
+                case Shape.Human:
+                    this.drawHuman(item);
+                    break;
             }
-            this.drawItem(item, -shiftX, -shiftY, last);
             if (item.shape == Shape.Original ||
                 item.shape == Shape.Line ||
                 item.shape == Shape.SmoothLine ||
@@ -397,82 +422,45 @@ var Drawer = (function () {
                 var points = item.raw;
                 if (item.shape == Shape.StraightLine)
                     points = [points[0], points[points.length - 1]];
-                this.drawArrow(points, item.lineArrowEnd, item.lineArrowStart, shiftX, shiftY, last);
+                this.drawArrow(points, item.lineArrowEnd, item.lineArrowStart, last);
             }
-            this.ctx.restore();
         }
     };
-    Drawer.prototype.drawItem = function (item, shiftX, shiftY, last) {
-        this.setupStroke(item, last);
-        switch (item.shape) {
-            case Shape.Original:
-                this.drawOriginal(item, shiftX, shiftY);
-                break;
-            case Shape.Rectangle:
-                this.drawRect(item, shiftX, shiftY);
-                break;
-            case Shape.Circle:
-                this.drawCircle(item, shiftX, shiftY);
-                break;
-            case Shape.Ellipse:
-                this.drawEllipse(item, shiftX, shiftY);
-                break;
-            case Shape.Line:
-                this.drawLine(item, shiftX, shiftY);
-                break;
-            case Shape.SmoothLine:
-                this.drawSmoothLine(item, shiftX, shiftY);
-                break;
-            case Shape.StraightLine:
-                this.drawStraightLine(item, shiftX, shiftY);
-                break;
-            case Shape.Text:
-                this.drawText(item, shiftX, shiftY, last);
-                break;
-            case Shape.Eraser:
-                this.drawEraser(item, shiftX, shiftY, last);
-                break;
-            case Shape.Human:
-                this.drawHuman(item, shiftX, shiftY);
-                break;
-        }
-    };
-    Drawer.prototype.drawEraser = function (item, shiftX, shiftY, last) {
+    Drawer.prototype.drawEraser = function (item, last) {
         this.ctx.lineWidth = 30;
         this.ctx.lineJoin = this.ctx.lineCap = 'round';
         this.ctx.strokeStyle = this.activeDrawing && last ? '#F9F9F9' : '#FFFFFF';
         this.ctx.shadowColor = 'transparent';
         this.ctx.beginPath();
-        this.ctx.moveTo(item.raw[0].x + shiftX, item.raw[0].y + shiftY);
+        this.ctx.moveTo(item.raw[0].x, item.raw[0].y);
         for (var j = 1; j < item.raw.length; j++) {
-            this.ctx.lineTo(item.raw[j].x + shiftX, item.raw[j].y + shiftY);
+            this.ctx.lineTo(item.raw[j].x, item.raw[j].y);
         }
         this.ctx.stroke();
     };
-    Drawer.prototype.drawText = function (item, shiftX, shiftY, last) {
+    Drawer.prototype.drawText = function (item, last) {
         this.ctx.font = "30px 	'Permanent Marker'";
         this.ctx.fillStyle = 'black';
-        this.ctx.fillText(item.text + (last ? '_' : ''), item.raw[0].x + shiftX, item.raw[0].y + shiftY);
+        this.ctx.fillText(item.text + (last ? '_' : ''), item.raw[0].x, item.raw[0].y);
     };
-    Drawer.prototype.drawOriginal = function (item, shiftX, shiftY) {
+    Drawer.prototype.drawOriginal = function (item) {
         this.ctx.beginPath();
-        this.ctx.moveTo(item.raw[0].x + shiftX, item.raw[0].y + shiftY);
+        this.ctx.moveTo(item.raw[0].x, item.raw[0].y);
         for (var j = 1; j < item.raw.length; j++) {
-            this.ctx.lineTo(item.raw[j].x + shiftX, item.raw[j].y + shiftY);
+            this.ctx.lineTo(item.raw[j].x, item.raw[j].y);
         }
         this.ctx.stroke();
     };
-    Drawer.prototype.drawLine = function (item, shiftX, shiftY) {
+    Drawer.prototype.drawLine = function (item) {
         this.ctx.beginPath();
-        var temp = Transform.move(item.raw, shiftX, shiftY);
-        var pts = window.simplify(temp, 20, true);
+        var pts = window.simplify(item.raw, 20, true);
         this.ctx.moveTo(pts[0].x, pts[0].y);
         for (var j = 1; j < pts.length; j++) {
             this.ctx.lineTo(pts[j].x, pts[j].y);
         }
         this.ctx.stroke();
     };
-    Drawer.prototype.drawArrow = function (points, to, fromArrow, shiftX, shiftY, last) {
+    Drawer.prototype.drawArrow = function (points, to, fromArrow, last) {
         var distance = 20;
         if (to) {
             var p2 = points[points.length - 1];
@@ -484,7 +472,7 @@ var Drawer = (function () {
                     break;
                 }
             }
-            this.drawArrowBetweenPoints(p1, p2, shiftX, shiftY, last);
+            this.drawArrowBetweenPoints(p1, p2, last);
         }
         if (fromArrow) {
             var p2 = points[0];
@@ -496,10 +484,10 @@ var Drawer = (function () {
                     break;
                 }
             }
-            this.drawArrowBetweenPoints(p1, p2, shiftX, shiftY, last);
+            this.drawArrowBetweenPoints(p1, p2, last);
         }
     };
-    Drawer.prototype.drawArrowBetweenPoints = function (p1, p2, shiftX, shiftY, last) {
+    Drawer.prototype.drawArrowBetweenPoints = function (p1, p2, last) {
         var dist = Utility.distance(p1, p2);
         var angle = Math.acos((p2.y - p1.y) / dist);
         if (p2.x < p1.x)
@@ -507,7 +495,7 @@ var Drawer = (function () {
         var size = 15;
         this.ctx.save();
         this.ctx.beginPath();
-        this.ctx.translate(p2.x - shiftX, p2.y - shiftY);
+        this.ctx.translate(p2.x, p2.y);
         this.ctx.rotate(-angle);
         this.ctx.lineWidth = 6;
         this.ctx.strokeStyle = last ? '#777' : '#000000';
@@ -519,10 +507,9 @@ var Drawer = (function () {
         this.ctx.stroke();
         this.ctx.restore();
     };
-    Drawer.prototype.drawSmoothLine = function (item, shiftX, shiftY) {
+    Drawer.prototype.drawSmoothLine = function (item) {
         this.ctx.beginPath();
-        var temp = Transform.move(item.raw, shiftX, shiftY);
-        var pts = window.simplify(temp, 20, true);
+        var pts = window.simplify(item.raw, 20, true);
         var cps = [];
         for (var i = 0; i < pts.length - 2; i += 1) {
             cps = cps.concat(Utility.controlPoints(pts[i], pts[i + 1], pts[i + 2]));
@@ -550,38 +537,28 @@ var Drawer = (function () {
             this.ctx.stroke();
         }
     };
-    Drawer.prototype.drawStraightLine = function (item, shiftX, shiftY) {
+    Drawer.prototype.drawStraightLine = function (item) {
         this.ctx.beginPath();
-        this.ctx.moveTo(item.raw[0].x + shiftX, item.raw[0].y + shiftY);
-        this.ctx.lineTo(item.raw[item.raw.length - 1].x + shiftX, item.raw[item.raw.length - 1].y + shiftY);
+        this.ctx.moveTo(item.raw[0].x, item.raw[0].y);
+        this.ctx.lineTo(item.raw[item.raw.length - 1].x, item.raw[item.raw.length - 1].y);
         this.ctx.stroke();
     };
-    Drawer.prototype.drawRectPoints = function (points) {
-        var b = Drawer.getBounds(points);
+    Drawer.prototype.drawRect = function (item) {
+        var b = Drawer.getBounds(item.raw);
         this.ctx.beginPath();
         this.ctx.moveTo(b.xmin, b.ymin);
         this.ctx.lineTo(b.xmax, b.ymin);
-        this.ctx.lineTo(b.xmax, b.ymax);
-        this.ctx.lineTo(b.xmin, b.ymax);
+        this.ctx.lineTo(b.xmax - 0, b.ymax);
+        this.ctx.lineTo(b.xmin - 0, b.ymax);
         this.ctx.lineTo(b.xmin, b.ymin);
         this.ctx.stroke();
     };
-    Drawer.prototype.drawRect = function (item, shiftX, shiftY) {
-        var b = Drawer.getBounds(item.raw);
-        this.ctx.beginPath();
-        this.ctx.moveTo(b.xmin + shiftX, b.ymin + shiftY);
-        this.ctx.lineTo(b.xmax + shiftX, b.ymin + shiftY);
-        this.ctx.lineTo(b.xmax + shiftX - 0, b.ymax + shiftY);
-        this.ctx.lineTo(b.xmin + shiftX - 0, b.ymax + shiftY);
-        this.ctx.lineTo(b.xmin + shiftX, b.ymin + shiftY);
-        this.ctx.stroke();
-    };
-    Drawer.prototype.drawHuman = function (item, shiftX, shiftY) {
+    Drawer.prototype.drawHuman = function (item) {
         var b = Drawer.getBounds(item.raw);
         var height = b.ymax - b.ymin;
         var headSize = height / 3 / 2;
-        var headCenterX = b.centerX + shiftX;
-        var headCenterY = b.ymin + headSize + shiftY;
+        var headCenterX = b.centerX;
+        var headCenterY = b.ymin + headSize;
         var bodyHeight = height / 3;
         var legsHeight = height / 3;
         var bodyStartY = headCenterY + headSize;
@@ -606,7 +583,7 @@ var Drawer = (function () {
         this.ctx.lineTo(headCenterX + headSize * armsKX, bodyStartY + bodyHeight * armsKY);
         this.ctx.stroke();
     };
-    Drawer.prototype.drawCircle = function (item, shiftX, shiftY) {
+    Drawer.prototype.drawCircle = function (item) {
         var b = Drawer.getBounds(item.raw);
         this.ctx.beginPath();
         var x = (b.xmax - b.xmin) / 2 + b.xmin;
@@ -614,10 +591,10 @@ var Drawer = (function () {
         var radiusX = (b.xmax - b.xmin) / 2;
         var radiusY = (b.ymax - b.ymin) / 2;
         var radius = Math.min(radiusX, radiusY);
-        this.ctx.arc(x + shiftX, y + shiftY, radius, 0, 2 * Math.PI, false);
+        this.ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
         this.ctx.stroke();
     };
-    Drawer.prototype.drawEllipse = function (item, shiftX, shiftY) {
+    Drawer.prototype.drawEllipse = function (item) {
         var b = Drawer.getBounds(item.raw);
         var x = (b.xmax - b.xmin) / 2 + b.xmin;
         var y = (b.ymax - b.ymin) / 2 + b.ymin;
@@ -625,7 +602,7 @@ var Drawer = (function () {
         var radiusY = (b.ymax - b.ymin) / 2;
         var radius = Math.min(radiusX, radiusY);
         this.ctx.beginPath();
-        this.ctx.ellipse(x + shiftX, y + shiftY, radiusX, radiusY, 0, 0, 2 * Math.PI, false);
+        this.ctx.ellipse(x, y, radiusX, radiusY, 0, 0, 2 * Math.PI, false);
         this.ctx.stroke();
     };
     Drawer.prototype.setupStroke = function (item, last) {

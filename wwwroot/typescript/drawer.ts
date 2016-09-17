@@ -20,27 +20,57 @@ class Drawer {
 		this.activeDrawing = activeDrawing;
 
 		for(var i = 0; i < this.source.items.length; i++) {
-			var item = this.source.items[i];
+			var item = Utility.clone(this.source.items[i]);
 			var last = i == this.source.items.length - 1;
 
-			this.ctx.save();
 			var b = Drawer.getBounds(item.raw);
-			var shiftX = b.centerX;
-			var shiftY = b.centerY;
+			item.raw = Transform.scale(item.raw, new Point(b.centerX, b.centerY), item.sizeK, item.sizeK);
+			item.raw = Transform.move(item.raw, item.moveX, item.moveY);
 			
-			if (item.shape == Shape.Rectangle) {
-				
-				var points = Transform.scale(item.raw, new Point(shiftX, shiftY), item.sizeK, item.sizeK);
-				points = Transform.move(points, item.moveX, item.moveY);
-				
-				this.drawRectPoints(points);
-				continue;
+			this.setupStroke(item, last);
+
+			switch(item.shape) {
+				case Shape.Original: 
+					this.drawOriginal(item);
+					break;
+
+				case Shape.Rectangle:
+					this.drawRect(item);
+					break;
+
+				case Shape.Circle:
+					this.drawCircle(item);	
+					break;
+
+				case Shape.Ellipse:
+					this.drawEllipse(item);
+					break;
+
+				case Shape.Line:
+					this.drawLine(item);
+					break;
+
+				case Shape.SmoothLine:
+					this.drawSmoothLine(item);
+					break;
+
+				case Shape.StraightLine:
+					this.drawStraightLine(item);
+					break;
+
+				case Shape.Text:
+					this.drawText(item, last);
+					break;
+
+				case Shape.Eraser:
+					this.drawEraser(item, last);
+					break;
+
+				case Shape.Human:
+					this.drawHuman(item);
+					break;
 			}
 
-			//this.ctx.translate(shiftX + item.moveX, shiftY + item.moveY);
-			//this.ctx.scale(item.sizeK, item.sizeK);
-			
-			this.drawItem(item, -shiftX, -shiftY, last);
 
 			if (item.shape == Shape.Original ||
 				item.shape == Shape.Line ||
@@ -48,100 +78,53 @@ class Drawer {
 				item.shape == Shape.StraightLine) {
 
 				var points = item.raw;
+
 				if (item.shape == Shape.StraightLine) 
 					points = [points[0], points[points.length - 1]];
 
-				this.drawArrow(points, item.lineArrowEnd, item.lineArrowStart, shiftX, shiftY, last);
+				this.drawArrow(points, item.lineArrowEnd, item.lineArrowStart, last);
 			}
-
-			this.ctx.restore();
 		}
 	}
 
-	drawItem(item: Item, shiftX: number, shiftY: number, last: boolean) {
-		this.setupStroke(item, last);
-
-		switch(item.shape) {
-			case Shape.Original: 
-				this.drawOriginal(item, shiftX, shiftY);
-				break;
-
-			case Shape.Rectangle:
-				this.drawRect(item, shiftX, shiftY);
-				break;
-
-			case Shape.Circle:
-				this.drawCircle(item, shiftX, shiftY);	
-				break;
-
-			case Shape.Ellipse:
-				this.drawEllipse(item, shiftX, shiftY);
-				break;
-
-			case Shape.Line:
-				this.drawLine(item, shiftX, shiftY);
-				break;
-
-			case Shape.SmoothLine:
-				this.drawSmoothLine(item, shiftX, shiftY);
-				break;
-
-			case Shape.StraightLine:
-				this.drawStraightLine(item, shiftX, shiftY);
-				break;
-
-			case Shape.Text:
-				this.drawText(item, shiftX, shiftY, last);
-				break;
-
-			case Shape.Eraser:
-				this.drawEraser(item, shiftX, shiftY, last);
-				break;
-
-			case Shape.Human:
-				this.drawHuman(item, shiftX, shiftY);
-				break;
-		}
-	}
-
-	drawEraser(item: Item, shiftX: number, shiftY: number, last: boolean) {
+	drawEraser(item: Item, last: boolean) {
 		this.ctx.lineWidth = 30;
 		this.ctx.lineJoin = this.ctx.lineCap = 'round';
 		this.ctx.strokeStyle = this.activeDrawing && last ? '#F9F9F9' : '#FFFFFF';
 		this.ctx.shadowColor = 'transparent';
 
 		this.ctx.beginPath();
-		this.ctx.moveTo(item.raw[0].x + shiftX, item.raw[0].y + shiftY);
+		this.ctx.moveTo(item.raw[0].x, item.raw[0].y);
 
 		for(var j = 1; j < item.raw.length; j++) {
-			this.ctx.lineTo(item.raw[j].x + shiftX, item.raw[j].y + shiftY);
+			this.ctx.lineTo(item.raw[j].x, item.raw[j].y);
 		}
 
 		this.ctx.stroke();
 	}
 
-	drawText(item: Item, shiftX: number, shiftY: number, last: boolean) {
+	drawText(item: Item, last: boolean) {
 		this.ctx.font = "30px 	'Permanent Marker'";
 		this.ctx.fillStyle = 'black';
-		this.ctx.fillText(item.text + (last ? '_' : ''), item.raw[0].x + shiftX, item.raw[0].y + shiftY);		
+		this.ctx.fillText(item.text + (last ? '_' : ''), item.raw[0].x, item.raw[0].y);		
 	}
 
-	drawOriginal(item: Item, shiftX: number, shiftY: number) {
+	drawOriginal(item: Item) {
 		this.ctx.beginPath();
-		this.ctx.moveTo(item.raw[0].x + shiftX, item.raw[0].y + shiftY);
+		this.ctx.moveTo(item.raw[0].x, item.raw[0].y);
 
 		for(var j = 1; j < item.raw.length; j++) {
-			this.ctx.lineTo(item.raw[j].x + shiftX, item.raw[j].y + shiftY);
+			this.ctx.lineTo(item.raw[j].x, item.raw[j].y);
 		}
 
 		this.ctx.stroke();
 	}
 
-	drawLine(item: Item, shiftX: number, shiftY: number) {
+	drawLine(item: Item) {
 		this.ctx.beginPath();
 
-		var temp: Point[] = Transform.move(item.raw, shiftX, shiftY);		
-		var pts = window.simplify(temp, 20, true);
+	
+		var pts = window.simplify(item.raw, 20, true);
 
 		this.ctx.moveTo(pts[0].x, pts[0].y);
 
@@ -152,7 +135,7 @@ class Drawer {
 		this.ctx.stroke();
 	}
 
-	drawArrow(points: Point[], to: boolean, fromArrow: boolean, shiftX: number, shiftY: number, last: boolean) {
+	drawArrow(points: Point[], to: boolean, fromArrow: boolean, last: boolean) {
 		var distance = 20;
 
 		if (to) {
@@ -167,7 +150,7 @@ class Drawer {
 				}
 			}
 
-			this.drawArrowBetweenPoints(p1, p2, shiftX, shiftY, last);
+			this.drawArrowBetweenPoints(p1, p2, last);
 		}
 
 		if (fromArrow) {
@@ -182,11 +165,11 @@ class Drawer {
 				}
 			}
 
-			this.drawArrowBetweenPoints(p1, p2, shiftX, shiftY, last);
+			this.drawArrowBetweenPoints(p1, p2, last);
 		}
 	}
 
-	drawArrowBetweenPoints(p1: Point, p2: Point, shiftX: number, shiftY: number, last: boolean) {
+	drawArrowBetweenPoints(p1: Point, p2: Point, last: boolean) {
 		var dist = Utility.distance(p1, p2);
 		var angle = Math.acos((p2.y - p1.y) / dist);
 
@@ -196,7 +179,7 @@ class Drawer {
 
 		this.ctx.save();
 		this.ctx.beginPath();
-		this.ctx.translate(p2.x - shiftX, p2.y - shiftY);
+		this.ctx.translate(p2.x, p2.y);
 		this.ctx.rotate(-angle);
 
 		this.ctx.lineWidth = 6;
@@ -213,11 +196,10 @@ class Drawer {
 		this.ctx.restore();
 	}
 
-	drawSmoothLine(item: Item, shiftX: number, shiftY: number) {
+	drawSmoothLine(item: Item) {
 		this.ctx.beginPath();
 
-		var temp: Point[] = Transform.move(item.raw, shiftX, shiftY);
-		var pts = window.simplify(temp, 20, true);
+		var pts = window.simplify(item.raw, 20, true);
 
 		var cps:Point[] = []; // There will be two control points for each "middle" point, 1 ... len-2e
 
@@ -266,48 +248,36 @@ class Drawer {
 
 
 
-	drawStraightLine(item: Item, shiftX: number, shiftY: number) {
+	drawStraightLine(item: Item) {
 		this.ctx.beginPath();
 
-		this.ctx.moveTo(item.raw[0].x + shiftX, item.raw[0].y + shiftY);
-		this.ctx.lineTo(item.raw[item.raw.length - 1].x + shiftX, item.raw[item.raw.length - 1].y + shiftY);
+		this.ctx.moveTo(item.raw[0].x, item.raw[0].y);
+		this.ctx.lineTo(item.raw[item.raw.length - 1].x, item.raw[item.raw.length - 1].y);
 
 		this.ctx.stroke();
 	}
 
-	drawRectPoints(points: Point[]) {
-		var b = Drawer.getBounds(points);
+	drawRect(item: Item) {
+		var b = Drawer.getBounds(item.raw);
   
 		this.ctx.beginPath();
 		this.ctx.moveTo(b.xmin, b.ymin);
 		this.ctx.lineTo(b.xmax, b.ymin);
-		this.ctx.lineTo(b.xmax, b.ymax);
-		this.ctx.lineTo(b.xmin, b.ymax);
+		this.ctx.lineTo(b.xmax - 0, b.ymax); // Tilt it a little
+		this.ctx.lineTo(b.xmin - 0, b.ymax); // Tilt it a little
 		this.ctx.lineTo(b.xmin, b.ymin);
 		this.ctx.stroke();
 	}
 
-	drawRect(item: Item, shiftX: number, shiftY: number) {
-		var b = Drawer.getBounds(item.raw);
-  
-		this.ctx.beginPath();
-		this.ctx.moveTo(b.xmin + shiftX, b.ymin + shiftY);
-		this.ctx.lineTo(b.xmax + shiftX, b.ymin + shiftY);
-		this.ctx.lineTo(b.xmax + shiftX - 0, b.ymax + shiftY); // Tilt it a little
-		this.ctx.lineTo(b.xmin + shiftX - 0, b.ymax + shiftY); // Tilt it a little
-		this.ctx.lineTo(b.xmin + shiftX, b.ymin + shiftY);
-		this.ctx.stroke();
-	}
-
-	drawHuman(item: Item, shiftX: number, shiftY: number) {
+	drawHuman(item: Item) {
 		var b = Drawer.getBounds(item.raw);
   
 		
 
 		var height = b.ymax - b.ymin;
 		var headSize = height / 3 / 2;
-		var headCenterX = b.centerX + shiftX;
-		var headCenterY = b.ymin + headSize + shiftY;
+		var headCenterX = b.centerX;
+		var headCenterY = b.ymin + headSize;
 
 		var bodyHeight = height / 3;
 		var legsHeight = height / 3;
@@ -342,7 +312,7 @@ class Drawer {
 		this.ctx.stroke();
 	}
 
-	drawCircle(item: Item, shiftX: number, shiftY: number) {
+	drawCircle(item: Item) {
 		var b = Drawer.getBounds(item.raw);
   
 		this.ctx.beginPath();
@@ -354,11 +324,11 @@ class Drawer {
 		var radiusY = (b.ymax-b.ymin)/2;
 		var radius = Math.min(radiusX, radiusY);
 		
-		this.ctx.arc(x + shiftX, y + shiftY, radius, 0, 2 * Math.PI, false);
+		this.ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
 		this.ctx.stroke();
 	}
 
-	drawEllipse(item: Item, shiftX: number, shiftY: number) {
+	drawEllipse(item: Item) {
 		var b = Drawer.getBounds(item.raw);
 		
 		var x = (b.xmax - b.xmin)/2 + b.xmin;
@@ -369,7 +339,7 @@ class Drawer {
 		var radius = Math.min(radiusX, radiusY);
 		 
 		this.ctx.beginPath();
-		this.ctx.ellipse(x + shiftX, y + shiftY, radiusX, radiusY, 0, 0, 2 * Math.PI, false);
+		this.ctx.ellipse(x, y, radiusX, radiusY, 0, 0, 2 * Math.PI, false);
 		this.ctx.stroke();
 	}
 
