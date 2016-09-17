@@ -83,7 +83,6 @@ class Director {
 			});
 
 		this.canvas.addEventListener('touchstart', (e: TouchEvent) => {
-			console.log(e);
 			e.preventDefault();
 
 			if (e.changedTouches.length > 1)

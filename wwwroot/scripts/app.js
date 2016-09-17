@@ -64,7 +64,6 @@ var Director = (function () {
             return false;
         });
         this.canvas.addEventListener('touchstart', function (e) {
-            console.log(e);
             e.preventDefault();
             if (e.changedTouches.length > 1)
                 return;
