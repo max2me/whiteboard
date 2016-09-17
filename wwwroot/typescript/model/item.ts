@@ -30,8 +30,15 @@ class Item {
 	}
 
 	clone() : Item {
-		var result = JSON.parse(JSON.stringify(this));
-		result.id = this.generateNewId(); 
+		var result = new Item();
+		result.shape = this.shape;
+		result.text = this.text;
+		result.sizeK = this.sizeK;
+		result.moveX = this.moveX;
+		result.moveY = this.moveY;
+		result.lineArrowStart = this.lineArrowStart; 
+		result.lineArrowEnd = this.lineArrowEnd;
+		result.raw = Utility.clone(this.raw); 
 
 		return result;
 	}

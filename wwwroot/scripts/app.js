@@ -11,23 +11,6 @@ $(function () {
         $('body').toggleClass('show-instructions');
     });
 });
-var Mode;
-(function (Mode) {
-    Mode[Mode["Drawing"] = 0] = "Drawing";
-    Mode[Mode["DrawingSteps"] = 1] = "DrawingSteps";
-    Mode[Mode["Scaling"] = 2] = "Scaling";
-    Mode[Mode["Moving"] = 3] = "Moving";
-    Mode[Mode["PreparingToPan"] = 4] = "PreparingToPan";
-    Mode[Mode["Panning"] = 5] = "Panning";
-    Mode[Mode["None"] = 6] = "None";
-})(Mode || (Mode = {}));
-var View = (function () {
-    function View() {
-        this.panX = 0;
-        this.panY = 0;
-    }
-    return View;
-}());
 var Director = (function () {
     function Director() {
     }
@@ -419,6 +402,16 @@ var Drawer = (function () {
     };
     return Drawer;
 }());
+var Mode;
+(function (Mode) {
+    Mode[Mode["Drawing"] = 0] = "Drawing";
+    Mode[Mode["DrawingSteps"] = 1] = "DrawingSteps";
+    Mode[Mode["Scaling"] = 2] = "Scaling";
+    Mode[Mode["Moving"] = 3] = "Moving";
+    Mode[Mode["PreparingToPan"] = 4] = "PreparingToPan";
+    Mode[Mode["Panning"] = 5] = "Panning";
+    Mode[Mode["None"] = 6] = "None";
+})(Mode || (Mode = {}));
 var Syncer = (function () {
     function Syncer(source, drawer) {
         this.source = source;
@@ -477,6 +470,13 @@ var Syncer = (function () {
         this.source.removeLast();
     };
     return Syncer;
+}());
+var View = (function () {
+    function View() {
+        this.panX = 0;
+        this.panY = 0;
+    }
+    return View;
 }());
 var Drawers;
 (function (Drawers) {
@@ -746,8 +746,15 @@ var Item = (function () {
         this.raw.push(new Point(x, y));
     };
     Item.prototype.clone = function () {
-        var result = JSON.parse(JSON.stringify(this));
-        result.id = this.generateNewId();
+        var result = new Item();
+        result.shape = this.shape;
+        result.text = this.text;
+        result.sizeK = this.sizeK;
+        result.moveX = this.moveX;
+        result.moveY = this.moveY;
+        result.lineArrowStart = this.lineArrowStart;
+        result.lineArrowEnd = this.lineArrowEnd;
+        result.raw = Utility.clone(this.raw);
         return result;
     };
     Item.prototype.isLine = function () {

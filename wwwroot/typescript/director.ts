@@ -3,26 +3,6 @@ interface Window {
 	keysight: any;
 }
 
-enum Mode {
-	Drawing,
-	DrawingSteps,
-	Scaling,
-	Moving,
-	PreparingToPan,
-	Panning,
-	None
-}
-
-class View {
-	panX: number;
-	panY: number;
-
-	constructor() {
-		this.panX = 0;
-		this.panY = 0;
-	}
-}
-
 class Director {
 	canvas: HTMLElement;
 	source: Source;
@@ -108,8 +88,6 @@ class Director {
 
 			self.interactionUp();
 		});
-
-			
 	}
 
 	interactionDown(clientX: number, clientY: number, ctrlKey: boolean, altKey: boolean, shiftKey: boolean, button: number = 1) {
@@ -293,10 +271,13 @@ class Director {
 
 		if (e.ctrlKey && e.shiftKey)
 			html = 'mode-steps';
+
 		else if (e.ctrlKey)
 			html = 'mode-scaling';
+
 		else if (e.shiftKey)
 			html = 'mode-moving';
+
 		else if (e.altKey)
 			html = 'mode-cloning';
 
@@ -393,7 +374,7 @@ class Director {
 		this.syncer.send();
 	}
 
-	switchShape(shape: Shape) {
+	private switchShape(shape: Shape) {
 		if (this.source.isEmpty())
 			return;
 
