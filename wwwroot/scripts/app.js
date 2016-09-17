@@ -230,6 +230,8 @@ var Director = (function () {
     Director.prototype.getHtmlClass = function (e) {
         var html = '';
         if (this.mode == Mode.PreparingToPan)
+            html = 'mode-preparing2pan';
+        if (this.mode == Mode.Panning)
             html = 'mode-panning';
         if (e.ctrlKey && e.shiftKey)
             html = 'mode-steps';
