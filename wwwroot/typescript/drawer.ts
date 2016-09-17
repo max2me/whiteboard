@@ -35,8 +35,12 @@ class Drawer {
 			var item = Utility.clone(this.source.items[i]);
 			var last = i == this.source.items.length - 1;
 
-			var b = Utility.getBounds(item.raw);
-			item.raw = Transform.scale(item.raw, new Point(b.centerX, b.centerY), item.sizeK, item.sizeK);
+			var bounds = Utility.getBounds(item.raw);
+			var itemCenter = new Point(bounds.centerX, bounds.centerY);
+			var canvasCenter = new Point(0, 0);
+
+			item.raw = Transform.scale(item.raw, canvasCenter, this.view.zoom, this.view.zoom);
+			item.raw = Transform.scale(item.raw, new Point(itemCenter.x, itemCenter.y), item.sizeK, item.sizeK);
 			item.raw = Transform.move(item.raw, item.moveX + this.view.panX, item.moveY + this.view.panY);
 			
 			switch(item.shape) {
@@ -73,7 +77,7 @@ class Drawer {
 					break;
 
 				case Shape.Text:
-					this.text.text(item, last);
+					this.text.text(item, last, this.view.zoom);
 					break;
 
 				case Shape.Eraser:

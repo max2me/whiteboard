@@ -61,6 +61,12 @@ class Director {
 			return false;
 		});
 
+		this.canvas.addEventListener('wheel', (e: WheelEvent) => {
+			var k = e.deltaY < 0 ? 1.05 : 0.95;
+			self.view.zoom *= k;
+			self.drawer.redraw(false);
+		});
+
 		this.canvas.addEventListener('touchstart', (e: TouchEvent) => {
 			e.preventDefault();
 
@@ -142,7 +148,7 @@ class Director {
 		if (this.mode == Mode.DrawingSteps) {
 			var item = this.source.last();
 			item.raw.pop();
-			item.record(clientX - this.view.panX, clientY - this.view.panY);
+			item.record(this.normalize(clientX, clientY));
 			this.drawer.redraw(true);
 
 		} else if (this.mode == Mode.Scaling) {
@@ -162,7 +168,7 @@ class Director {
 			this.view.panY = this.initPanningY + (clientY - this.initPanningPoint.y); 
 
 		} else {
-			this.source.last().record(clientX - this.view.panX, clientY - this.view.panY);
+			this.source.last().record(this.normalize(clientX, clientY));
 		}
 
 		this.syncer.send();
@@ -170,13 +176,14 @@ class Director {
 	}
 
 	startTyping(clientX: number, clientY: number) {
-		this.source.start(clientX - this.view.panX, clientY - this.view.panY);
+		this.source.start(this.normalize(clientX, clientY));
 		this.source.last().shape = Shape.Text;
+		this.source.last().fontSizeK = 1 / this.view.zoom;
 		this.drawer.redraw(true);
 	}
 	
 	startDrawing(clientX: number, clientY: number) {
-		this.source.start(clientX - this.view.panX, clientY - this.view.panY);
+		this.source.start(this.normalize(clientX, clientY));
 		this.mode = Mode.Drawing;
 	}
 
@@ -184,7 +191,7 @@ class Director {
 		if (this.source.isEmpty())
 			return;
 
-		this.source.start(clientX - this.view.panX, clientY - this.view.panY);
+		this.source.start(this.normalize(clientX, clientY));
 		this.source.last().shape = Shape.Eraser;
 		this.mode = Mode.Drawing;
 	}
@@ -199,11 +206,11 @@ class Director {
 	startDrawingSteps(clientX: number, clientY: number) {
 		if (this.mode == Mode.None) {
 			this.mode = Mode.DrawingSteps;
-			this.source.start(clientX - this.view.panX, clientY - this.view.panY);
-			this.source.last().record(clientX - this.view.panX, clientY - this.view.panY);
+			this.source.start(this.normalize(clientX, clientY));
+			this.source.last().record(this.normalize(clientX, clientY));
 
 		} else if (this.mode == Mode.DrawingSteps) {
-			this.source.last().record(clientX - this.view.panX, clientY - this.view.panY);
+			this.source.last().record(this.normalize(clientX, clientY));
 		}
 	}
 
@@ -373,7 +380,14 @@ class Director {
 		this.syncer.send();
 	}
 
-	private switchShape(shape: Shape) {
+	normalize(x: number, y: number): Point {
+		var newX = x - this.view.panX;
+		var newY = y - this.view.panY;
+
+		return new Point(newX / this.view.zoom, newY / this.view.zoom);
+	}
+
+	switchShape(shape: Shape) {
 		if (this.source.isEmpty())
 			return;
 

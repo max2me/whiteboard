@@ -45,6 +45,11 @@ var Director = (function () {
             self.startTyping(e.clientX, e.clientY);
             return false;
         });
+        this.canvas.addEventListener('wheel', function (e) {
+            var k = e.deltaY < 0 ? 1.05 : 0.95;
+            self.view.zoom *= k;
+            self.drawer.redraw(false);
+        });
         this.canvas.addEventListener('touchstart', function (e) {
             e.preventDefault();
             if (e.changedTouches.length > 1)
@@ -113,7 +118,7 @@ var Director = (function () {
         if (this.mode == Mode.DrawingSteps) {
             var item = this.source.last();
             item.raw.pop();
-            item.record(clientX - this.view.panX, clientY - this.view.panY);
+            item.record(this.normalize(clientX, clientY));
             this.drawer.redraw(true);
         }
         else if (this.mode == Mode.Scaling) {
@@ -132,24 +137,25 @@ var Director = (function () {
             this.view.panY = this.initPanningY + (clientY - this.initPanningPoint.y);
         }
         else {
-            this.source.last().record(clientX - this.view.panX, clientY - this.view.panY);
+            this.source.last().record(this.normalize(clientX, clientY));
         }
         this.syncer.send();
         this.drawer.redraw(true);
     };
     Director.prototype.startTyping = function (clientX, clientY) {
-        this.source.start(clientX - this.view.panX, clientY - this.view.panY);
+        this.source.start(this.normalize(clientX, clientY));
         this.source.last().shape = Shape.Text;
+        this.source.last().fontSizeK = 1 / this.view.zoom;
         this.drawer.redraw(true);
     };
     Director.prototype.startDrawing = function (clientX, clientY) {
-        this.source.start(clientX - this.view.panX, clientY - this.view.panY);
+        this.source.start(this.normalize(clientX, clientY));
         this.mode = Mode.Drawing;
     };
     Director.prototype.startErasing = function (clientX, clientY) {
         if (this.source.isEmpty())
             return;
-        this.source.start(clientX - this.view.panX, clientY - this.view.panY);
+        this.source.start(this.normalize(clientX, clientY));
         this.source.last().shape = Shape.Eraser;
         this.mode = Mode.Drawing;
     };
@@ -161,11 +167,11 @@ var Director = (function () {
     Director.prototype.startDrawingSteps = function (clientX, clientY) {
         if (this.mode == Mode.None) {
             this.mode = Mode.DrawingSteps;
-            this.source.start(clientX - this.view.panX, clientY - this.view.panY);
-            this.source.last().record(clientX - this.view.panX, clientY - this.view.panY);
+            this.source.start(this.normalize(clientX, clientY));
+            this.source.last().record(this.normalize(clientX, clientY));
         }
         else if (this.mode == Mode.DrawingSteps) {
-            this.source.last().record(clientX - this.view.panX, clientY - this.view.panY);
+            this.source.last().record(this.normalize(clientX, clientY));
         }
     };
     Director.prototype.startMoving = function (clientX, clientY) {
@@ -314,6 +320,11 @@ var Director = (function () {
         }
         this.syncer.send();
     };
+    Director.prototype.normalize = function (x, y) {
+        var newX = x - this.view.panX;
+        var newY = y - this.view.panY;
+        return new Point(newX / this.view.zoom, newY / this.view.zoom);
+    };
     Director.prototype.switchShape = function (shape) {
         if (this.source.isEmpty())
             return;
@@ -346,8 +357,11 @@ var Drawer = (function () {
         for (var i = 0; i < this.source.items.length; i++) {
             var item = Utility.clone(this.source.items[i]);
             var last = i == this.source.items.length - 1;
-            var b = Utility.getBounds(item.raw);
-            item.raw = Transform.scale(item.raw, new Point(b.centerX, b.centerY), item.sizeK, item.sizeK);
+            var bounds = Utility.getBounds(item.raw);
+            var itemCenter = new Point(bounds.centerX, bounds.centerY);
+            var canvasCenter = new Point(0, 0);
+            item.raw = Transform.scale(item.raw, canvasCenter, this.view.zoom, this.view.zoom);
+            item.raw = Transform.scale(item.raw, new Point(itemCenter.x, itemCenter.y), item.sizeK, item.sizeK);
             item.raw = Transform.move(item.raw, item.moveX + this.view.panX, item.moveY + this.view.panY);
             switch (item.shape) {
                 case Shape.Original:
@@ -375,7 +389,7 @@ var Drawer = (function () {
                     this.lines.straight(item, last);
                     break;
                 case Shape.Text:
-                    this.text.text(item, last);
+                    this.text.text(item, last, this.view.zoom);
                     break;
                 case Shape.Eraser:
                     this.drawEraser(item, last);
@@ -718,8 +732,8 @@ var Drawers;
         function Text() {
             _super.apply(this, arguments);
         }
-        Text.prototype.text = function (item, last) {
-            var size = 30 * item.sizeK;
+        Text.prototype.text = function (item, last, zoom) {
+            var size = 30 * item.sizeK * item.fontSizeK * zoom;
             this.ctx.font = size + "px 	'Permanent Marker'";
             this.ctx.fillStyle = 'black';
             this.ctx.fillText(item.text + (last ? '_' : ''), item.raw[0].x, item.raw[0].y);
@@ -735,6 +749,7 @@ var Item = (function () {
         this.shape = Shape.Original;
         this.text = '';
         this.sizeK = 1;
+        this.fontSizeK = 1;
         this.moveX = 0;
         this.moveY = 0;
         this.lineArrowEnd = false;
@@ -743,14 +758,15 @@ var Item = (function () {
     Item.prototype.generateNewId = function () {
         return 'id' + Math.round(Math.random() * 1000000);
     };
-    Item.prototype.record = function (x, y) {
-        this.raw.push(new Point(x, y));
+    Item.prototype.record = function (point) {
+        this.raw.push(new Point(point.x, point.y));
     };
     Item.prototype.clone = function () {
         var result = new Item();
         result.shape = this.shape;
         result.text = this.text;
         result.sizeK = this.sizeK;
+        result.fontSizeK = this.fontSizeK;
         result.moveX = this.moveX;
         result.moveY = this.moveY;
         result.lineArrowStart = this.lineArrowStart;
@@ -794,9 +810,9 @@ var Source = (function () {
     Source.prototype.push = function (item) {
         this.items.push(item);
     };
-    Source.prototype.start = function (x, y) {
+    Source.prototype.start = function (point) {
         var item = new Item();
-        item.record(x, y);
+        item.record(point);
         this.items.push(item);
     };
     Source.prototype.isEmpty = function () {

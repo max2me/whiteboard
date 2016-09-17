@@ -4,6 +4,7 @@ class Item {
 	shape: Shape;
 	text: string;
 	sizeK: number;
+	fontSizeK: number;
 	moveX: number;
 	moveY: number;
 	lineArrowEnd: boolean;
@@ -15,6 +16,7 @@ class Item {
 		this.shape = Shape.Original;
 		this.text = '';
 		this.sizeK = 1;
+		this.fontSizeK = 1;
 		this.moveX = 0;
 		this.moveY = 0;
 		this.lineArrowEnd = false;
@@ -25,8 +27,8 @@ class Item {
 		return 'id' + Math.round(Math.random() * 1000000);
 	}
 
-	record(x: number, y: number) {
-		this.raw.push(new Point(x, y));
+	record(point: Point) {
+		this.raw.push(new Point(point.x, point.y)); // Kinda sketchy but need to make sure we dont retain old refs
 	}
 
 	clone() : Item {
@@ -34,6 +36,7 @@ class Item {
 		result.shape = this.shape;
 		result.text = this.text;
 		result.sizeK = this.sizeK;
+		result.fontSizeK = this.fontSizeK;
 		result.moveX = this.moveX;
 		result.moveY = this.moveY;
 		result.lineArrowStart = this.lineArrowStart; 

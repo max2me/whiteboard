@@ -13,9 +13,9 @@ class Source {
 		this.items.push(item);
 	}
 
-	start(x: number, y: number) {
+	start(point: Point) {
 		var item = new Item();
-		item.record(x, y);
+		item.record(point);
 
 		this.items.push(item);
 	}
