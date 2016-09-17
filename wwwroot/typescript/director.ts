@@ -42,25 +42,24 @@ class Director {
 		this.drawer = new Drawer(this.canvas, this.source, this.view);
 		this.syncer = new Syncer(this.source, this.drawer);		
 
-		$(this.canvas)
-			.mousedown((e: MouseEvent) => {
-				e.preventDefault();
-				self.interactionDown(e.clientX, e.clientY, e.ctrlKey, e.altKey, e.shiftKey, e.button);
-			})
+		this.canvas.addEventListener('mousedown', (e: MouseEvent) => {
+			e.preventDefault();
+			self.interactionDown(e.clientX, e.clientY, e.ctrlKey, e.altKey, e.shiftKey, e.button);
+		});
 
-			.mousemove((e: MouseEvent) => {
-				self.interactionMove(e.clientX, e.clientY, e.ctrlKey, e.altKey, e.shiftKey, e.button);
-			})
+		this.canvas.addEventListener('mousemove', (e: MouseEvent) => {
+			self.interactionMove(e.clientX, e.clientY, e.ctrlKey, e.altKey, e.shiftKey, e.button);
+		});
 
-			.mouseup((e: MouseEvent) => {
-				e.preventDefault();
-				self.interactionUp();
-			})
+		this.canvas.addEventListener('mouseup', (e: MouseEvent) => {
+			e.preventDefault();
+			self.interactionUp();
+		});
 
-			.dblclick((e: MouseEvent) => {
-				self.startTyping(e.clientX, e.clientY);
-				return false;
-			});
+		this.canvas.addEventListener('dblclick', (e: MouseEvent) => {
+			self.startTyping(e.clientX, e.clientY);
+			return false;
+		});
 
 		this.canvas.addEventListener('touchstart', (e: TouchEvent) => {
 			e.preventDefault();

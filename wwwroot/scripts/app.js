@@ -30,19 +30,18 @@ var Director = (function () {
         this.canvas = document.getElementById('c');
         this.drawer = new Drawer(this.canvas, this.source, this.view);
         this.syncer = new Syncer(this.source, this.drawer);
-        $(this.canvas)
-            .mousedown(function (e) {
+        this.canvas.addEventListener('mousedown', function (e) {
             e.preventDefault();
             self.interactionDown(e.clientX, e.clientY, e.ctrlKey, e.altKey, e.shiftKey, e.button);
-        })
-            .mousemove(function (e) {
+        });
+        this.canvas.addEventListener('mousemove', function (e) {
             self.interactionMove(e.clientX, e.clientY, e.ctrlKey, e.altKey, e.shiftKey, e.button);
-        })
-            .mouseup(function (e) {
+        });
+        this.canvas.addEventListener('mouseup', function (e) {
             e.preventDefault();
             self.interactionUp();
-        })
-            .dblclick(function (e) {
+        });
+        this.canvas.addEventListener('dblclick', function (e) {
             self.startTyping(e.clientX, e.clientY);
             return false;
         });
@@ -475,6 +474,7 @@ var View = (function () {
     function View() {
         this.panX = 0;
         this.panY = 0;
+        this.zoom = 1;
     }
     return View;
 }());
@@ -719,7 +719,8 @@ var Drawers;
             _super.apply(this, arguments);
         }
         Text.prototype.text = function (item, last) {
-            this.ctx.font = "30px 	'Permanent Marker'";
+            var size = 30 * item.sizeK;
+            this.ctx.font = size + "px 	'Permanent Marker'";
             this.ctx.fillStyle = 'black';
             this.ctx.fillText(item.text + (last ? '_' : ''), item.raw[0].x, item.raw[0].y);
         };
