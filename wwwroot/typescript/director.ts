@@ -62,8 +62,17 @@ class Director {
 		});
 
 		this.canvas.addEventListener('wheel', (e: WheelEvent) => {
+			var oldZoom = self.view.zoom;
+
 			var k = e.deltaY < 0 ? 1.05 : 0.95;
 			self.view.zoom *= k;
+
+			var w = self.canvas.offsetWidth / 2;
+			var h = self.canvas.offsetHeight / 2;
+
+			self.view.panX -= w * (self.view.zoom - oldZoom); 
+			self.view.panY -= h * (self.view.zoom - oldZoom);
+			 
 			self.drawer.redraw(false);
 		});
 
