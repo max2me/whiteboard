@@ -129,8 +129,7 @@ var Director = (function () {
             this.move(clientX, clientY);
         }
         else if (this.mode == Mode.Panning) {
-            this.view.panX = this.initPanningX + (clientX - this.initPanningPoint.x);
-            this.view.panY = this.initPanningY + (clientY - this.initPanningPoint.y);
+            this.pan(clientX, clientY);
         }
         else {
             this.source.last().record(this.normalize(clientX, clientY));
@@ -184,8 +183,14 @@ var Director = (function () {
     Director.prototype.startPanning = function (clientX, clientY) {
         this.mode = Mode.Panning;
         this.initPanningPoint = new Point(clientX, clientY);
-        this.initPanningX = this.view.panX;
-        this.initPanningY = this.view.panY;
+    };
+    Director.prototype.pan = function (clientX, clientY) {
+        var current = new Point(clientX, clientY);
+        var deltaX = (current.x - this.initPanningPoint.x) / this.view.zoom;
+        this.view.panX += deltaX;
+        this.view.panY += (current.y - this.initPanningPoint.y) / this.view.zoom;
+        console.log(this.view.panX, deltaX, this.view.zoom);
+        this.initPanningPoint = current;
     };
     Director.prototype.startScaling = function (clientX, clientY) {
         this.mode = Mode.Scaling;
@@ -331,8 +336,8 @@ var Director = (function () {
         this.syncer.send();
     };
     Director.prototype.normalize = function (x, y) {
-        var newX = x - this.view.panX;
-        var newY = y - this.view.panY;
+        var newX = x / this.view.zoom - this.view.panX;
+        var newY = y / this.view.zoom - this.view.panY;
         return new Point(newX, newY);
     };
     Director.prototype.switchShape = function (shape) {

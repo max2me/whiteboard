@@ -13,10 +13,7 @@ class Director {
 
 	initScalingPoint: Point;
 	initMovingPoint: Point;
-
 	initPanningPoint: Point;
-	initPanningX: number;
-	initPanningY: number;
 
 	init() {
 		var self = this;
@@ -62,8 +59,6 @@ class Director {
 
 			var k = e.deltaY < 0 ? 1.05 : 0.95;
 			self.view.zoom *= k;
-
-
 
 			self.drawer.redraw(false);
 		});
@@ -159,8 +154,7 @@ class Director {
 			this.move(clientX, clientY);
 
 		} else if (this.mode == Mode.Panning) {
-			this.view.panX = this.initPanningX + (clientX - this.initPanningPoint.x); 
-			this.view.panY = this.initPanningY + (clientY - this.initPanningPoint.y); 
+			this.pan(clientX, clientY);
 
 		} else {
 			this.source.last().record(this.normalize(clientX, clientY));
@@ -209,6 +203,7 @@ class Director {
 		}
 	}
 
+	// Moving
 	startMoving(clientX: number, clientY: number) {
 		this.mode = Mode.Moving;
 		this.initMovingPoint = this.normalize(clientX, clientY);
@@ -225,11 +220,23 @@ class Director {
 		this.initMovingPoint = current;
 	}
 
+	// Panning
 	startPanning(clientX: number, clientY: number) {
 		this.mode = Mode.Panning;
 		this.initPanningPoint = new Point(clientX, clientY);
-		this.initPanningX = this.view.panX;
-		this.initPanningY = this.view.panY;
+	}
+
+	pan(clientX: number, clientY: number) {
+		var current = new Point(clientX, clientY);
+
+		var deltaX = (current.x - this.initPanningPoint.x) / this.view.zoom;
+
+		this.view.panX += deltaX; 
+		this.view.panY += (current.y - this.initPanningPoint.y) / this.view.zoom;
+
+		console.log(this.view.panX, deltaX, this.view.zoom);
+
+		this.initPanningPoint = current; 
 	}
 
 	startScaling(clientX: number, clientY: number) {
@@ -399,8 +406,8 @@ class Director {
 	}
 
 	normalize(x: number, y: number): Point {
-		var newX = x - this.view.panX;
-		var newY = y - this.view.panY;
+		var newX = x / this.view.zoom - this.view.panX;
+		var newY = y / this.view.zoom - this.view.panY;
 
 		return new Point(newX, newY);
 	}
