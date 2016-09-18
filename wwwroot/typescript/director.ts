@@ -23,8 +23,8 @@ class Director {
 		self.mode = Mode.None;
 
 		$('html')
-			.keydown(self.generalHotkeys.bind(this))
 			.keydown(self.textTyping.bind(this))
+			.keydown(self.generalHotkeys.bind(this))			
 			.keydown(self.syncUpHtmlStateDown.bind(this))
 			.keyup(self.syncUpHtmlStateUp.bind(this));
 
@@ -211,11 +211,11 @@ class Director {
 
 	startMoving(clientX: number, clientY: number) {
 		this.mode = Mode.Moving;
-		this.initMovingPoint = new Point(clientX, clientY);
+		this.initMovingPoint = this.normalize(clientX, clientY);
 	}
 
 	move(clientX: number, clientY: number) {
-		var current = new Point(clientX, clientY);
+		var current = this.normalize(clientX, clientY);
 
 		var shiftX = clientX - this.initMovingPoint.x;
 		var shiftY = clientY - this.initMovingPoint.y;
@@ -234,12 +234,11 @@ class Director {
 
 	startScaling(clientX: number, clientY: number) {
 		this.mode = Mode.Scaling;
-
-		this.initScalingPoint = new Point(clientX, clientY);
+		this.initScalingPoint = this.normalize(clientX, clientY);
 	}
 
 	scale(clientX: number, clientY: number) {
-		var current = new Point(clientX, clientY);
+		var current = this.normalize(clientX, clientY);
 		var item = this.source.last();
 		
 		var bounds = Utility.getBounds(item.raw);
@@ -403,7 +402,7 @@ class Director {
 		var newX = x - this.view.panX;
 		var newY = y - this.view.panY;
 
-		return new Point(newX / this.view.zoom, newY / this.view.zoom);
+		return new Point(newX, newY);
 	}
 
 	switchShape(shape: Shape) {

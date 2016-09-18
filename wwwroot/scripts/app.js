@@ -18,8 +18,8 @@ var Director = (function () {
         var self = this;
         self.mode = Mode.None;
         $('html')
-            .keydown(self.generalHotkeys.bind(this))
             .keydown(self.textTyping.bind(this))
+            .keydown(self.generalHotkeys.bind(this))
             .keydown(self.syncUpHtmlStateDown.bind(this))
             .keyup(self.syncUpHtmlStateUp.bind(this));
         $('canvas').on('contextmenu', function () {
@@ -172,10 +172,10 @@ var Director = (function () {
     };
     Director.prototype.startMoving = function (clientX, clientY) {
         this.mode = Mode.Moving;
-        this.initMovingPoint = new Point(clientX, clientY);
+        this.initMovingPoint = this.normalize(clientX, clientY);
     };
     Director.prototype.move = function (clientX, clientY) {
-        var current = new Point(clientX, clientY);
+        var current = this.normalize(clientX, clientY);
         var shiftX = clientX - this.initMovingPoint.x;
         var shiftY = clientY - this.initMovingPoint.y;
         this.source.last().raw = Transform.move(this.source.last().raw, shiftX, shiftY);
@@ -189,10 +189,10 @@ var Director = (function () {
     };
     Director.prototype.startScaling = function (clientX, clientY) {
         this.mode = Mode.Scaling;
-        this.initScalingPoint = new Point(clientX, clientY);
+        this.initScalingPoint = this.normalize(clientX, clientY);
     };
     Director.prototype.scale = function (clientX, clientY) {
-        var current = new Point(clientX, clientY);
+        var current = this.normalize(clientX, clientY);
         var item = this.source.last();
         var bounds = Utility.getBounds(item.raw);
         var center = new Point(bounds.centerX, bounds.centerY);
@@ -333,7 +333,7 @@ var Director = (function () {
     Director.prototype.normalize = function (x, y) {
         var newX = x - this.view.panX;
         var newY = y - this.view.panY;
-        return new Point(newX / this.view.zoom, newY / this.view.zoom);
+        return new Point(newX, newY);
     };
     Director.prototype.switchShape = function (shape) {
         if (this.source.isEmpty())
