@@ -55,7 +55,7 @@ namespace Drawers {
 
 			this.ctx.beginPath();
 
-			var pts = window.simplify(item.raw, 20 * item.sizeK, true);
+			var pts = window.simplify(item.raw, 20, true);
 
 			var cps:Point[] = []; // There will be two control points for each "middle" point, 1 ... len-2e
 

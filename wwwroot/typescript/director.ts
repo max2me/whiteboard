@@ -11,12 +11,8 @@ class Director {
 	mode: Mode;
 	view: View;
 
-	initScaleDistance: number;
-	initScale: number;
-
+	initScalingPoint: Point;
 	initMovingPoint: Point;
-	initMoveX: number;
-	initMoveY: number;
 
 	initPanningPoint: Point;
 	initPanningX: number;
@@ -66,14 +62,9 @@ class Director {
 
 			var k = e.deltaY < 0 ? 1.05 : 0.95;
 			self.view.zoom *= k;
-			var zoomDelta = self.view.zoom - oldZoom;
 
-			var w = self.canvas.offsetWidth / 2;
-			var h = self.canvas.offsetHeight / 2;
 
-			self.view.panX = self.view.panX - w * zoomDelta; 
-			self.view.panY = self.view.panY - h * zoomDelta;
-			 
+
 			self.drawer.redraw(false);
 		});
 
@@ -162,16 +153,10 @@ class Director {
 			this.drawer.redraw(true);
 
 		} else if (this.mode == Mode.Scaling) {
-			var item = this.source.last();
-			var bounds = Utility.getBounds(item.raw);
-			var distance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(clientX, clientY));
-			
-			item.sizeK = this.initScale * distance / this.initScaleDistance;
+			this.scale(clientX, clientY);
 		
 		} else if (this.mode == Mode.Moving) {
-			var current = new Point(clientX, clientY);
-			this.source.last().moveX = this.initMoveX + current.x - this.initMovingPoint.x;
-			this.source.last().moveY = this.initMoveY + current.y - this.initMovingPoint.y;
+			this.move(clientX, clientY);
 
 		} else if (this.mode == Mode.Panning) {
 			this.view.panX = this.initPanningX + (clientX - this.initPanningPoint.x); 
@@ -227,8 +212,17 @@ class Director {
 	startMoving(clientX: number, clientY: number) {
 		this.mode = Mode.Moving;
 		this.initMovingPoint = new Point(clientX, clientY);
-		this.initMoveX = this.source.last().moveX;
-		this.initMoveY = this.source.last().moveY;
+	}
+
+	move(clientX: number, clientY: number) {
+		var current = new Point(clientX, clientY);
+
+		var shiftX = clientX - this.initMovingPoint.x;
+		var shiftY = clientY - this.initMovingPoint.y;
+
+		this.source.last().raw = Transform.move(this.source.last().raw, shiftX, shiftY);
+		
+		this.initMovingPoint = current;
 	}
 
 	startPanning(clientX: number, clientY: number) {
@@ -241,10 +235,25 @@ class Director {
 	startScaling(clientX: number, clientY: number) {
 		this.mode = Mode.Scaling;
 
+		this.initScalingPoint = new Point(clientX, clientY);
+	}
+
+	scale(clientX: number, clientY: number) {
+		var current = new Point(clientX, clientY);
 		var item = this.source.last();
+		
 		var bounds = Utility.getBounds(item.raw);
-		this.initScaleDistance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(clientX, clientY));
-		this.initScale = this.source.last().sizeK;
+		var center = new Point(bounds.centerX, bounds.centerY);
+
+		var oldDistance = Utility.distance(center, this.initScalingPoint);
+		var newDistance = Utility.distance(center, current);
+		
+		var k = newDistance / oldDistance;
+
+		item.raw = Transform.scale(item.raw, center, k, k);
+		item.fontSizeK = item.fontSizeK * k;
+
+		this.initScalingPoint = current;
 	}
 
 	syncUpHtmlStateDown(e: KeyboardEvent) {

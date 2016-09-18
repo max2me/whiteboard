@@ -3,10 +3,7 @@ class Item {
 	raw: Point[];
 	shape: Shape;
 	text: string;
-	sizeK: number;
 	fontSizeK: number;
-	moveX: number;
-	moveY: number;
 	lineArrowEnd: boolean;
 	lineArrowStart: boolean;
 
@@ -15,10 +12,7 @@ class Item {
 		this.raw = [];
 		this.shape = Shape.Original;
 		this.text = '';
-		this.sizeK = 1;
 		this.fontSizeK = 1;
-		this.moveX = 0;
-		this.moveY = 0;
 		this.lineArrowEnd = false;
 		this.lineArrowStart = false;
 	}
@@ -35,10 +29,7 @@ class Item {
 		var result = new Item();
 		result.shape = this.shape;
 		result.text = this.text;
-		result.sizeK = this.sizeK;
 		result.fontSizeK = this.fontSizeK;
-		result.moveX = this.moveX;
-		result.moveY = this.moveY;
 		result.lineArrowStart = this.lineArrowStart; 
 		result.lineArrowEnd = this.lineArrowEnd;
 		result.raw = Utility.clone(this.raw); 

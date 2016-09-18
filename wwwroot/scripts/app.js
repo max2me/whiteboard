@@ -49,11 +49,6 @@ var Director = (function () {
             var oldZoom = self.view.zoom;
             var k = e.deltaY < 0 ? 1.05 : 0.95;
             self.view.zoom *= k;
-            var zoomDelta = self.view.zoom - oldZoom;
-            var w = self.canvas.offsetWidth / 2;
-            var h = self.canvas.offsetHeight / 2;
-            self.view.panX = self.view.panX - w * zoomDelta;
-            self.view.panY = self.view.panY - h * zoomDelta;
             self.drawer.redraw(false);
         });
         this.canvas.addEventListener('touchstart', function (e) {
@@ -128,15 +123,10 @@ var Director = (function () {
             this.drawer.redraw(true);
         }
         else if (this.mode == Mode.Scaling) {
-            var item = this.source.last();
-            var bounds = Utility.getBounds(item.raw);
-            var distance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(clientX, clientY));
-            item.sizeK = this.initScale * distance / this.initScaleDistance;
+            this.scale(clientX, clientY);
         }
         else if (this.mode == Mode.Moving) {
-            var current = new Point(clientX, clientY);
-            this.source.last().moveX = this.initMoveX + current.x - this.initMovingPoint.x;
-            this.source.last().moveY = this.initMoveY + current.y - this.initMovingPoint.y;
+            this.move(clientX, clientY);
         }
         else if (this.mode == Mode.Panning) {
             this.view.panX = this.initPanningX + (clientX - this.initPanningPoint.x);
@@ -183,8 +173,13 @@ var Director = (function () {
     Director.prototype.startMoving = function (clientX, clientY) {
         this.mode = Mode.Moving;
         this.initMovingPoint = new Point(clientX, clientY);
-        this.initMoveX = this.source.last().moveX;
-        this.initMoveY = this.source.last().moveY;
+    };
+    Director.prototype.move = function (clientX, clientY) {
+        var current = new Point(clientX, clientY);
+        var shiftX = clientX - this.initMovingPoint.x;
+        var shiftY = clientY - this.initMovingPoint.y;
+        this.source.last().raw = Transform.move(this.source.last().raw, shiftX, shiftY);
+        this.initMovingPoint = current;
     };
     Director.prototype.startPanning = function (clientX, clientY) {
         this.mode = Mode.Panning;
@@ -194,10 +189,19 @@ var Director = (function () {
     };
     Director.prototype.startScaling = function (clientX, clientY) {
         this.mode = Mode.Scaling;
+        this.initScalingPoint = new Point(clientX, clientY);
+    };
+    Director.prototype.scale = function (clientX, clientY) {
+        var current = new Point(clientX, clientY);
         var item = this.source.last();
         var bounds = Utility.getBounds(item.raw);
-        this.initScaleDistance = Utility.distance(new Point(bounds.centerX + item.moveX, bounds.centerY + item.moveY), new Point(clientX, clientY));
-        this.initScale = this.source.last().sizeK;
+        var center = new Point(bounds.centerX, bounds.centerY);
+        var oldDistance = Utility.distance(center, this.initScalingPoint);
+        var newDistance = Utility.distance(center, current);
+        var k = newDistance / oldDistance;
+        item.raw = Transform.scale(item.raw, center, k, k);
+        item.fontSizeK = item.fontSizeK * k;
+        this.initScalingPoint = current;
     };
     Director.prototype.syncUpHtmlStateDown = function (e) {
         var char = String.fromCharCode(e.which).toLowerCase();
@@ -366,9 +370,8 @@ var Drawer = (function () {
             var bounds = Utility.getBounds(item.raw);
             var itemCenter = new Point(bounds.centerX, bounds.centerY);
             var canvasCenter = new Point(0, 0);
+            item.raw = Transform.move(item.raw, this.view.panX, this.view.panY);
             item.raw = Transform.scale(item.raw, canvasCenter, this.view.zoom, this.view.zoom);
-            item.raw = Transform.scale(item.raw, new Point(itemCenter.x, itemCenter.y), item.sizeK, item.sizeK);
-            item.raw = Transform.move(item.raw, item.moveX + this.view.panX, item.moveY + this.view.panY);
             switch (item.shape) {
                 case Shape.Original:
                     this.original.original(item, last);
@@ -564,7 +567,7 @@ var Drawers;
         Lines.prototype.smooth = function (item, last) {
             this.setupStroke(item, last);
             this.ctx.beginPath();
-            var pts = window.simplify(item.raw, 20 * item.sizeK, true);
+            var pts = window.simplify(item.raw, 20, true);
             var cps = [];
             for (var i = 0; i < pts.length - 2; i += 1) {
                 cps = cps.concat(Utility.controlPoints(pts[i], pts[i + 1], pts[i + 2]));
@@ -739,7 +742,7 @@ var Drawers;
             _super.apply(this, arguments);
         }
         Text.prototype.text = function (item, last, zoom) {
-            var size = 30 * item.sizeK * item.fontSizeK * zoom;
+            var size = 30 * item.fontSizeK * zoom;
             this.ctx.font = size + "px 	'Permanent Marker'";
             this.ctx.fillStyle = 'black';
             this.ctx.fillText(item.text + (last ? '_' : ''), item.raw[0].x, item.raw[0].y);
@@ -754,10 +757,7 @@ var Item = (function () {
         this.raw = [];
         this.shape = Shape.Original;
         this.text = '';
-        this.sizeK = 1;
         this.fontSizeK = 1;
-        this.moveX = 0;
-        this.moveY = 0;
         this.lineArrowEnd = false;
         this.lineArrowStart = false;
     }
@@ -771,10 +771,7 @@ var Item = (function () {
         var result = new Item();
         result.shape = this.shape;
         result.text = this.text;
-        result.sizeK = this.sizeK;
         result.fontSizeK = this.fontSizeK;
-        result.moveX = this.moveX;
-        result.moveY = this.moveY;
         result.lineArrowStart = this.lineArrowStart;
         result.lineArrowEnd = this.lineArrowEnd;
         result.raw = Utility.clone(this.raw);
