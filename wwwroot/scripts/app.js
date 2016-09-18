@@ -189,7 +189,6 @@ var Director = (function () {
         var deltaX = (current.x - this.initPanningPoint.x) / this.view.zoom;
         this.view.panX += deltaX;
         this.view.panY += (current.y - this.initPanningPoint.y) / this.view.zoom;
-        console.log(this.view.panX, deltaX, this.view.zoom);
         this.initPanningPoint = current;
     };
     Director.prototype.startScaling = function (clientX, clientY) {
