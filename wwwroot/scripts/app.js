@@ -171,13 +171,13 @@ var Director = (function () {
     };
     Director.prototype.startMoving = function (clientX, clientY) {
         this.mode = Mode.Moving;
-        this.initMovingPoint = this.normalize(clientX, clientY);
+        this.initMovingPoint = new Point(clientX, clientY);
     };
     Director.prototype.move = function (clientX, clientY) {
-        var current = this.normalize(clientX, clientY);
+        var current = new Point(clientX, clientY);
         var shiftX = clientX - this.initMovingPoint.x;
         var shiftY = clientY - this.initMovingPoint.y;
-        this.source.last().raw = Transform.move(this.source.last().raw, shiftX, shiftY);
+        this.source.last().raw = Transform.move(this.source.last().raw, shiftX / this.view.zoom, shiftY / this.view.zoom);
         this.initMovingPoint = current;
     };
     Director.prototype.startPanning = function (clientX, clientY) {
@@ -206,44 +206,6 @@ var Director = (function () {
         item.raw = Transform.scale(item.raw, center, k, k);
         item.fontSizeK = item.fontSizeK * k;
         this.initScalingPoint = current;
-    };
-    Director.prototype.syncUpHtmlStateDown = function (e) {
-        var char = String.fromCharCode(e.which).toLowerCase();
-        if (char == ' ' && this.mode == Mode.None) {
-            this.mode = Mode.PreparingToPan;
-        }
-        else if (this.mode == Mode.DrawingSteps && !e.ctrlKey && !e.shiftKey) {
-            this.source.last().raw.pop();
-            this.mode = Mode.None;
-        }
-        $('html').attr('class', this.getHtmlClass(e));
-    };
-    Director.prototype.syncUpHtmlStateUp = function (e) {
-        var char = String.fromCharCode(e.which).toLowerCase();
-        if (char == ' ' && this.mode == Mode.PreparingToPan) {
-            this.mode = Mode.None;
-        }
-        else if (this.mode == Mode.DrawingSteps && !e.ctrlKey && !e.shiftKey) {
-            this.source.last().raw.pop();
-            this.mode = Mode.None;
-        }
-        $('html').attr('class', this.getHtmlClass(e));
-    };
-    Director.prototype.getHtmlClass = function (e) {
-        var html = '';
-        if (this.mode == Mode.PreparingToPan)
-            html = 'mode-preparing2pan';
-        if (this.mode == Mode.Panning)
-            html = 'mode-panning';
-        if (e.ctrlKey && e.shiftKey)
-            html = 'mode-steps';
-        else if (e.ctrlKey)
-            html = 'mode-scaling';
-        else if (e.shiftKey)
-            html = 'mode-moving';
-        else if (e.altKey)
-            html = 'mode-cloning';
-        return html;
     };
     Director.prototype.textTyping = function (e) {
         var last = this.source.last();
@@ -333,6 +295,44 @@ var Director = (function () {
                 break;
         }
         this.syncer.send();
+    };
+    Director.prototype.syncUpHtmlStateDown = function (e) {
+        var char = String.fromCharCode(e.which).toLowerCase();
+        if (char == ' ' && this.mode == Mode.None) {
+            this.mode = Mode.PreparingToPan;
+        }
+        else if (this.mode == Mode.DrawingSteps && !e.ctrlKey && !e.shiftKey) {
+            this.source.last().raw.pop();
+            this.mode = Mode.None;
+        }
+        $('html').attr('class', this.getHtmlClass(e));
+    };
+    Director.prototype.syncUpHtmlStateUp = function (e) {
+        var char = String.fromCharCode(e.which).toLowerCase();
+        if (char == ' ' && this.mode == Mode.PreparingToPan) {
+            this.mode = Mode.None;
+        }
+        else if (this.mode == Mode.DrawingSteps && !e.ctrlKey && !e.shiftKey) {
+            this.source.last().raw.pop();
+            this.mode = Mode.None;
+        }
+        $('html').attr('class', this.getHtmlClass(e));
+    };
+    Director.prototype.getHtmlClass = function (e) {
+        var html = '';
+        if (this.mode == Mode.PreparingToPan)
+            html = 'mode-preparing2pan';
+        if (this.mode == Mode.Panning)
+            html = 'mode-panning';
+        if (e.ctrlKey && e.shiftKey)
+            html = 'mode-steps';
+        else if (e.ctrlKey)
+            html = 'mode-scaling';
+        else if (e.shiftKey)
+            html = 'mode-moving';
+        else if (e.altKey)
+            html = 'mode-cloning';
+        return html;
     };
     Director.prototype.normalize = function (x, y) {
         var newX = x / this.view.zoom - this.view.panX;

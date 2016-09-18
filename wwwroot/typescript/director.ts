@@ -206,16 +206,16 @@ class Director {
 	// Moving
 	startMoving(clientX: number, clientY: number) {
 		this.mode = Mode.Moving;
-		this.initMovingPoint = this.normalize(clientX, clientY);
+		this.initMovingPoint = new Point(clientX, clientY);
 	}
 
 	move(clientX: number, clientY: number) {
-		var current = this.normalize(clientX, clientY);
+		var current = new Point(clientX, clientY);
 
 		var shiftX = clientX - this.initMovingPoint.x;
 		var shiftY = clientY - this.initMovingPoint.y;
 
-		this.source.last().raw = Transform.move(this.source.last().raw, shiftX, shiftY);
+		this.source.last().raw = Transform.move(this.source.last().raw, shiftX / this.view.zoom, shiftY / this.view.zoom);
 		
 		this.initMovingPoint = current;
 	}
@@ -237,6 +237,8 @@ class Director {
 		this.initPanningPoint = current; 
 	}
 
+
+	// Scaling
 	startScaling(clientX: number, clientY: number) {
 		this.mode = Mode.Scaling;
 		this.initScalingPoint = this.normalize(clientX, clientY);
@@ -260,59 +262,7 @@ class Director {
 		this.initScalingPoint = current;
 	}
 
-	syncUpHtmlStateDown(e: KeyboardEvent) {
-		var char = String.fromCharCode(e.which).toLowerCase();
-
-		if (char == ' ' && this.mode == Mode.None) {
-			this.mode = Mode.PreparingToPan;
-		}
-
-		else if (this.mode == Mode.DrawingSteps && !e.ctrlKey && !e.shiftKey) {
-			this.source.last().raw.pop(); // Clean up after moving
-			this.mode = Mode.None;
-		}		
-
-		$('html').attr('class', this.getHtmlClass(e));
-	}
-
-	syncUpHtmlStateUp(e: KeyboardEvent) {
-		var char = String.fromCharCode(e.which).toLowerCase();
-
-		if (char == ' ' && this.mode == Mode.PreparingToPan) {
-			this.mode = Mode.None;
-		}
-		else if (this.mode == Mode.DrawingSteps && !e.ctrlKey && !e.shiftKey) {
-			this.source.last().raw.pop(); // Clean up after moving
-			this.mode = Mode.None;
-		}		
-
-		$('html').attr('class', this.getHtmlClass(e));
-	}
-
-	getHtmlClass(e: KeyboardEvent): string {
-		var html = '';
-
-		if (this.mode == Mode.PreparingToPan) 
-			html = 'mode-preparing2pan';
-
-		if (this.mode == Mode.Panning) 
-			html = 'mode-panning';
-
-		if (e.ctrlKey && e.shiftKey)
-			html = 'mode-steps';
-
-		else if (e.ctrlKey)
-			html = 'mode-scaling';
-
-		else if (e.shiftKey)
-			html = 'mode-moving';
-
-		else if (e.altKey)
-			html = 'mode-cloning';
-
-		return html;
-	}
-
+	// Keyboard-related
 	textTyping(e: KeyboardEvent) {
 		var last = this.source.last();
 		if (last == null || last.shape != Shape.Text) return;
@@ -401,6 +351,60 @@ class Director {
 		}
 
 		this.syncer.send();
+	}
+
+	// Helpers
+	syncUpHtmlStateDown(e: KeyboardEvent) {
+		var char = String.fromCharCode(e.which).toLowerCase();
+
+		if (char == ' ' && this.mode == Mode.None) {
+			this.mode = Mode.PreparingToPan;
+		}
+
+		else if (this.mode == Mode.DrawingSteps && !e.ctrlKey && !e.shiftKey) {
+			this.source.last().raw.pop(); // Clean up after moving
+			this.mode = Mode.None;
+		}		
+
+		$('html').attr('class', this.getHtmlClass(e));
+	}
+
+	syncUpHtmlStateUp(e: KeyboardEvent) {
+		var char = String.fromCharCode(e.which).toLowerCase();
+
+		if (char == ' ' && this.mode == Mode.PreparingToPan) {
+			this.mode = Mode.None;
+		}
+		else if (this.mode == Mode.DrawingSteps && !e.ctrlKey && !e.shiftKey) {
+			this.source.last().raw.pop(); // Clean up after moving
+			this.mode = Mode.None;
+		}		
+
+		$('html').attr('class', this.getHtmlClass(e));
+	}
+
+	getHtmlClass(e: KeyboardEvent): string {
+		var html = '';
+
+		if (this.mode == Mode.PreparingToPan) 
+			html = 'mode-preparing2pan';
+
+		if (this.mode == Mode.Panning) 
+			html = 'mode-panning';
+
+		if (e.ctrlKey && e.shiftKey)
+			html = 'mode-steps';
+
+		else if (e.ctrlKey)
+			html = 'mode-scaling';
+
+		else if (e.shiftKey)
+			html = 'mode-moving';
+
+		else if (e.altKey)
+			html = 'mode-cloning';
+
+		return html;
 	}
 
 	normalize(x: number, y: number): Point {
