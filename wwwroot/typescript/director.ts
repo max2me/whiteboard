@@ -60,7 +60,7 @@ class Director {
 			
 			var oldZoom = self.view.zoom;
 
-			var k = e.deltaY < 0 ? 0.1 : - 0.1;
+			var k = e.deltaY < 0 ? 0.2 : - 0.2;
 			
 			var oldZoom = self.view.zoom;
 			var newZoom = oldZoom + k;
@@ -104,11 +104,12 @@ class Director {
 	}
 
 	logView(description: string) {
-		console.log(description, Math.round(this.view.panX), Math.round(this.view.panY), this.view.zoom);
+		console.log(description, Math.round(this.view.panX * 100) / 100, Math.round(this.view.panY * 100) / 100, this.view.zoom);
 	}
 
 	calculatePan(point: number, oldPan: number, oldZoom: number, newZoom: number): number {
-		return (oldPan * oldZoom) / newZoom + point * (oldZoom - newZoom) / newZoom;
+		return (oldPan * oldZoom + point * oldZoom - point * newZoom) / newZoom;
+		// return (point * newZoom - point * oldZoom + oldPan * oldZoom) / newZoom;
 	}
 
 	interactionDown(clientX: number, clientY: number, ctrlKey: boolean, altKey: boolean, shiftKey: boolean, button: number = 1) {
@@ -251,14 +252,15 @@ class Director {
 
 		var deltaX = (current.x - this.initPanningPoint.x) / this.view.zoom;
 		var deltaY = (current.y - this.initPanningPoint.y) / this.view.zoom;
+		this.initPanningPoint = current;
 
-		this.logView('Old pan');
+		this.logView('Old pan ' + deltaX);
 		this.view.panX += deltaX; 
 		this.view.panY += deltaY ;
 		this.logView('New pan');
 		console.log('-');
 
-		this.initPanningPoint = current; 
+		
 	}
 
 

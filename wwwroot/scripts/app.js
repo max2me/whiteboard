@@ -50,7 +50,7 @@ var Director = (function () {
             console.log('Cursor', e.clientX, e.clientY);
             _this.logView('Old Zoom');
             var oldZoom = self.view.zoom;
-            var k = e.deltaY < 0 ? 0.1 : -0.1;
+            var k = e.deltaY < 0 ? 0.2 : -0.2;
             var oldZoom = self.view.zoom;
             var newZoom = oldZoom + k;
             self.view.panX = _this.calculatePan(e.clientX, _this.view.panX, oldZoom, newZoom);
@@ -80,10 +80,10 @@ var Director = (function () {
         });
     };
     Director.prototype.logView = function (description) {
-        console.log(description, Math.round(this.view.panX), Math.round(this.view.panY), this.view.zoom);
+        console.log(description, Math.round(this.view.panX * 100) / 100, Math.round(this.view.panY * 100) / 100, this.view.zoom);
     };
     Director.prototype.calculatePan = function (point, oldPan, oldZoom, newZoom) {
-        return (oldPan * oldZoom) / newZoom + point * (oldZoom - newZoom) / newZoom;
+        return (oldPan * oldZoom + point * oldZoom - point * newZoom) / newZoom;
     };
     Director.prototype.interactionDown = function (clientX, clientY, ctrlKey, altKey, shiftKey, button) {
         if (button === void 0) { button = 1; }
@@ -203,12 +203,12 @@ var Director = (function () {
         var current = new Point(clientX, clientY);
         var deltaX = (current.x - this.initPanningPoint.x) / this.view.zoom;
         var deltaY = (current.y - this.initPanningPoint.y) / this.view.zoom;
-        this.logView('Old pan');
+        this.initPanningPoint = current;
+        this.logView('Old pan ' + deltaX);
         this.view.panX += deltaX;
         this.view.panY += deltaY;
         this.logView('New pan');
         console.log('-');
-        this.initPanningPoint = current;
     };
     Director.prototype.startScaling = function (clientX, clientY) {
         this.mode = Mode.Scaling;
@@ -621,19 +621,6 @@ var Drawers;
             if (p2.x < p1.x)
                 angle = 2 * Math.PI - angle;
             var size = 15;
-            this.ctx.save();
-            this.ctx.beginPath();
-            this.ctx.translate(p2.x, p2.y);
-            this.ctx.rotate(-angle);
-            this.ctx.lineWidth = 6;
-            this.ctx.strokeStyle = last ? '#777' : '#000000';
-            this.ctx.moveTo(0, 0);
-            this.ctx.lineTo(size / 2, -size);
-            this.ctx.stroke();
-            this.ctx.moveTo(0, 0);
-            this.ctx.lineTo(-size / 2, -size);
-            this.ctx.stroke();
-            this.ctx.restore();
         };
         Lines.prototype.drawCurvedPath = function (cps, pts) {
             var len = pts.length;

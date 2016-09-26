@@ -104,23 +104,23 @@ namespace Drawers {
 
 			var size = 15;
 
-			this.ctx.save();
-			this.ctx.beginPath();
-			this.ctx.translate(p2.x, p2.y);
-			this.ctx.rotate(-angle);
+			// this.ctx.save();
+			// this.ctx.beginPath();
+			// this.ctx.translate(p2.x, p2.y);
+			// this.ctx.rotate(-angle);
 
-			this.ctx.lineWidth = 6;
-			this.ctx.strokeStyle = last? '#777' : '#000000';
+			// this.ctx.lineWidth = 6;
+			// this.ctx.strokeStyle = last? '#777' : '#000000';
 			
-			this.ctx.moveTo(0, 0);
-			this.ctx.lineTo(size/2, -size);
-			this.ctx.stroke();
+			// this.ctx.moveTo(0, 0);
+			// this.ctx.lineTo(size/2, -size);
+			// this.ctx.stroke();
 			
-			this.ctx.moveTo(0, 0);
-			this.ctx.lineTo(-size/2, -size);
-			this.ctx.stroke();
+			// this.ctx.moveTo(0, 0);
+			// this.ctx.lineTo(-size/2, -size);
+			// this.ctx.stroke();
 			
-			this.ctx.restore();
+			// this.ctx.restore();
 		}
 
 		private drawCurvedPath(cps: Point[], pts: Point[]){
