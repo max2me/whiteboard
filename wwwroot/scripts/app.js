@@ -15,6 +15,7 @@ var Director = (function () {
     function Director() {
     }
     Director.prototype.init = function () {
+        var _this = this;
         var self = this;
         self.mode = Mode.None;
         $('html')
@@ -46,9 +47,17 @@ var Director = (function () {
             return false;
         });
         this.canvas.addEventListener('wheel', function (e) {
+            console.log('Cursor', e.clientX, e.clientY);
+            _this.logView('Old Zoom');
             var oldZoom = self.view.zoom;
-            var k = e.deltaY < 0 ? 1.05 : 0.95;
-            self.view.zoom *= k;
+            var k = e.deltaY < 0 ? 0.1 : -0.1;
+            var oldZoom = self.view.zoom;
+            var newZoom = oldZoom + k;
+            self.view.panX = _this.calculatePan(e.clientX, _this.view.panX, oldZoom, newZoom);
+            self.view.panY = _this.calculatePan(e.clientY, _this.view.panY, oldZoom, newZoom);
+            self.view.zoom = newZoom;
+            _this.logView('New Zoom');
+            console.log('-');
             self.drawer.redraw(false);
         });
         this.canvas.addEventListener('touchstart', function (e) {
@@ -69,6 +78,12 @@ var Director = (function () {
                 return;
             self.interactionUp();
         });
+    };
+    Director.prototype.logView = function (description) {
+        console.log(description, Math.round(this.view.panX), Math.round(this.view.panY), this.view.zoom);
+    };
+    Director.prototype.calculatePan = function (point, oldPan, oldZoom, newZoom) {
+        return (oldPan * oldZoom) / newZoom + point * (oldZoom - newZoom) / newZoom;
     };
     Director.prototype.interactionDown = function (clientX, clientY, ctrlKey, altKey, shiftKey, button) {
         if (button === void 0) { button = 1; }
@@ -187,8 +202,12 @@ var Director = (function () {
     Director.prototype.pan = function (clientX, clientY) {
         var current = new Point(clientX, clientY);
         var deltaX = (current.x - this.initPanningPoint.x) / this.view.zoom;
+        var deltaY = (current.y - this.initPanningPoint.y) / this.view.zoom;
+        this.logView('Old pan');
         this.view.panX += deltaX;
-        this.view.panY += (current.y - this.initPanningPoint.y) / this.view.zoom;
+        this.view.panY += deltaY;
+        this.logView('New pan');
+        console.log('-');
         this.initPanningPoint = current;
     };
     Director.prototype.startScaling = function (clientX, clientY) {
@@ -374,8 +393,8 @@ var Drawer = (function () {
             var bounds = Utility.getBounds(item.raw);
             var itemCenter = new Point(bounds.centerX, bounds.centerY);
             var canvasCenter = new Point(0, 0);
-            item.raw = Transform.move(item.raw, this.view.panX, this.view.panY);
             item.raw = Transform.scale(item.raw, canvasCenter, this.view.zoom, this.view.zoom);
+            item.raw = Transform.move(item.raw, this.view.panX * this.view.zoom, this.view.panY * this.view.zoom);
             switch (item.shape) {
                 case Shape.Original:
                     this.original.original(item, last);
