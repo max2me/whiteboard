@@ -39,9 +39,10 @@ class Drawer {
 			var itemCenter = new Point(bounds.centerX, bounds.centerY);
 			var canvasCenter = new Point(0, 0);
 
-			item.raw = Transform.move(item.raw, this.view.panX, this.view.panY);
 			item.raw = Transform.scale(item.raw, canvasCenter, this.view.zoom, this.view.zoom);
+			item.raw = Transform.move(item.raw, this.view.panX * this.view.zoom, this.view.panY * this.view.zoom);
 			
+
 			switch(item.shape) {
 				case Shape.Original: 
 					this.original.original(item, last);

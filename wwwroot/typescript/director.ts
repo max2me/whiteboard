@@ -55,11 +55,23 @@ class Director {
 		});
 
 		this.canvas.addEventListener('wheel', (e: WheelEvent) => {
+			console.log('Cursor', e.clientX, e.clientY);
+			this.logView('Old Zoom');
+			
 			var oldZoom = self.view.zoom;
 
-			var k = e.deltaY < 0 ? 1.05 : 0.95;
-			self.view.zoom *= k;
+			var k = e.deltaY < 0 ? 0.2 : - 0.2;
+			
+			var oldZoom = self.view.zoom;
+			var newZoom = oldZoom + k;
 
+			self.view.panX = this.calculatePan(e.clientX, this.view.panX, oldZoom, newZoom); 
+			self.view.panY = this.calculatePan(e.clientY, this.view.panY, oldZoom, newZoom); 
+			self.view.zoom = newZoom;
+
+			this.logView('New Zoom');
+			console.log('-');
+			
 			self.drawer.redraw(false);
 		});
 
@@ -89,6 +101,15 @@ class Director {
 
 			self.interactionUp();
 		});
+	}
+
+	logView(description: string) {
+		console.log(description, Math.round(this.view.panX * 100) / 100, Math.round(this.view.panY * 100) / 100, this.view.zoom);
+	}
+
+	calculatePan(point: number, oldPan: number, oldZoom: number, newZoom: number): number {
+		return (oldPan * oldZoom + point * oldZoom - point * newZoom) / newZoom;
+		// return (point * newZoom - point * oldZoom + oldPan * oldZoom) / newZoom;
 	}
 
 	interactionDown(clientX: number, clientY: number, ctrlKey: boolean, altKey: boolean, shiftKey: boolean, button: number = 1) {
@@ -230,11 +251,16 @@ class Director {
 		var current = new Point(clientX, clientY);
 
 		var deltaX = (current.x - this.initPanningPoint.x) / this.view.zoom;
+		var deltaY = (current.y - this.initPanningPoint.y) / this.view.zoom;
+		this.initPanningPoint = current;
 
+		this.logView('Old pan ' + deltaX);
 		this.view.panX += deltaX; 
-		this.view.panY += (current.y - this.initPanningPoint.y) / this.view.zoom;
+		this.view.panY += deltaY ;
+		this.logView('New pan');
+		console.log('-');
 
-		this.initPanningPoint = current; 
+		
 	}
 
 

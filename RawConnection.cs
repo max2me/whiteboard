@@ -9,20 +9,19 @@ namespace wsweb
 {
     public class RawConnection : PersistentConnection
     {
-        private static readonly ConcurrentDictionary<string, string> _users = new ConcurrentDictionary<string, string>();
-        private static readonly ConcurrentDictionary<string, string> _clients = new ConcurrentDictionary<string, string>();
+        private static readonly ConcurrentDictionary<string, string> Users = new ConcurrentDictionary<string, string>();
+        private static readonly ConcurrentDictionary<string, string> Clients = new ConcurrentDictionary<string, string>();
 
         protected override async Task OnConnected(HttpRequest request, string connectionId)
         {
             var userName = request.Cookies["user"];
             if (!string.IsNullOrEmpty(userName))
             {
-                _clients[connectionId] = userName;
-                _users[userName] = connectionId;
+                Clients[connectionId] = userName;
+                Users[userName] = connectionId;
             }
 
             string clientIp = request.HttpContext.Connection.RemoteIpAddress?.ToString();
-
             string user = GetUser(connectionId);
 
             await Groups.Add(connectionId, "foo");
@@ -38,7 +37,7 @@ namespace wsweb
         protected override Task OnDisconnected(HttpRequest request, string connectionId, bool stopCalled)
         {
             string ignored;
-            _users.TryRemove(connectionId, out ignored);
+            Users.TryRemove(connectionId, out ignored);
 
             string suffix = stopCalled ? "cleanly" : "uncleanly";
             return null;
@@ -68,7 +67,7 @@ namespace wsweb
         private string GetUser(string connectionId)
         {
             string user;
-            if (!_clients.TryGetValue(connectionId, out user))
+            if (!Clients.TryGetValue(connectionId, out user))
             {
                 return connectionId;
             }
@@ -78,7 +77,7 @@ namespace wsweb
         private string GetClient(string user)
         {
             string connectionId;
-            if (_users.TryGetValue(user, out connectionId))
+            if (Users.TryGetValue(user, out connectionId))
             {
                 return connectionId;
             }
