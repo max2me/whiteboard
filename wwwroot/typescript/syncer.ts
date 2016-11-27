@@ -6,52 +6,49 @@ class Syncer {
 	constructor(source: Source, drawer: Drawer){
 		this.source = source;
 		this.drawer = drawer;
-
-		var self = this;
-
 		this.connection = $.connection('/r');
-		this.connection.received(function(data: any) {
+		this.connection.received((data: any) => {
 			var item = JSON.parse(data.Json);
 			if (data.Type == 'Delete') {
 				var indexToDelete = -1;
-				for(var i = 0; i < self.source.items.length; i++) {
-					if (self.source.items[i].id == item.id) {
+				for(var i = 0; i < this.source.items.length; i++) {
+					if (this.source.items[i].id == item.id) {
 						indexToDelete = i;
 						break;
 					}
 				}
 
 				if (indexToDelete != -1) {
-					self.source.items.splice(indexToDelete, 1);
-					self.drawer.redraw(false);
+					this.source.items.splice(indexToDelete, 1);
+					this.drawer.redraw(false);
 					return;
 				}
 			}
 			
 			if (item != null) {
 				var replaced = false;
-				for(var i = 0; i < self.source.items.length; i++) {
-					var k = self.source.items[i];
+				for(var i = 0; i < this.source.items.length; i++) {
+					var k = this.source.items[i];
 					if (k.id == item.id) {
-						self.source.items[i] = item;
+						this.source.items[i] = item;
 						replaced = true;
 						break;
 					}
 				}
 
 				if (!replaced) {
-					self.source.push(item);
+					this.source.push(item);
 				}
 
-				self.drawer.redraw(false);
+				this.drawer.redraw(false);
 			}
 		});
 
-		this.connection.error(function(error: any) {
+		this.connection.error((error: any) => {
 			console.warn(error);
 		});
 
-		this.connection.start(function() {
+		this.connection.start(() => {
 		});
 	}
 

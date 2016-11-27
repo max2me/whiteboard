@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -7,18 +8,20 @@ namespace wsweb
 {
     public class Startup
     {
-        // This method gets called by the runtime. Use this method to add services to the container.
-        // For more information on how to configure your application, visit http://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSignalR(options =>
-            {
-                options.Hubs.EnableDetailedErrors = true;
-            });
+	        services
+				.AddOptions()
+				.AddRouting(options => options.LowercaseUrls = true)
+				.AddMvc();
+
+			services.AddSignalR(options =>
+		        {
+			        options.Hubs.EnableDetailedErrors = true;
+		        });
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+		public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
             loggerFactory.AddConsole();
 
@@ -27,11 +30,29 @@ namespace wsweb
                 app.UseDeveloperExceptionPage();
             }
 
+            app
+				.UseDefaultFiles()
+				.UseStaticFiles()
+				.UseWebSockets()
+				.UseSignalR<RawConnection>("/r")
+				.UseMvc(routes =>
+	            {
+		            routes
+			            .MapRoute(
+				            name: "default",
+				            template: "{controller=Home}/{action=Index}/{id?}")
+			            .MapRoute(
+				            name: "n",
+				            template: "{*napkin}/",
+				            defaults: new {controller = "Home", action = "Napkin"});
+	            })
+				.UseStatusCodePages()
+				.Run(context =>
+				{
+					context.Response.StatusCode = 404;
+					return Task.FromResult(0);
+				});
 
-            app.UseDefaultFiles();
-            app.UseStaticFiles();
-            app.UseWebSockets();
-            app.UseSignalR<RawConnection>("/r");
-        }
-    }
+		}
+	}
 }

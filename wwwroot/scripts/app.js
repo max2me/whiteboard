@@ -15,6 +15,7 @@ var Director = (function () {
     function Director() {
     }
     Director.prototype.init = function () {
+        var _this = this;
         var self = this;
         self.mode = Mode.None;
         $('html')
@@ -46,9 +47,17 @@ var Director = (function () {
             return false;
         });
         this.canvas.addEventListener('wheel', function (e) {
+            console.log('Cursor', e.clientX, e.clientY);
+            _this.logView('Old Zoom');
             var oldZoom = self.view.zoom;
-            var k = e.deltaY < 0 ? 1.05 : 0.95;
-            self.view.zoom *= k;
+            var k = e.deltaY < 0 ? 0.2 : -0.2;
+            var oldZoom = self.view.zoom;
+            var newZoom = oldZoom + k;
+            self.view.panX = _this.calculatePan(e.clientX, _this.view.panX, oldZoom, newZoom);
+            self.view.panY = _this.calculatePan(e.clientY, _this.view.panY, oldZoom, newZoom);
+            self.view.zoom = newZoom;
+            _this.logView('New Zoom');
+            console.log('-');
             self.drawer.redraw(false);
         });
         this.canvas.addEventListener('touchstart', function (e) {
@@ -69,6 +78,12 @@ var Director = (function () {
                 return;
             self.interactionUp();
         });
+    };
+    Director.prototype.logView = function (description) {
+        console.log(description, Math.round(this.view.panX * 100) / 100, Math.round(this.view.panY * 100) / 100, this.view.zoom);
+    };
+    Director.prototype.calculatePan = function (point, oldPan, oldZoom, newZoom) {
+        return (oldPan * oldZoom + point * oldZoom - point * newZoom) / newZoom;
     };
     Director.prototype.interactionDown = function (clientX, clientY, ctrlKey, altKey, shiftKey, button) {
         if (button === void 0) { button = 1; }
@@ -187,9 +202,13 @@ var Director = (function () {
     Director.prototype.pan = function (clientX, clientY) {
         var current = new Point(clientX, clientY);
         var deltaX = (current.x - this.initPanningPoint.x) / this.view.zoom;
-        this.view.panX += deltaX;
-        this.view.panY += (current.y - this.initPanningPoint.y) / this.view.zoom;
+        var deltaY = (current.y - this.initPanningPoint.y) / this.view.zoom;
         this.initPanningPoint = current;
+        this.logView('Old pan ' + deltaX);
+        this.view.panX += deltaX;
+        this.view.panY += deltaY;
+        this.logView('New pan');
+        console.log('-');
     };
     Director.prototype.startScaling = function (clientX, clientY) {
         this.mode = Mode.Scaling;
@@ -374,8 +393,8 @@ var Drawer = (function () {
             var bounds = Utility.getBounds(item.raw);
             var itemCenter = new Point(bounds.centerX, bounds.centerY);
             var canvasCenter = new Point(0, 0);
-            item.raw = Transform.move(item.raw, this.view.panX, this.view.panY);
             item.raw = Transform.scale(item.raw, canvasCenter, this.view.zoom, this.view.zoom);
+            item.raw = Transform.move(item.raw, this.view.panX * this.view.zoom, this.view.panY * this.view.zoom);
             switch (item.shape) {
                 case Shape.Original:
                     this.original.original(item, last);
@@ -440,40 +459,40 @@ var Mode;
 })(Mode || (Mode = {}));
 var Syncer = (function () {
     function Syncer(source, drawer) {
+        var _this = this;
         this.source = source;
         this.drawer = drawer;
-        var self = this;
         this.connection = $.connection('/r');
         this.connection.received(function (data) {
             var item = JSON.parse(data.Json);
             if (data.Type == 'Delete') {
                 var indexToDelete = -1;
-                for (var i = 0; i < self.source.items.length; i++) {
-                    if (self.source.items[i].id == item.id) {
+                for (var i = 0; i < _this.source.items.length; i++) {
+                    if (_this.source.items[i].id == item.id) {
                         indexToDelete = i;
                         break;
                     }
                 }
                 if (indexToDelete != -1) {
-                    self.source.items.splice(indexToDelete, 1);
-                    self.drawer.redraw(false);
+                    _this.source.items.splice(indexToDelete, 1);
+                    _this.drawer.redraw(false);
                     return;
                 }
             }
             if (item != null) {
                 var replaced = false;
-                for (var i = 0; i < self.source.items.length; i++) {
-                    var k = self.source.items[i];
+                for (var i = 0; i < _this.source.items.length; i++) {
+                    var k = _this.source.items[i];
                     if (k.id == item.id) {
-                        self.source.items[i] = item;
+                        _this.source.items[i] = item;
                         replaced = true;
                         break;
                     }
                 }
                 if (!replaced) {
-                    self.source.push(item);
+                    _this.source.push(item);
                 }
-                self.drawer.redraw(false);
+                _this.drawer.redraw(false);
             }
         });
         this.connection.error(function (error) {
@@ -773,19 +792,6 @@ var Drawers;
             if (p2.x < p1.x)
                 angle = 2 * Math.PI - angle;
             var size = 15;
-            this.ctx.save();
-            this.ctx.beginPath();
-            this.ctx.translate(p2.x, p2.y);
-            this.ctx.rotate(-angle);
-            this.ctx.lineWidth = 6;
-            this.ctx.strokeStyle = last ? '#777' : '#000000';
-            this.ctx.moveTo(0, 0);
-            this.ctx.lineTo(size / 2, -size);
-            this.ctx.stroke();
-            this.ctx.moveTo(0, 0);
-            this.ctx.lineTo(-size / 2, -size);
-            this.ctx.stroke();
-            this.ctx.restore();
         };
         Lines.prototype.drawCurvedPath = function (cps, pts) {
             var len = pts.length;
