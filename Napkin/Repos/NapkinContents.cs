@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Napkin.Model;
 
-namespace Napkin.wwwroot.Repos
+namespace Napkint.Repos
 {
     public class NapkinContents
     {

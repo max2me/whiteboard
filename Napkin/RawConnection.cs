@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
 using Napkin.Model;
-using Napkin.wwwroot.Repos;
+using Napkint.Repos;
 using Newtonsoft.Json;
 
 namespace Napkin
