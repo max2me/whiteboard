@@ -1,0 +1,164 @@
+@import (inline) "normalize.css";
+
+* {
+	box-sizing: border-box;
+}
+
+html, body {
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	font-size: 15px;
+	font-family: 'Lato', sans-serif;
+	line-height: 1.4;
+}
+
+canvas { 
+	padding: 0;
+	margin: 0;
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 100;
+}
+
+.toolbar {
+	position: absolute;
+	top: 0;
+	right: 0;
+	background: #EFEFEF;
+	padding: 0.5rem;
+}
+
+.instructions {
+	position: absolute;
+	left: -350px;
+	top: 0;
+	background: #2967a2;
+	color: #FFF;
+	padding: 0;
+	z-index: 1000;
+	transition: 0.4s left ease-in-out;
+	width: 350px;
+	height: 100%;
+
+	.toggle {
+		position: absolute;
+		top: 0;
+		right: -50px;
+		cursor: pointer;
+		font-size: 2rem;
+		font-weight: 300;
+		transition: 0.2s opacity;
+		line-height: 1;
+		width: 50px;
+		height: 50px;
+		line-height: 50px;
+		text-align: center;
+		background: #EEE;
+		color: #2967a2;
+
+		&:hover {
+			opacity: 0.8;
+		}
+	}
+
+	h1 {
+		margin-top: 0;
+		letter-spacing: 1px;
+		font-size: 30px;
+		margin-bottom: 1rem;
+	}
+
+	h2 {
+		font-size: 20px;
+		margin-top: 1.5rem;
+		padding-top: 1.5rem;
+		border-top: 1px dotted white;
+	}
+
+	p, ul {
+		color: #E8EFF5;
+	}
+
+	ul {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+
+		li {
+			margin-bottom: 0.5rem;
+		}
+
+		li:before {
+			content: "\203A";
+			padding-right: 5px;
+		}
+
+		.sep {
+			margin-top: 1.5rem;
+		}
+	}
+
+	.k {
+		font-size: 0.8rem;
+		background: rgba(255,255,255,0.1);
+		border-radius: 3px;
+		text-transform: uppercase;
+		padding: 3px 6px 1px 6px;
+		margin-right: 2px;
+		font-family: Courier New, Courier, monospace;
+		font-weight: bold;
+		color: #a8f9da;
+    	border: 1px solid #5290cc;
+	}
+
+	.description {
+		max-height: 100%;
+		overflow-y: auto;
+		padding: 1.5rem;
+	}
+}
+
+.show-instructions {
+	.instructions {
+		left: 0;
+	}
+}
+
+.fontloader {
+	position: absolute;
+	top: -100px;
+	left: -100px;
+	font-family: 'Permanent Marker';
+	z-index: 0;
+}
+
+html.mode-scaling canvas {
+	cursor: nwse-resize;
+}
+
+html.mode-moving canvas {
+	cursor: move;
+}
+
+html.mode-cloning canvas {
+	cursor: copy;
+}
+
+html.mode-steps canvas {
+	cursor: crosshair;
+}
+
+html.mode-preparing2pan canvas {
+	cursor: -moz-grab; 
+	cursor: -webkit-grab;
+	cursor: grab;
+}
+
+html.mode-panning canvas {
+	cursor: -moz-grabbing; 
+	cursor: -webkit-grabbing;
+	cursor: grabbing;
+}
