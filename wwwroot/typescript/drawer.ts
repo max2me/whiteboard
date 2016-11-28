@@ -31,7 +31,7 @@ class Drawer {
 		this.clear();
 		this.activeDrawing = activeDrawing;
 
-		var list = Utility.clone(this.source.items);
+		var list = this.consolidateSource(this.source.items);
 
 		for(var i = 0; i < list.length; i++) {
 			var item = list[i];
@@ -111,6 +111,22 @@ class Drawer {
 
 	clear() {
 		this.ctx.clearRect(0, 0, this.el.width, this.el.height);
+	}
+
+	consolidateSource(originalItems: Item[]): Item[] {
+		const unfilteredList = Utility.clone(originalItems);
+		const result: Item[] = [];
+
+		for (var i = 0; i < unfilteredList.length; i++) {
+			var item = unfilteredList[i];
+			if (item.shape == Shape.Delete) {
+				result.pop();
+			} else {
+				result.push(item);
+			}
+		}
+
+		return result;
 	}
 }
 

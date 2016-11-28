@@ -335,6 +335,7 @@ class Director {
 			var deleteItem = new Item();
 			deleteItem.shape = Shape.Delete;
 			this.source.push(deleteItem);
+			this.syncer.send();
 			this.drawer.redraw(false);
 			return;
 		}
