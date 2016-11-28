@@ -11,7 +11,13 @@ namespace Napkin.Controllers
 {
     public class HomeController : Controller
     {
-        public IActionResult Index()
+	    public IActionResult Index()
+	    {
+		    return View();
+	    }
+
+		[HttpPost]
+        public IActionResult Index(Object ignore)
         {
             return Redirect("/" + Guid.NewGuid().ToString() + "/");
         }
