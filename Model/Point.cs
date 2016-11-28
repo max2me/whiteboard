@@ -9,9 +9,9 @@ namespace wsweb.Model
     public class Point
     {
 		[JsonProperty("x")]
-		public int X { get; set; }
+		public decimal X { get; set; }
 
 		[JsonProperty("y")]
-		public int Y { get; set; }
+		public decimal Y { get; set; }
     }
 }

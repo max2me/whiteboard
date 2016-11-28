@@ -478,7 +478,7 @@ var Syncer = (function () {
         var _this = this;
         this.source = source;
         this.drawer = drawer;
-        this.connection = $.connection('/r', { napkin: napkinId }, true);
+        this.connection = $.connection('/r', { napkin: napkinId }, false);
         this.connection.received(function (data) {
             var items = JSON.parse(data.Json);
             items.forEach(function (item) {
@@ -489,22 +489,28 @@ var Syncer = (function () {
         this.connection.error(function (error) {
             console.warn(error);
         });
-        this.connection.start(function () { });
+        this.connection.start().done(function () {
+            console.log('Connected');
+            _this.connection.send({
+                Type: 'RequestContent'
+            });
+        });
     }
     Syncer.prototype.processItem = function (item) {
-        if (item != null) {
-            var replaced = false;
-            for (var i = 0; i < this.source.items.length; i++) {
-                var k = this.source.items[i];
-                if (k.id == item.id) {
-                    this.source.items[i] = item;
-                    replaced = true;
-                    break;
-                }
+        if (item == null) {
+            return;
+        }
+        var replaced = false;
+        for (var i = 0; i < this.source.items.length; i++) {
+            var k = this.source.items[i];
+            if (k.id == item.id) {
+                this.source.items[i] = item;
+                replaced = true;
+                break;
             }
-            if (!replaced) {
-                this.source.push(item);
-            }
+        }
+        if (!replaced) {
+            this.source.push(item);
         }
     };
     Syncer.prototype.send = function () {

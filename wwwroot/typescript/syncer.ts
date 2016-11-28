@@ -8,7 +8,7 @@ class Syncer {
 	constructor(source: Source, drawer: Drawer){
 		this.source = source;
 		this.drawer = drawer;
-		this.connection = $.connection('/r', { napkin: napkinId }, true);
+		this.connection = $.connection('/r', { napkin: napkinId }, false);
 		this.connection.received((data: any) => {
 			var items = JSON.parse(data.Json);
 			items.forEach((item: Item) => {
@@ -22,24 +22,32 @@ class Syncer {
 			console.warn(error);
 		});
 
-		this.connection.start(() => {});
+		this.connection.start().done(() => {
+			console.log('Connected');
+			// Request everything that has been drawn from the beginning
+			this.connection.send({
+				Type: 'RequestContent'
+			});
+		});
 	}
 
 	processItem(item: Item) {
-		if (item != null) {
-			var replaced = false;
-			for (var i = 0; i < this.source.items.length; i++) {
-				var k = this.source.items[i];
-				if (k.id == item.id) {
-					this.source.items[i] = item;
-					replaced = true;
-					break;
-				}
-			}
+		if (item == null) {
+			return;
+		}
 
-			if (!replaced) {
-				this.source.push(item);
+		var replaced = false;
+		for (var i = 0; i < this.source.items.length; i++) {
+			var k = this.source.items[i];
+			if (k.id == item.id) {
+				this.source.items[i] = item;
+				replaced = true;
+				break;
 			}
+		}
+
+		if (!replaced) {
+			this.source.push(item);
 		}
 	}
 

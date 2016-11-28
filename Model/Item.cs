@@ -28,5 +28,14 @@ namespace wsweb.Model
 
 		[JsonProperty("lineArrowStart")]
 		public bool LineArrowStart { get; set; }
+
+	    public void CopyProperties(Item item)
+	    {
+		    Raw = item.Raw;
+		    Shape = item.Shape;
+		    Text = item.Text;
+		    LineArrowEnd = item.LineArrowEnd;
+		    LineArrowStart = item.LineArrowStart;
+	    }
     }
 }
