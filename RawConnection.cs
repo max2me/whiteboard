@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
+using Napkin.Model;
+using Napkin.wwwroot.Repos;
 using Newtonsoft.Json;
-using wsweb.Model;
-using wsweb.wwwroot.Repos;
 
-namespace wsweb
+namespace Napkin
 {
     public class RawConnection : PersistentConnection
     {

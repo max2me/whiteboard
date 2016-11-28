@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace wsweb.Model
+namespace Napkin.Model
 {
     public enum Shape
     {

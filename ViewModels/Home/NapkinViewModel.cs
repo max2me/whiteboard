@@ -1,4 +1,4 @@
-﻿namespace wsweb.ViewModels
+﻿namespace Napkin.ViewModels
 {
 	public class NapkinViewModel
 	{

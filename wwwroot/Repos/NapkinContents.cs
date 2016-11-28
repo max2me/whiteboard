@@ -3,9 +3,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using wsweb.Model;
+using Napkin.Model;
 
-namespace wsweb.wwwroot.Repos
+namespace Napkin.wwwroot.Repos
 {
     public class NapkinContents
     {
