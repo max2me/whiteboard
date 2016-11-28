@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using wsweb.ViewModels;
 
 // For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -17,7 +18,10 @@ namespace wsweb.Controllers
 
 	    public IActionResult Napkin(string napkin)
 	    {
-		    return View();
+		    return View(new NapkinViewModel()
+		    {
+			    Id = napkin
+		    });
 	    }
     }
 }

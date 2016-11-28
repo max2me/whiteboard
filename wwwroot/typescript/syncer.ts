@@ -1,3 +1,5 @@
+declare var napkinId: String;
+
 class Syncer {
 	connection: any;
 	source: Source;
@@ -6,25 +8,9 @@ class Syncer {
 	constructor(source: Source, drawer: Drawer){
 		this.source = source;
 		this.drawer = drawer;
-		this.connection = $.connection('/r');
+		this.connection = $.connection('/r', { napkin: napkinId }, true);
 		this.connection.received((data: any) => {
 			var item = JSON.parse(data.Json);
-			if (data.Type == 'Delete') {
-				var indexToDelete = -1;
-				for(var i = 0; i < this.source.items.length; i++) {
-					if (this.source.items[i].id == item.id) {
-						indexToDelete = i;
-						break;
-					}
-				}
-
-				if (indexToDelete != -1) {
-					this.source.items.splice(indexToDelete, 1);
-					this.drawer.redraw(false);
-					return;
-				}
-			}
-			
 			if (item != null) {
 				var replaced = false;
 				for(var i = 0; i < this.source.items.length; i++) {
@@ -48,8 +34,7 @@ class Syncer {
 			console.warn(error);
 		});
 
-		this.connection.start(() => {
-		});
+		this.connection.start(() => {});
 	}
 
 	send() {
@@ -57,14 +42,5 @@ class Syncer {
 			Type: 'Broadcast',
 			Json: JSON.stringify(this.source.last())
 		});
-	}
-
-	deleteAndSend() {
-		this.connection.send({
-			Type: 'Delete',
-			Json: JSON.stringify(this.source.last())
-		});
-
-		this.source.removeLast();
 	}
 }

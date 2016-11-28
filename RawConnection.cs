@@ -11,6 +11,7 @@ namespace wsweb
     {
         private static readonly ConcurrentDictionary<string, string> Users = new ConcurrentDictionary<string, string>();
         private static readonly ConcurrentDictionary<string, string> Clients = new ConcurrentDictionary<string, string>();
+	    private static readonly string QueryStringParameterName = "napkin";
 
         protected override async Task OnConnected(HttpRequest request, string connectionId)
         {
@@ -23,8 +24,9 @@ namespace wsweb
 
             string clientIp = request.HttpContext.Connection.RemoteIpAddress?.ToString();
             string user = GetUser(connectionId);
+	        string napkin = request.Query[QueryStringParameterName];
 
-            await Groups.Add(connectionId, "foo");
+            await Groups.Add(connectionId, napkin);
         }
 
         protected override Task OnReconnected(HttpRequest request, string connectionId)
@@ -50,7 +52,6 @@ namespace wsweb
             switch (message.Type)
             {
                 case IncomingMessage.Broadcast:
-				case IncomingMessage.Delete:
                     return Connection.Broadcast(new
                     {
                         Type = message.Type.ToString(),
@@ -74,23 +75,12 @@ namespace wsweb
             return user;
         }
 
-        private string GetClient(string user)
-        {
-            string connectionId;
-            if (Users.TryGetValue(user, out connectionId))
-            {
-                return connectionId;
-            }
-            return null;
-        }
-
         public enum IncomingMessage
         {
-            Broadcast,
-			Delete
+            Broadcast
         }
 
-        class Message
+        public class Message
         {
             public IncomingMessage Type { get; set; }
             public string Json { get; set; }

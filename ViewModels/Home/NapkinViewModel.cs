@@ -2,6 +2,6 @@
 {
 	public class NapkinViewModel
 	{
-		
+		public string Id { get; set; }
 	}
 }

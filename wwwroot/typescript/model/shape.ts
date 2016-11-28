@@ -8,5 +8,6 @@ enum Shape {
 	Text,
 	SmoothLine,
 	Eraser,
-	Human
+	Human,
+	Delete
 }

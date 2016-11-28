@@ -1,10 +1,11 @@
 {
-    "compilerOptions": {
-        "module": "amd",
-        "noImplicitAny": true,
-        "removeComments": true,
-        "preserveConstEnums": true,
-        "outFile": "../scripts/app.js",
-        "sourceMap": true
-    }
+	"compileOnSave": true,
+	"compilerOptions": {
+		"module": "amd",
+		"noImplicitAny": true,
+		"removeComments": true,
+		"preserveConstEnums": true,
+		"outFile": "../scripts/app.js",
+		"sourceMap": true
+	}
 }

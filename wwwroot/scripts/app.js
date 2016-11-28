@@ -233,7 +233,9 @@ var Director = (function () {
         var char = window.keysight(e).char;
         if (char == '\b' || char == 'delete') {
             if (last.text == '') {
-                this.source.removeLast();
+                var deleteItem = new Item();
+                deleteItem.shape = Shape.Delete;
+                this.source.push(deleteItem);
                 this.syncer.send();
                 this.drawer.redraw(false);
                 return;
@@ -261,7 +263,9 @@ var Director = (function () {
             return;
         var c = String.fromCharCode(e.which).toLowerCase();
         if (e.which == 8 || e.which == 46) {
-            this.syncer.deleteAndSend();
+            var deleteItem = new Item();
+            deleteItem.shape = Shape.Delete;
+            this.source.push(deleteItem);
             this.drawer.redraw(false);
             return;
         }
@@ -387,9 +391,10 @@ var Drawer = (function () {
     Drawer.prototype.redraw = function (activeDrawing) {
         this.clear();
         this.activeDrawing = activeDrawing;
-        for (var i = 0; i < this.source.items.length; i++) {
-            var item = Utility.clone(this.source.items[i]);
-            var last = i == this.source.items.length - 1;
+        var list = Utility.clone(this.source.items);
+        for (var i = 0; i < list.length; i++) {
+            var item = list[i];
+            var last = i == list.length - 1;
             var bounds = Utility.getBounds(item.raw);
             var itemCenter = new Point(bounds.centerX, bounds.centerY);
             var canvasCenter = new Point(0, 0);
@@ -462,23 +467,9 @@ var Syncer = (function () {
         var _this = this;
         this.source = source;
         this.drawer = drawer;
-        this.connection = $.connection('/r');
+        this.connection = $.connection('/r', { napkin: napkinId }, true);
         this.connection.received(function (data) {
             var item = JSON.parse(data.Json);
-            if (data.Type == 'Delete') {
-                var indexToDelete = -1;
-                for (var i = 0; i < _this.source.items.length; i++) {
-                    if (_this.source.items[i].id == item.id) {
-                        indexToDelete = i;
-                        break;
-                    }
-                }
-                if (indexToDelete != -1) {
-                    _this.source.items.splice(indexToDelete, 1);
-                    _this.drawer.redraw(false);
-                    return;
-                }
-            }
             if (item != null) {
                 var replaced = false;
                 for (var i = 0; i < _this.source.items.length; i++) {
@@ -498,21 +489,13 @@ var Syncer = (function () {
         this.connection.error(function (error) {
             console.warn(error);
         });
-        this.connection.start(function () {
-        });
+        this.connection.start(function () { });
     }
     Syncer.prototype.send = function () {
         this.connection.send({
             Type: 'Broadcast',
             Json: JSON.stringify(this.source.last())
         });
-    };
-    Syncer.prototype.deleteAndSend = function () {
-        this.connection.send({
-            Type: 'Delete',
-            Json: JSON.stringify(this.source.last())
-        });
-        this.source.removeLast();
     };
     return Syncer;
 }());
@@ -669,6 +652,7 @@ var Shape;
     Shape[Shape["SmoothLine"] = 7] = "SmoothLine";
     Shape[Shape["Eraser"] = 8] = "Eraser";
     Shape[Shape["Human"] = 9] = "Human";
+    Shape[Shape["Delete"] = 10] = "Delete";
 })(Shape || (Shape = {}));
 var Source = (function () {
     function Source() {

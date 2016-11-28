@@ -31,9 +31,11 @@ class Drawer {
 		this.clear();
 		this.activeDrawing = activeDrawing;
 
-		for(var i = 0; i < this.source.items.length; i++) {
-			var item = Utility.clone(this.source.items[i]);
-			var last = i == this.source.items.length - 1;
+		var list = Utility.clone(this.source.items);
+
+		for(var i = 0; i < list.length; i++) {
+			var item = list[i];
+			var last = i == list.length - 1;
 
 			var bounds = Utility.getBounds(item.raw);
 			var itemCenter = new Point(bounds.centerX, bounds.centerY);

@@ -296,7 +296,9 @@ class Director {
 		var char: string = window.keysight(e).char;
 		if (char == '\b' || char == 'delete') {
 			if (last.text == '') {
-				this.source.removeLast();
+				var deleteItem = new Item();
+				deleteItem.shape = Shape.Delete;
+				this.source.push(deleteItem);
 				this.syncer.send();
 				this.drawer.redraw(false);
 				return;
@@ -330,7 +332,9 @@ class Director {
 		var c = String.fromCharCode(e.which).toLowerCase();
 
 		if (e.which == 8 || e.which == 46) { // backspace or delete
-			this.syncer.deleteAndSend();
+			var deleteItem = new Item();
+			deleteItem.shape = Shape.Delete;
+			this.source.push(deleteItem);
 			this.drawer.redraw(false);
 			return;
 		}
