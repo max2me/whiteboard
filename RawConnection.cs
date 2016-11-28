@@ -41,7 +41,6 @@ namespace wsweb
             string ignored;
             Users.TryRemove(connectionId, out ignored);
 
-            string suffix = stopCalled ? "cleanly" : "uncleanly";
             return null;
         }
 
@@ -55,7 +54,7 @@ namespace wsweb
                     return Connection.Broadcast(new
                     {
                         Type = message.Type.ToString(),
-                        Json = message.Json
+                        Json = "[" + message.Json + "]"
                     },
                     connectionId);
                 default:

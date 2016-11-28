@@ -233,9 +233,7 @@ var Director = (function () {
         var char = window.keysight(e).char;
         if (char == '\b' || char == 'delete') {
             if (last.text == '') {
-                var deleteItem = new Item();
-                deleteItem.shape = Shape.Delete;
-                this.source.push(deleteItem);
+                this.source.push(new DeleteItem());
                 this.syncer.send();
                 this.drawer.redraw(false);
                 return;
@@ -263,9 +261,7 @@ var Director = (function () {
             return;
         var c = String.fromCharCode(e.which).toLowerCase();
         if (e.which == 8 || e.which == 46) {
-            var deleteItem = new Item();
-            deleteItem.shape = Shape.Delete;
-            this.source.push(deleteItem);
+            this.source.push(new DeleteItem());
             this.syncer.send();
             this.drawer.redraw(false);
             return;
@@ -484,28 +480,33 @@ var Syncer = (function () {
         this.drawer = drawer;
         this.connection = $.connection('/r', { napkin: napkinId }, true);
         this.connection.received(function (data) {
-            var item = JSON.parse(data.Json);
-            if (item != null) {
-                var replaced = false;
-                for (var i = 0; i < _this.source.items.length; i++) {
-                    var k = _this.source.items[i];
-                    if (k.id == item.id) {
-                        _this.source.items[i] = item;
-                        replaced = true;
-                        break;
-                    }
-                }
-                if (!replaced) {
-                    _this.source.push(item);
-                }
-                _this.drawer.redraw(false);
-            }
+            var items = JSON.parse(data.Json);
+            items.forEach(function (item) {
+                _this.processItem(item);
+            });
+            _this.drawer.redraw(false);
         });
         this.connection.error(function (error) {
             console.warn(error);
         });
         this.connection.start(function () { });
     }
+    Syncer.prototype.processItem = function (item) {
+        if (item != null) {
+            var replaced = false;
+            for (var i = 0; i < this.source.items.length; i++) {
+                var k = this.source.items[i];
+                if (k.id == item.id) {
+                    this.source.items[i] = item;
+                    replaced = true;
+                    break;
+                }
+            }
+            if (!replaced) {
+                this.source.push(item);
+            }
+        }
+    };
     Syncer.prototype.send = function () {
         this.connection.send({
             Type: 'Broadcast',
@@ -791,6 +792,14 @@ var Item = (function () {
     return Item;
 }());
 ;
+var DeleteItem = (function (_super) {
+    __extends(DeleteItem, _super);
+    function DeleteItem() {
+        _super.call(this);
+        this.shape = Shape.Delete;
+    }
+    return DeleteItem;
+}(Item));
 var Point = (function () {
     function Point(x, y) {
         this.x = x;
