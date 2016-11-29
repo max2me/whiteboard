@@ -11,6 +11,9 @@ namespace Napkin.Repos
 
 	    public void AddItem(String napkinId, Item item)
 	    {
+		    if (item == null)
+			    return;
+
 		    var napkin = GetNapkin(napkinId);
 
 		    var replaced = false;
