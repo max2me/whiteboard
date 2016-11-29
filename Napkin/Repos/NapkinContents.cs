@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Napkin.Model;
 
-namespace Napkint.Repos
+namespace Napkin.Repos
 {
     public class NapkinContents
     {

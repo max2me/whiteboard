@@ -27,8 +27,15 @@ namespace Napkin
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            // Add framework services.
-            services.AddMvc();
+            services
+				.AddOptions()
+				.AddRouting(options => options.LowercaseUrls = true)
+				.AddMvc();
+
+			services.AddSignalR(options =>
+		        {
+			        options.Hubs.EnableDetailedErrors = true;
+		        });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -47,14 +54,28 @@ namespace Napkin
                 app.UseExceptionHandler("/Home/Error");
             }
 
-            app.UseStaticFiles();
-
-            app.UseMvc(routes =>
-            {
-                routes.MapRoute(
-                    name: "default",
-                    template: "{controller=Home}/{action=Index}/{id?}");
-            });
+            app
+				.UseDefaultFiles()
+				.UseStaticFiles()
+				.UseWebSockets()
+				.UseSignalR<RawConnection>("/r")
+				.UseMvc(routes =>
+	            {
+		            routes
+			            .MapRoute(
+				            name: "default",
+				            template: "{controller=Home}/{action=Index}/{id?}")
+			            .MapRoute(
+				            name: "n",
+				            template: "{*napkin}/",
+				            defaults: new {controller = "Home", action = "Napkin"});
+	            })
+				.UseStatusCodePages()
+				.Run(context =>
+				{
+					context.Response.StatusCode = 404;
+					return Task.FromResult(0);
+				});
         }
     }
 }
