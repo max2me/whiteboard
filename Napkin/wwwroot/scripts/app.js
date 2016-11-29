@@ -233,8 +233,7 @@ var Director = (function () {
         var char = window.keysight(e).char;
         if (char == '\b' || char == 'delete') {
             if (last.text == '') {
-                this.source.push(new DeleteItem());
-                this.syncer.send();
+                this.deleteAndSync();
                 this.drawer.redraw(false);
                 return;
             }
@@ -255,14 +254,18 @@ var Director = (function () {
         this.syncer.send();
         this.drawer.redraw(false);
     };
+    Director.prototype.deleteAndSync = function () {
+        var d = new DeleteItem();
+        this.source.push(d);
+        this.syncer.send(d);
+    };
     Director.prototype.generalHotkeys = function (e) {
         if (this.source.last() == null ||
             this.source.last().shape == Shape.Text)
             return;
         var c = String.fromCharCode(e.which).toLowerCase();
         if (e.which == 8 || e.which == 46) {
-            this.source.push(new DeleteItem());
-            this.syncer.send();
+            this.deleteAndSync();
             this.drawer.redraw(false);
             return;
         }
@@ -526,10 +529,11 @@ var Syncer = (function () {
             this.source.push(item);
         }
     };
-    Syncer.prototype.send = function () {
+    Syncer.prototype.send = function (last) {
+        if (last === void 0) { last = null; }
         this.connection.send({
             Type: 'Broadcast',
-            Json: JSON.stringify(this.source.last())
+            Json: JSON.stringify(last || this.source.last())
         });
     };
     Syncer.prototype.sendClearAll = function () {
@@ -546,6 +550,201 @@ var View = (function () {
         this.zoom = 1;
     }
     return View;
+}());
+var Keyboard = (function () {
+    function Keyboard() {
+    }
+    Keyboard.isDelete = function (char) {
+        return char == Keyboard.backspace || char == Keyboard.delete;
+    };
+    Keyboard.isArrowRight = function (char) {
+        return char == Keyboard.arrowRight;
+    };
+    Keyboard.isArrowLeft = function (char) {
+        return char == Keyboard.arrowLeft;
+    };
+    Keyboard.backspace = 8;
+    Keyboard.delete = 46;
+    Keyboard.arrowRight = 39;
+    Keyboard.arrowLeft = 37;
+    return Keyboard;
+}());
+var Transform = (function () {
+    function Transform() {
+    }
+    Transform.move = function (points, shiftX, shiftY) {
+        var result = [];
+        for (var i = 0; i < points.length; i++) {
+            var p = points[i];
+            result.push(new Point(p.x + shiftX, p.y + shiftY));
+        }
+        return result;
+    };
+    Transform.scale = function (points, origin, scaleX, scaleY) {
+        var result = [];
+        for (var i = 0; i < points.length; i++) {
+            var p = points[i];
+            result.push(new Point(origin.x + (p.x - origin.x) * scaleX, origin.y + (p.y - origin.y) * scaleY));
+        }
+        return result;
+    };
+    return Transform;
+}());
+var Utility = (function () {
+    function Utility() {
+    }
+    Utility.distance = function (p1, p2) {
+        return Math.abs(Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)));
+    };
+    Utility.va = function (p1, p2) {
+        return [p2.x - p1.x, p2.y - p1.y];
+    };
+    Utility.clone = function (object) {
+        return JSON.parse(JSON.stringify(object));
+    };
+    Utility.controlPoints = function (p1, p2, p3) {
+        var t = 0.5;
+        var v = Utility.va(p1, p3);
+        var d01 = Utility.distance(p1, p2);
+        var d12 = Utility.distance(p2, p3);
+        var d012 = d01 + d12;
+        return [new Point(p2.x - v[0] * t * d01 / d012, p2.y - v[1] * t * d01 / d012),
+            new Point(p2.x + v[0] * t * d12 / d012, p2.y + v[1] * t * d12 / d012)];
+    };
+    Utility.getBounds = function (coords) {
+        if (coords.length == 1) {
+            return {
+                xmin: coords[0].x,
+                xmax: coords[0].x,
+                ymin: coords[0].y,
+                ymax: coords[0].y,
+                centerX: coords[0].x,
+                centerY: coords[0].y
+            };
+        }
+        var xmin = 1000000, xmax = 0, ymin = 1000000, ymax = 0;
+        for (var i = 0; i < coords.length; i++) {
+            var p = coords[i];
+            if (p.x < xmin)
+                xmin = p.x;
+            if (p.x > xmax)
+                xmax = p.x;
+            if (p.y < ymin)
+                ymin = p.y;
+            if (p.y > ymax)
+                ymax = p.y;
+        }
+        return {
+            xmin: xmin,
+            xmax: xmax,
+            ymin: ymin,
+            ymax: ymax,
+            centerX: xmin + (xmax - xmin) / 2,
+            centerY: ymin + (ymax - ymin) / 2
+        };
+    };
+    return Utility;
+}());
+var Item = (function () {
+    function Item() {
+        this.id = this.generateNewId();
+        this.raw = [];
+        this.shape = Shape.Original;
+        this.text = '';
+        this.fontSizeK = 1;
+        this.lineArrowEnd = false;
+        this.lineArrowStart = false;
+    }
+    Item.prototype.generateNewId = function () {
+        return 'id' + Math.round(Math.random() * 1000000);
+    };
+    Item.prototype.record = function (point) {
+        this.raw.push(new Point(point.x, point.y));
+    };
+    Item.prototype.clone = function () {
+        var result = new Item();
+        result.shape = this.shape;
+        result.text = this.text;
+        result.fontSizeK = this.fontSizeK;
+        result.lineArrowStart = this.lineArrowStart;
+        result.lineArrowEnd = this.lineArrowEnd;
+        result.raw = Utility.clone(this.raw);
+        return result;
+    };
+    Item.prototype.isLine = function () {
+        return;
+    };
+    return Item;
+}());
+;
+var DeleteItem = (function (_super) {
+    __extends(DeleteItem, _super);
+    function DeleteItem() {
+        _super.call(this);
+        this.shape = Shape.Delete;
+    }
+    return DeleteItem;
+}(Item));
+var Point = (function () {
+    function Point(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+    return Point;
+}());
+var Shape;
+(function (Shape) {
+    Shape[Shape["Original"] = 0] = "Original";
+    Shape[Shape["Rectangle"] = 10] = "Rectangle";
+    Shape[Shape["Circle"] = 20] = "Circle";
+    Shape[Shape["Ellipse"] = 30] = "Ellipse";
+    Shape[Shape["Line"] = 40] = "Line";
+    Shape[Shape["StraightLine"] = 50] = "StraightLine";
+    Shape[Shape["Text"] = 60] = "Text";
+    Shape[Shape["SmoothLine"] = 70] = "SmoothLine";
+    Shape[Shape["Eraser"] = 80] = "Eraser";
+    Shape[Shape["Human"] = 90] = "Human";
+    Shape[Shape["Delete"] = 100] = "Delete";
+})(Shape || (Shape = {}));
+var Source = (function () {
+    function Source() {
+        this.items = [];
+    }
+    Source.prototype.last = function () {
+        var deleted = 0;
+        for (var i = this.items.length - 1; i >= 0; i--) {
+            var item = this.items[i];
+            if (item.shape == Shape.Delete) {
+                deleted++;
+            }
+            else {
+                if (deleted == 0) {
+                    return item;
+                }
+                else {
+                    deleted--;
+                }
+            }
+        }
+        return null;
+    };
+    Source.prototype.push = function (item) {
+        this.items.push(item);
+    };
+    Source.prototype.start = function (point) {
+        var item = new Item();
+        item.record(point);
+        this.items.push(item);
+    };
+    Source.prototype.isEmpty = function () {
+        return this.items.length == 0;
+    };
+    Source.prototype.removeLast = function () {
+        if (this.isEmpty())
+            return;
+        this.items.pop();
+    };
+    return Source;
 }());
 var Drawers;
 (function (Drawers) {
@@ -802,199 +1001,4 @@ var Drawers;
     }(Drawers.Base));
     Drawers.Text = Text;
 })(Drawers || (Drawers = {}));
-var Item = (function () {
-    function Item() {
-        this.id = this.generateNewId();
-        this.raw = [];
-        this.shape = Shape.Original;
-        this.text = '';
-        this.fontSizeK = 1;
-        this.lineArrowEnd = false;
-        this.lineArrowStart = false;
-    }
-    Item.prototype.generateNewId = function () {
-        return 'id' + Math.round(Math.random() * 1000000);
-    };
-    Item.prototype.record = function (point) {
-        this.raw.push(new Point(point.x, point.y));
-    };
-    Item.prototype.clone = function () {
-        var result = new Item();
-        result.shape = this.shape;
-        result.text = this.text;
-        result.fontSizeK = this.fontSizeK;
-        result.lineArrowStart = this.lineArrowStart;
-        result.lineArrowEnd = this.lineArrowEnd;
-        result.raw = Utility.clone(this.raw);
-        return result;
-    };
-    Item.prototype.isLine = function () {
-        return;
-    };
-    return Item;
-}());
-;
-var DeleteItem = (function (_super) {
-    __extends(DeleteItem, _super);
-    function DeleteItem() {
-        _super.call(this);
-        this.shape = Shape.Delete;
-    }
-    return DeleteItem;
-}(Item));
-var Point = (function () {
-    function Point(x, y) {
-        this.x = x;
-        this.y = y;
-    }
-    return Point;
-}());
-var Shape;
-(function (Shape) {
-    Shape[Shape["Original"] = 0] = "Original";
-    Shape[Shape["Rectangle"] = 10] = "Rectangle";
-    Shape[Shape["Circle"] = 20] = "Circle";
-    Shape[Shape["Ellipse"] = 30] = "Ellipse";
-    Shape[Shape["Line"] = 40] = "Line";
-    Shape[Shape["StraightLine"] = 50] = "StraightLine";
-    Shape[Shape["Text"] = 60] = "Text";
-    Shape[Shape["SmoothLine"] = 70] = "SmoothLine";
-    Shape[Shape["Eraser"] = 80] = "Eraser";
-    Shape[Shape["Human"] = 90] = "Human";
-    Shape[Shape["Delete"] = 100] = "Delete";
-})(Shape || (Shape = {}));
-var Source = (function () {
-    function Source() {
-        this.items = [];
-    }
-    Source.prototype.last = function () {
-        var deleted = 0;
-        for (var i = this.items.length - 1; i >= 0; i--) {
-            var item = this.items[i];
-            if (item.shape == Shape.Delete) {
-                deleted++;
-            }
-            else {
-                if (deleted == 0) {
-                    return item;
-                }
-                else {
-                    deleted--;
-                }
-            }
-        }
-        return null;
-    };
-    Source.prototype.push = function (item) {
-        this.items.push(item);
-    };
-    Source.prototype.start = function (point) {
-        var item = new Item();
-        item.record(point);
-        this.items.push(item);
-    };
-    Source.prototype.isEmpty = function () {
-        return this.items.length == 0;
-    };
-    Source.prototype.removeLast = function () {
-        if (this.isEmpty())
-            return;
-        this.items.pop();
-    };
-    return Source;
-}());
-var Keyboard = (function () {
-    function Keyboard() {
-    }
-    Keyboard.isDelete = function (char) {
-        return char == Keyboard.backspace || char == Keyboard.delete;
-    };
-    Keyboard.isArrowRight = function (char) {
-        return char == Keyboard.arrowRight;
-    };
-    Keyboard.isArrowLeft = function (char) {
-        return char == Keyboard.arrowLeft;
-    };
-    Keyboard.backspace = 8;
-    Keyboard.delete = 46;
-    Keyboard.arrowRight = 39;
-    Keyboard.arrowLeft = 37;
-    return Keyboard;
-}());
-var Transform = (function () {
-    function Transform() {
-    }
-    Transform.move = function (points, shiftX, shiftY) {
-        var result = [];
-        for (var i = 0; i < points.length; i++) {
-            var p = points[i];
-            result.push(new Point(p.x + shiftX, p.y + shiftY));
-        }
-        return result;
-    };
-    Transform.scale = function (points, origin, scaleX, scaleY) {
-        var result = [];
-        for (var i = 0; i < points.length; i++) {
-            var p = points[i];
-            result.push(new Point(origin.x + (p.x - origin.x) * scaleX, origin.y + (p.y - origin.y) * scaleY));
-        }
-        return result;
-    };
-    return Transform;
-}());
-var Utility = (function () {
-    function Utility() {
-    }
-    Utility.distance = function (p1, p2) {
-        return Math.abs(Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)));
-    };
-    Utility.va = function (p1, p2) {
-        return [p2.x - p1.x, p2.y - p1.y];
-    };
-    Utility.clone = function (object) {
-        return JSON.parse(JSON.stringify(object));
-    };
-    Utility.controlPoints = function (p1, p2, p3) {
-        var t = 0.5;
-        var v = Utility.va(p1, p3);
-        var d01 = Utility.distance(p1, p2);
-        var d12 = Utility.distance(p2, p3);
-        var d012 = d01 + d12;
-        return [new Point(p2.x - v[0] * t * d01 / d012, p2.y - v[1] * t * d01 / d012),
-            new Point(p2.x + v[0] * t * d12 / d012, p2.y + v[1] * t * d12 / d012)];
-    };
-    Utility.getBounds = function (coords) {
-        if (coords.length == 1) {
-            return {
-                xmin: coords[0].x,
-                xmax: coords[0].x,
-                ymin: coords[0].y,
-                ymax: coords[0].y,
-                centerX: coords[0].x,
-                centerY: coords[0].y
-            };
-        }
-        var xmin = 1000000, xmax = 0, ymin = 1000000, ymax = 0;
-        for (var i = 0; i < coords.length; i++) {
-            var p = coords[i];
-            if (p.x < xmin)
-                xmin = p.x;
-            if (p.x > xmax)
-                xmax = p.x;
-            if (p.y < ymin)
-                ymin = p.y;
-            if (p.y > ymax)
-                ymax = p.y;
-        }
-        return {
-            xmin: xmin,
-            xmax: xmax,
-            ymin: ymin,
-            ymax: ymax,
-            centerX: xmin + (xmax - xmin) / 2,
-            centerY: ymin + (ymax - ymin) / 2
-        };
-    };
-    return Utility;
-}());
 //# sourceMappingURL=app.js.map

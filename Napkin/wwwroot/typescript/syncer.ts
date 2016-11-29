@@ -62,10 +62,10 @@ class Syncer {
 		}
 	}
 
-	send() {
+	send(last: Item = null) {
 		this.connection.send({
 			Type: 'Broadcast',
-			Json: JSON.stringify(this.source.last())
+			Json: JSON.stringify(last || this.source.last())
 		});
 	}
 

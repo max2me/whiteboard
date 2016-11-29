@@ -259,8 +259,6 @@ class Director {
 		this.view.panY += deltaY ;
 		this.logView('New pan');
 		console.log('-');
-
-		
 	}
 
 
@@ -296,8 +294,7 @@ class Director {
 		var char: string = window.keysight(e).char;
 		if (char == '\b' || char == 'delete') {
 			if (last.text == '') {
-				this.source.push(new DeleteItem());
-				this.syncer.send();
+				this.deleteAndSync();
 				this.drawer.redraw(false);
 				return;
 			}
@@ -323,6 +320,12 @@ class Director {
 		this.drawer.redraw(false);
 	}
 
+	deleteAndSync() {
+		var d = new DeleteItem();
+		this.source.push(d);
+		this.syncer.send(d);
+	}
+
 	generalHotkeys(e: KeyboardEvent) {
 		if (this.source.last() == null ||
 			this.source.last().shape == Shape.Text) return;
@@ -330,8 +333,7 @@ class Director {
 		var c = String.fromCharCode(e.which).toLowerCase();
 
 		if (e.which == 8 || e.which == 46) { // backspace or delete
-			this.source.push(new DeleteItem());
-			this.syncer.send();
+			this.deleteAndSync();
 			this.drawer.redraw(false);
 			return;
 		}
