@@ -639,11 +639,29 @@ var Drawers;
             }
         };
         Lines.prototype.drawArrowBetweenPoints = function (p1, p2, last) {
-            var dist = Utility.distance(p1, p2);
-            var angle = Math.acos((p2.y - p1.y) / dist);
-            if (p2.x < p1.x)
-                angle = 2 * Math.PI - angle;
-            var size = 15;
+            var deltaX = p2.x - p1.x;
+            var deltaY = p2.y - p1.y;
+            var angleInDegreees = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+            var angleInRadians = angleInDegreees * Math.PI / 180;
+            var sizeX = 15;
+            var sizeY = 10;
+            var newPoint1 = this.rotatePoint(new Point(p2.x - sizeX, p2.y - sizeY), p2, angleInRadians);
+            var newPoint2 = this.rotatePoint(new Point(p2.x - sizeX, p2.y + sizeY), p2, angleInRadians);
+            this.ctx.lineWidth = 6;
+            this.ctx.strokeStyle = last ? '#777' : '#000000';
+            this.ctx.moveTo(p2.x, p2.y);
+            this.ctx.lineTo(newPoint1.x, newPoint1.y);
+            this.ctx.stroke();
+            this.ctx.moveTo(p2.x, p2.y);
+            this.ctx.lineTo(newPoint2.x, newPoint2.y);
+            this.ctx.stroke();
+        };
+        Lines.prototype.rotatePoint = function (point, origin, angleInRadians) {
+            var dx = point.x - origin.x;
+            var dy = point.y - origin.y;
+            var x = dx * Math.cos(angleInRadians) - dy * Math.sin(angleInRadians) + origin.x;
+            var y = dy * Math.cos(angleInRadians) + dx * Math.sin(angleInRadians) + origin.y;
+            return new Point(x, y);
         };
         Lines.prototype.drawCurvedPath = function (cps, pts) {
             var len = pts.length;

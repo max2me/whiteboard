@@ -97,30 +97,38 @@ namespace Drawers {
 		}
 
 		private drawArrowBetweenPoints(p1: Point, p2: Point, last: boolean) {
-			var dist = Utility.distance(p1, p2);
-			var angle = Math.acos((p2.y - p1.y) / dist);
+			var deltaX = p2.x - p1.x;
+			var deltaY = p2.y - p1.y;
+			var angleInDegreees = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+			var angleInRadians = angleInDegreees * Math.PI / 180;
 
-			if (p2.x < p1.x) angle = 2 * Math.PI - angle;
+			var sizeX = 15;
+			var sizeY = 10;
+			var newPoint1 = this.rotatePoint(new Point(p2.x - sizeX, p2.y - sizeY), p2, angleInRadians);
+			var newPoint2 = this.rotatePoint(new Point(p2.x - sizeX, p2.y + sizeY), p2, angleInRadians);
 
-			var size = 15;
-
-			// this.ctx.save();
-			// this.ctx.beginPath();
-			// this.ctx.translate(p2.x, p2.y);
-			// this.ctx.rotate(-angle);
-
-			// this.ctx.lineWidth = 6;
-			// this.ctx.strokeStyle = last? '#777' : '#000000';
 			
-			// this.ctx.moveTo(0, 0);
-			// this.ctx.lineTo(size/2, -size);
-			// this.ctx.stroke();
+
+			this.ctx.lineWidth = 6;
+			this.ctx.strokeStyle = last? '#777' : '#000000';
 			
-			// this.ctx.moveTo(0, 0);
-			// this.ctx.lineTo(-size/2, -size);
-			// this.ctx.stroke();
-			
-			// this.ctx.restore();
+			this.ctx.moveTo(p2.x, p2.y);
+			this.ctx.lineTo(newPoint1.x, newPoint1.y);
+			this.ctx.stroke();
+
+			this.ctx.moveTo(p2.x, p2.y);
+			this.ctx.lineTo(newPoint2.x, newPoint2.y);
+			this.ctx.stroke();
+		}
+
+		private rotatePoint(point: Point, origin: Point, angleInRadians: number) : Point {
+			var dx = point.x - origin.x;
+			var dy = point.y - origin.y;
+
+			var x = dx * Math.cos(angleInRadians) - dy * Math.sin(angleInRadians) + origin.x;
+			var y = dy * Math.cos(angleInRadians) + dx * Math.sin(angleInRadians) + origin.y;
+
+			return new Point(x, y);
 		}
 
 		private drawCurvedPath(cps: Point[], pts: Point[]){
