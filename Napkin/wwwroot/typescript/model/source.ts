@@ -6,7 +6,22 @@ class Source {
 	}
 
 	last(): Item {
-		return this.items.length ? this.items[this.items.length - 1] : null;
+		// Have to account for `deleted` items in the source
+		var deleted = 0;
+		for (var i = this.items.length - 1; i >= 0; i--) {
+			var item = this.items[i];
+			if (item.shape == Shape.Delete) {
+				deleted++;
+			} else {
+				if (deleted == 0) {
+					return item;
+				} else {
+					deleted--;
+				}
+			}
+		}
+
+		return null;
 	}
 
 	push(item: Item) {

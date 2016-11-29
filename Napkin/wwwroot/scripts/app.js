@@ -868,7 +868,22 @@ var Source = (function () {
         this.items = [];
     }
     Source.prototype.last = function () {
-        return this.items.length ? this.items[this.items.length - 1] : null;
+        var deleted = 0;
+        for (var i = this.items.length - 1; i >= 0; i--) {
+            var item = this.items[i];
+            if (item.shape == Shape.Delete) {
+                deleted++;
+            }
+            else {
+                if (deleted == 0) {
+                    return item;
+                }
+                else {
+                    deleted--;
+                }
+            }
+        }
+        return null;
     };
     Source.prototype.push = function (item) {
         this.items.push(item);
