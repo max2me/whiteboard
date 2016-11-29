@@ -4,16 +4,29 @@ class Syncer {
 	connection: any;
 	source: Source;
 	drawer: Drawer;
+	director: Director;
 
-	constructor(source: Source, drawer: Drawer){
+	constructor(source: Source, drawer: Drawer, director: Director){
 		this.source = source;
 		this.drawer = drawer;
+		this.director = director;
 		this.connection = $.connection('/r', { napkin: napkinId }, false);
-		this.connection.received((data: any) => {
-			var items = JSON.parse(data.Json);
-			items.forEach((item: Item) => {
-				this.processItem(item);
-			});
+		this.connection.received((message: any) => {
+
+			switch(message.Type) {
+				case 'Broadcast':
+					var items = JSON.parse(message.Json);
+					items.forEach((item: Item) => {
+						this.processItem(item);
+					});
+					break;
+
+				case 'ClearAll':
+					this.director.resetModeToNone();
+					this.source.items = [];
+					break;
+			}
+			
 			
 			this.drawer.redraw(false);
 		});
@@ -23,8 +36,6 @@ class Syncer {
 		});
 
 		this.connection.start().done(() => {
-			console.log('Connected');
-			// Request everything that has been drawn from the beginning
 			this.connection.send({
 				Type: 'RequestContent'
 			});
@@ -55,6 +66,12 @@ class Syncer {
 		this.connection.send({
 			Type: 'Broadcast',
 			Json: JSON.stringify(this.source.last())
+		});
+	}
+
+	sendClearAll(): any {
+		this.connection.send({
+			Type: 'ClearAll'
 		});
 	}
 }

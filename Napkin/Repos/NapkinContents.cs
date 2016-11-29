@@ -47,5 +47,16 @@ namespace Napkin.Repos
 
 		    return result;
 	    }
+
+	    public void ClearAll(string napkinID)
+	    {
+		    var napkin = GetNapkin(napkinID);
+
+		    while (!napkin.IsEmpty)
+			{
+				Item tempItem = null;
+				napkin.TryDequeue(out tempItem);
+			}
+		}
     }
 }

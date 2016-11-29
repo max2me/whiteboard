@@ -33,7 +33,7 @@ class Director {
 		this.view = new View();
 		this.canvas = document.getElementById('c');
 		this.drawer = new Drawer(this.canvas, this.source, this.view);
-		this.syncer = new Syncer(this.source, this.drawer);		
+		this.syncer = new Syncer(this.source, this.drawer, this);		
 
 		this.canvas.addEventListener('mousedown', (e: MouseEvent) => {
 			e.preventDefault();
@@ -396,6 +396,11 @@ class Director {
 		$('html').attr('class', this.getHtmlClass(e));
 	}
 
+	resetModeToNone() {
+		this.mode = Mode.None;
+		$('html').attr('class', '');
+	}
+
 	syncUpHtmlStateUp(e: KeyboardEvent) {
 		var char = String.fromCharCode(e.which).toLowerCase();
 
@@ -451,6 +456,7 @@ class Director {
 
 	clearAll() {
 		this.source.items = [];
+		this.syncer.sendClearAll();
 		this.drawer.redraw(false);
 	}
 }

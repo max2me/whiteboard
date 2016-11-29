@@ -19,7 +19,10 @@ namespace Napkin.Controllers
 		[HttpPost]
         public IActionResult Index(Object ignore)
         {
-            return Redirect("/" + Guid.NewGuid().ToString() + "/");
+			var random = new Random();
+	        var name = random.Next(999).ToString("D3") + "-" + random.Next(999).ToString("D3");
+
+			return Redirect("/" + name + "/");
         }
 
 	    public IActionResult Napkin(string napkin)

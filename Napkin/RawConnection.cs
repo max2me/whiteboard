@@ -62,6 +62,16 @@ namespace Napkin
 
 					return Connection.Send(connectionId, requestContents);
 
+				case IncomingMessage.ClearAll:
+					Contents.ClearAll(Members.GetNapkin(connectionId));
+
+					var clearAllContents = new
+					{
+						Type = IncomingMessage.ClearAll.ToString()
+					};
+
+					return Groups.Send(Members.GetNapkin(connectionId), clearAllContents, connectionId);
+
 				default:
                     break;
             }
@@ -72,7 +82,8 @@ namespace Napkin
         public enum IncomingMessage
         {
             Broadcast,
-			RequestContent
+			RequestContent,
+			ClearAll
         }
 
         public class Message
