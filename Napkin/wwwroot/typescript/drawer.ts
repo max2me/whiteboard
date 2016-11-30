@@ -18,13 +18,42 @@ class Drawer {
 		this.ctx = el.getContext('2d');
 		this.ctx.lineJoin = this.ctx.lineCap = 'round';
 
-		this.el.width =$('body').width() - $('.actions').width();
-		this.el.height = $('body').height();
-
+		this.setupCanvas(this.ctx);
+		
 		this.original = new Drawers.Original(this.ctx);
 		this.shapes = new Drawers.Shapes(this.ctx);
 		this.lines = new Drawers.Lines(this.ctx);
 		this.text = new Drawers.Text(this.ctx);
+	}
+
+	setupCanvas(context: CanvasRenderingContext2D) {
+		var visibleH = $('body').height();
+		var visibleW = $('body').width() - $('.actions').width();
+		var ratio = this.getRatio(context);
+
+		this.el.width = visibleW * ratio;
+        this.el.height = visibleH * ratio;
+
+        this.el.style.width = visibleW + 'px';
+        this.el.style.height = visibleH + 'px';
+
+        // now scale the context to counter
+        // the fact that we've manually scaled
+        // our canvas element
+        context.scale(ratio, ratio);
+	}
+
+	getRatio(context: any): number {
+		var devicePixelRatio = window.devicePixelRatio || 1,
+		backingStoreRatio = context.webkitBackingStorePixelRatio ||
+		context.mozBackingStorePixelRatio ||
+		context.msBackingStorePixelRatio ||
+		context.oBackingStorePixelRatio ||
+		context.backingStorePixelRatio || 1,
+
+		ratio = devicePixelRatio / backingStoreRatio;
+
+		return ratio;
 	}
 
 	redraw(activeDrawing: boolean) {
