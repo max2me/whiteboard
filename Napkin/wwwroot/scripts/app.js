@@ -46,20 +46,6 @@ var Director = (function () {
             self.startTyping(e.clientX, e.clientY);
             return false;
         });
-        this.canvas.addEventListener('wheel', function (e) {
-            console.log('Cursor', e.clientX, e.clientY);
-            _this.logView('Old Zoom');
-            var oldZoom = self.view.zoom;
-            var k = e.deltaY < 0 ? 0.2 : -0.2;
-            var oldZoom = self.view.zoom;
-            var newZoom = oldZoom + k;
-            self.view.panX = _this.calculatePan(e.clientX, _this.view.panX, oldZoom, newZoom);
-            self.view.panY = _this.calculatePan(e.clientY, _this.view.panY, oldZoom, newZoom);
-            self.view.zoom = newZoom;
-            _this.logView('New Zoom');
-            console.log('-');
-            self.drawer.redraw(false);
-        });
         this.canvas.addEventListener('touchstart', function (e) {
             e.preventDefault();
             if (e.changedTouches.length > 1)

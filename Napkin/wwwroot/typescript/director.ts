@@ -54,6 +54,8 @@ class Director {
 			return false;
 		});
 
+		/* Disabled zooming for the time being because it's buggy
+		 *
 		this.canvas.addEventListener('wheel', (e: WheelEvent) => {
 			console.log('Cursor', e.clientX, e.clientY);
 			this.logView('Old Zoom');
@@ -74,6 +76,7 @@ class Director {
 			
 			self.drawer.redraw(false);
 		});
+		*/
 
 		this.canvas.addEventListener('touchstart', (e: TouchEvent) => {
 			e.preventDefault();
