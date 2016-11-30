@@ -18,7 +18,7 @@ class Drawer {
 		this.ctx = el.getContext('2d');
 		this.ctx.lineJoin = this.ctx.lineCap = 'round';
 
-		this.el.width =$('body').width();
+		this.el.width =$('body').width() - $('.actions').width();
 		this.el.height = $('body').height();
 
 		this.original = new Drawers.Original(this.ctx);
