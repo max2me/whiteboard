@@ -39,6 +39,7 @@ body {
 	background: #333;
 	width: 50px;
 	height: 100%;
+	overflow-y: auto;
 
 	.button {
 		width: 50px;
@@ -51,9 +52,20 @@ body {
 		cursor: pointer;
 		transition: 0.2s background;
 
+		img {
+			width: 30px;
+			height: 30px;
+			vertical-align: -3px;
+		}
+
 		&:hover {
 			background: #2967a2;
 		}
+	}
+
+	.break {
+		border-bottom: 2px solid #FFF;
+		opacity: 0.3;
 	}
 }
 

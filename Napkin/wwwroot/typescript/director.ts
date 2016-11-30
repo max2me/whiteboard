@@ -131,6 +131,49 @@ class Director {
 			this.switchShape(Shape.Human);
 			this.drawer.redraw(false);
 		});
+
+		$('#a-line-straight').click(() => {
+			this.switchShape(Shape.StraightLine);
+			this.drawer.redraw(false);
+		});
+
+		$('#a-line').click(() => {
+			this.switchShape(Shape.Line);
+			this.drawer.redraw(false);
+		});
+
+		$('#a-line-smooth').click(() => {
+			this.switchShape(Shape.SmoothLine);
+			this.drawer.redraw(false);
+		});
+
+		$('#a-arrow-to').click(() => {
+			var item = this.source.last();
+			item.lineArrowEnd = !item.lineArrowEnd;
+
+			if (item.shape != Shape.Line && item.shape != Shape.SmoothLine && item.shape != Shape.StraightLine) {
+				this.switchShape(Shape.SmoothLine);
+			}
+
+			this.drawer.redraw(false);
+		});
+
+		$('#a-arrow-from').click(() => {
+			var item = this.source.last();
+			item.lineArrowStart = !item.lineArrowStart;
+
+			if (item.shape != Shape.Line && item.shape != Shape.SmoothLine && item.shape != Shape.StraightLine) {
+				this.switchShape(Shape.SmoothLine);
+			}
+
+			this.drawer.redraw(false);
+		});
+
+		$('#a-clear').click(() => {
+			if (confirm('Clear all?')) {
+				this.clearAll();
+			}
+		});
 	}
 
 	logView(description: string) {

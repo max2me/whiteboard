@@ -102,6 +102,39 @@ var Director = (function () {
             _this.switchShape(Shape.Human);
             _this.drawer.redraw(false);
         });
+        $('#a-line-straight').click(function () {
+            _this.switchShape(Shape.StraightLine);
+            _this.drawer.redraw(false);
+        });
+        $('#a-line').click(function () {
+            _this.switchShape(Shape.Line);
+            _this.drawer.redraw(false);
+        });
+        $('#a-line-smooth').click(function () {
+            _this.switchShape(Shape.SmoothLine);
+            _this.drawer.redraw(false);
+        });
+        $('#a-arrow-to').click(function () {
+            var item = _this.source.last();
+            item.lineArrowEnd = !item.lineArrowEnd;
+            if (item.shape != Shape.Line && item.shape != Shape.SmoothLine && item.shape != Shape.StraightLine) {
+                _this.switchShape(Shape.SmoothLine);
+            }
+            _this.drawer.redraw(false);
+        });
+        $('#a-arrow-from').click(function () {
+            var item = _this.source.last();
+            item.lineArrowStart = !item.lineArrowStart;
+            if (item.shape != Shape.Line && item.shape != Shape.SmoothLine && item.shape != Shape.StraightLine) {
+                _this.switchShape(Shape.SmoothLine);
+            }
+            _this.drawer.redraw(false);
+        });
+        $('#a-clear').click(function () {
+            if (confirm('Clear all?')) {
+                _this.clearAll();
+            }
+        });
     };
     Director.prototype.logView = function (description) {
         console.log(description, Math.round(this.view.panX * 100) / 100, Math.round(this.view.panY * 100) / 100, this.view.zoom);
