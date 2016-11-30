@@ -101,6 +101,36 @@ class Director {
 
 			self.interactionUp();
 		});
+
+		$('#a-delete').click(() => {
+			this.deleteAndSync();
+			this.drawer.redraw(false);
+		});
+
+		$('#a-original').click(() => {
+			this.switchShape(Shape.Original);
+			this.drawer.redraw(false);
+		});
+
+		$('#a-circle').click(() => {
+			this.switchShape(Shape.Circle);
+			this.drawer.redraw(false);
+		});
+
+		$('#a-ellipse').click(() => {
+			this.switchShape(Shape.Ellipse);
+			this.drawer.redraw(false);
+		});
+
+		$('#a-rectangle').click(() => {
+			this.switchShape(Shape.Rectangle);
+			this.drawer.redraw(false);
+		});
+
+		$('#a-human').click(() => {
+			this.switchShape(Shape.Human);
+			this.drawer.redraw(false);
+		});
 	}
 
 	logView(description: string) {
@@ -207,7 +237,7 @@ class Director {
 	}
 
 	startCloning(clientX: number, clientY: number) {
-		var newItem = this.source.last().clone();
+		var newItem = Utility.cloneItem(this.source.last());
 		this.source.push(newItem);
 
 		this.startMoving(clientX, clientY);

@@ -11,6 +11,18 @@ class Utility {
 		return JSON.parse(JSON.stringify(object));
 	}
 
+	static cloneItem(item: Item): Item {
+		var result = new Item();
+		result.shape = item.shape;
+		result.text = item.text;
+		result.fontSizeK = item.fontSizeK;
+		result.lineArrowStart = item.lineArrowStart;
+		result.lineArrowEnd = item.lineArrowEnd;
+		result.raw = Utility.clone(item.raw);
+
+		return result;
+	}
+
 	static controlPoints(p1: Point, p2: Point, p3: Point) : Point[]{
 		var t = 0.5;
 		var v = Utility.va(p1, p3);

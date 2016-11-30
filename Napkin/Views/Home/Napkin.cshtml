@@ -57,55 +57,62 @@
 	</style>
 </head>
 <body class="">
-<div class="canvas-container">
-	<canvas id="c"></canvas>
-	<div class="instructions text">
-		<div class="toggle">&#x2261;</div>
+	<div class="canvas-container">
+		<canvas id="c"></canvas>
+		<div class="instructions text">
+			<div class="toggle">&#x2261;</div>
 
-		<div class="description">
-			<h1>NAPKIN</h1>
-			<p>Quickly sketch something together.</p>
+			<div class="description">
+				<h1>NAPKIN</h1>
+				<p>Quickly sketch something together.</p>
 
-			<h2>BASICS</h2>
-			<ul>
-				<li><span class="k">LClick + Drag</span> Draw</li>
-				<li><span class="k">RClick + draw</span> Erase</li>
-				<li><span class="k">DBL click</span> and start typing for text</li>
-				<li><span class="k">Ctrl+Shift+Click</span> to create polyline</li>
-				<li class="sep"><span class="k">Ctrl+Drag</span> to resize</li>
-				<li><span class="k">Shift+Drag</span> to move</li>
-				<li><span class="k">Alt+Drag</span> to clone</li>
-				<li class="sep"><span class="k">DEL</span> to delete</li>
+				<h2>BASICS</h2>
+				<ul>
+					<li><span class="k">LClick + Drag</span> Draw</li>
+					<li><span class="k">RClick + draw</span> Erase</li>
+					<li><span class="k">DBL click</span> and start typing for text</li>
+					<li><span class="k">Ctrl+Shift+Click</span> to create polyline</li>
+					<li class="sep"><span class="k">Ctrl+Drag</span> to resize</li>
+					<li><span class="k">Shift+Drag</span> to move</li>
+					<li><span class="k">Alt+Drag</span> to clone</li>
+					<li class="sep"><span class="k">DEL</span> to delete</li>
 
-			</ul>
+				</ul>
 
-			<p>You can only modify the most recent object that you've drawn by either resizing/moving/cloning or specifying its shape.</p>
+				<p>You can only modify the most recent object that you've drawn by either resizing/moving/cloning or specifying its shape.</p>
 
-			<h2>SHAPES</h2>
-			<p>Use shortcuts below to switch what you've drawn to one of the shapes.</p>
-			<ul>
-				<li><span class="k">o</span> As-is (original, as-drawn, he-he)</li>
-				<li><span class="k">r</span> Rectangle</li>
-				<li><span class="k">c</span> Circle</li>
-				<li><span class="k">e</span> Ellipse</li>
-				<li><span class="k">h</span> Human stick figure</li>
-				<li><span class="k">k</span> Straight line</li>
-				<li><span class="k">l</span> Smooth line or simplified</li>
-				<li><span class="k">RIGHT ARROW</span> TO arrow</li>
-				<li><span class="k">LEFT ARROW</span> FROM arrow</li>
-			</ul>
+				<h2>SHAPES</h2>
+				<p>Use shortcuts below to switch what you've drawn to one of the shapes.</p>
+				<ul>
+					<li><span class="k">o</span> As-is (original, as-drawn, he-he)</li>
+					<li><span class="k">r</span> Rectangle</li>
+					<li><span class="k">c</span> Circle</li>
+					<li><span class="k">e</span> Ellipse</li>
+					<li><span class="k">h</span> Human stick figure</li>
+					<li><span class="k">k</span> Straight line</li>
+					<li><span class="k">l</span> Smooth line or simplified</li>
+					<li><span class="k">RIGHT ARROW</span> TO arrow</li>
+					<li><span class="k">LEFT ARROW</span> FROM arrow</li>
+				</ul>
+			</div>
 		</div>
 	</div>
-</div>
-	<div class="actions">&nbsp;</div>
-<script src='https://code.jquery.com/jquery-2.2.4.min.js'></script>
-<script src='/scripts/libs/keysight/dist/keysight.umd.js'></script>
-<script src="http://ajax.aspnetcdn.com/ajax/signalr/jquery.signalr-2.2.1.js"></script>
-<script src='/scripts/simplify.js'></script>
-<script>
-	var napkinId = '@Model.Id';
-</script>
-<script src='/scripts/app.js'></script>
-<span class="fontloader">font</span>
+	<div class="actions">
+		<div class="button" id="a-delete" title="Delete">&times;</div>
+		<div class="button" id="a-original" title="Original">O</div>
+		<div class="button" id="a-circle" title="Circle">C</div>
+		<div class="button" id="a-ellipse" title="Ellipse">E</div>
+		<div class="button" id="a-rectangle" title="Rectangle">R</div>
+		<div class="button" id="a-human" title="Human">H</div>
+	</div>
+	<script src='https://code.jquery.com/jquery-2.2.4.min.js'></script>
+	<script src='/scripts/libs/keysight/dist/keysight.umd.js'></script>
+	<script src="https://ajax.aspnetcdn.com/ajax/signalr/jquery.signalr-2.2.1.js"></script>
+	<script src='/scripts/simplify.js'></script>
+	<script>
+		var napkinId = '@Model.Id';
+	</script>
+	<script src='/scripts/app.js'></script>
+	<span class="fontloader">font</span>
 </body>
 </html>

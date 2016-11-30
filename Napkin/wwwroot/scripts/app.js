@@ -78,6 +78,30 @@ var Director = (function () {
                 return;
             self.interactionUp();
         });
+        $('#a-delete').click(function () {
+            _this.deleteAndSync();
+            _this.drawer.redraw(false);
+        });
+        $('#a-original').click(function () {
+            _this.switchShape(Shape.Original);
+            _this.drawer.redraw(false);
+        });
+        $('#a-circle').click(function () {
+            _this.switchShape(Shape.Circle);
+            _this.drawer.redraw(false);
+        });
+        $('#a-ellipse').click(function () {
+            _this.switchShape(Shape.Ellipse);
+            _this.drawer.redraw(false);
+        });
+        $('#a-rectangle').click(function () {
+            _this.switchShape(Shape.Rectangle);
+            _this.drawer.redraw(false);
+        });
+        $('#a-human').click(function () {
+            _this.switchShape(Shape.Human);
+            _this.drawer.redraw(false);
+        });
     };
     Director.prototype.logView = function (description) {
         console.log(description, Math.round(this.view.panX * 100) / 100, Math.round(this.view.panY * 100) / 100, this.view.zoom);
@@ -170,7 +194,7 @@ var Director = (function () {
         this.mode = Mode.Drawing;
     };
     Director.prototype.startCloning = function (clientX, clientY) {
-        var newItem = this.source.last().clone();
+        var newItem = Utility.cloneItem(this.source.last());
         this.source.push(newItem);
         this.startMoving(clientX, clientY);
     };
@@ -822,16 +846,6 @@ var Item = (function () {
     Item.prototype.record = function (point) {
         this.raw.push(new Point(point.x, point.y));
     };
-    Item.prototype.clone = function () {
-        var result = new Item();
-        result.shape = this.shape;
-        result.text = this.text;
-        result.fontSizeK = this.fontSizeK;
-        result.lineArrowStart = this.lineArrowStart;
-        result.lineArrowEnd = this.lineArrowEnd;
-        result.raw = Utility.clone(this.raw);
-        return result;
-    };
     Item.prototype.isLine = function () {
         return;
     };
@@ -957,6 +971,16 @@ var Utility = (function () {
     };
     Utility.clone = function (object) {
         return JSON.parse(JSON.stringify(object));
+    };
+    Utility.cloneItem = function (item) {
+        var result = new Item();
+        result.shape = item.shape;
+        result.text = item.text;
+        result.fontSizeK = item.fontSizeK;
+        result.lineArrowStart = item.lineArrowStart;
+        result.lineArrowEnd = item.lineArrowEnd;
+        result.raw = Utility.clone(item.raw);
+        return result;
     };
     Utility.controlPoints = function (p1, p2, p3) {
         var t = 0.5;
