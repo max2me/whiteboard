@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.15
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Napkin", "Napkin\Napkin.xproj", "{11E9E189-F11A-4879-8CED-488DAEA25EC0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Napkin", "Napkin\Napkin.csproj", "{11E9E189-F11A-4879-8CED-488DAEA25EC0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

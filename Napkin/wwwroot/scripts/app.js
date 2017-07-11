@@ -1,8 +1,13 @@
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var director = null;
 $(function () {
     director = new Director();
@@ -615,7 +620,7 @@ var Keyboard = (function () {
     function Keyboard() {
     }
     Keyboard.isDelete = function (char) {
-        return char == Keyboard.backspace || char == Keyboard.delete;
+        return char == Keyboard.backspace || char == Keyboard["delete"];
     };
     Keyboard.isArrowRight = function (char) {
         return char == Keyboard.arrowRight;
@@ -623,12 +628,12 @@ var Keyboard = (function () {
     Keyboard.isArrowLeft = function (char) {
         return char == Keyboard.arrowLeft;
     };
-    Keyboard.backspace = 8;
-    Keyboard.delete = 46;
-    Keyboard.arrowRight = 39;
-    Keyboard.arrowLeft = 37;
     return Keyboard;
 }());
+Keyboard.backspace = 8;
+Keyboard["delete"] = 46;
+Keyboard.arrowRight = 39;
+Keyboard.arrowLeft = 37;
 var Transform = (function () {
     function Transform() {
     }
@@ -740,8 +745,9 @@ var Item = (function () {
 var DeleteItem = (function (_super) {
     __extends(DeleteItem, _super);
     function DeleteItem() {
-        _super.call(this);
-        this.shape = Shape.Delete;
+        var _this = _super.call(this) || this;
+        _this.shape = Shape.Delete;
+        return _this;
     }
     return DeleteItem;
 }(Item));
@@ -830,7 +836,7 @@ var Drawers;
     var Lines = (function (_super) {
         __extends(Lines, _super);
         function Lines() {
-            _super.apply(this, arguments);
+            return _super !== null && _super.apply(this, arguments) || this;
         }
         Lines.prototype.segment = function (item, last) {
             this.setupStroke(item, last);
@@ -952,7 +958,7 @@ var Drawers;
     var Original = (function (_super) {
         __extends(Original, _super);
         function Original() {
-            _super.apply(this, arguments);
+            return _super !== null && _super.apply(this, arguments) || this;
         }
         Original.prototype.original = function (item, last) {
             this.setupStroke(item, last);
@@ -972,7 +978,7 @@ var Drawers;
     var Shapes = (function (_super) {
         __extends(Shapes, _super);
         function Shapes() {
-            _super.apply(this, arguments);
+            return _super !== null && _super.apply(this, arguments) || this;
         }
         Shapes.prototype.rectangle = function (item, last) {
             this.setupStroke(item, last);
@@ -1049,7 +1055,7 @@ var Drawers;
     var Text = (function (_super) {
         __extends(Text, _super);
         function Text() {
-            _super.apply(this, arguments);
+            return _super !== null && _super.apply(this, arguments) || this;
         }
         Text.prototype.text = function (item, last, zoom) {
             var lines = (item.text + (last ? '_' : '')).split('\n');
