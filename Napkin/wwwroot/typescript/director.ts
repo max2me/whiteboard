@@ -33,7 +33,9 @@ class Director {
 		this.view = new View();
 		this.canvas = document.getElementById('c');
 		this.drawer = new Drawer(this.canvas, this.source, this.view);
-		this.syncer = new Syncer(this.source, this.drawer, this);		
+		this.syncer = new Syncer(this.source, this.drawer, this, () => {
+			$('html').removeClass('loading');
+		});		
 
 		this.canvas.addEventListener('mousedown', (e: MouseEvent) => {
 			e.preventDefault();
