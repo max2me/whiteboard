@@ -5,16 +5,26 @@ class Syncer {
 	source: Source;
 	drawer: Drawer;
 	director: Director;
+	onInitialContent: () => void;
+	broadcastsReceived: number;
 
-	constructor(source: Source, drawer: Drawer, director: Director){
+	constructor(source: Source, drawer: Drawer, director: Director, onInitialContent: () => void){
 		this.source = source;
 		this.drawer = drawer;
 		this.director = director;
+		this.broadcastsReceived = 0;
+		this.onInitialContent = onInitialContent;
 		this.connection = $.connection('/r', { napkin: napkinId }, false);
 		this.connection.received((message: any) => {
 
 			switch(message.Type) {
 				case 'Broadcast':
+					if (this.broadcastsReceived === 0) {
+						this.onInitialContent();
+					} 
+
+					this.broadcastsReceived++;
+
 					var items = JSON.parse(message.Json);
 					items.forEach((item: Item) => {
 						this.processItem(item);

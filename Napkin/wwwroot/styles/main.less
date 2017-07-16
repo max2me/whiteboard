@@ -32,6 +32,40 @@ body {
 		width: 100%;
 		height: 100%;
 		z-index: 100;
+		transition: 0.3s background-color;
+		background-color: #FFF;
+	}
+}
+
+.loading-indicator {
+	font-family: 'Permanent Marker';
+	font-size: 40px;
+	width: 100%;
+	height: 100%;
+	text-align: center;
+	position: absolute;
+	z-index: 10000;
+	left: 0;
+	top: 0;
+	padding-top: 300px;
+	display: none;
+}
+
+html.loading {
+	background: #F0F0F0;
+
+	body,
+	#c {
+		background: #F0F0F0;
+	}
+
+	.loading-indicator {
+		display: block;
+	}
+
+	.toggle,
+	.actions {
+		display: none;
 	}
 }
 
