@@ -54,7 +54,7 @@ namespace Napkin
 				.UseWebSockets()
 				.UseSignalR(routes =>
 	            {
-		            routes.MapHub<R>("r");
+		            routes.MapHub<SyncHub>("r");
 	            })
 				.UseMvc(routes =>
 	            {

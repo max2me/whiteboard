@@ -222,6 +222,7 @@ var Director = (function () {
     Director.prototype.startCloning = function (clientX, clientY) {
         var newItem = Utility.cloneItem(this.source.last());
         this.source.push(newItem);
+        this.source.myOwnItemIds.push(newItem.id);
         this.startMoving(clientX, clientY);
     };
     Director.prototype.startDrawingSteps = function (clientX, clientY) {
@@ -556,12 +557,13 @@ var Syncer = (function () {
         this.director = director;
         this.onInitialContent = onInitialContent;
         this.connection = new signalR.HubConnection('/r');
-        this.connection.on('send', function (data) {
-            console.log(data);
-        });
         this.connection.on('broadcast', function (item) {
-            console.log('broadcast', item);
             _this.processItem(item);
+            _this.drawer.redraw(false);
+        });
+        this.connection.on('clearAll', function () {
+            _this.director.resetModeToNone();
+            _this.source.items = [];
             _this.drawer.redraw(false);
         });
         this.connection
@@ -579,13 +581,13 @@ var Syncer = (function () {
         });
     }
     Syncer.prototype.processItem = function (item) {
-        if (item == null) {
+        if (item == null || this.source.myOwnItemIds.indexOf(item.id) !== -1) {
             return;
         }
         var replaced = false;
         for (var i = 0; i < this.source.items.length; i++) {
-            var k = this.source.items[i];
-            if (k.id == item.id) {
+            var existingItem = this.source.items[i];
+            if (existingItem.id === item.id) {
                 this.source.items[i] = item;
                 replaced = true;
                 break;
@@ -600,6 +602,7 @@ var Syncer = (function () {
         this.connection.invoke('broadcast', last || this.source.last());
     };
     Syncer.prototype.sendClearAll = function () {
+        this.connection.invoke('clearAll');
     };
     return Syncer;
 }());
@@ -925,16 +928,20 @@ var Shape;
 var Source = (function () {
     function Source() {
         this.items = [];
+        this.myOwnItemIds = [];
     }
     Source.prototype.last = function () {
         var deleted = 0;
         for (var i = this.items.length - 1; i >= 0; i--) {
             var item = this.items[i];
-            if (item.shape == Shape.Delete) {
+            if (this.myOwnItemIds.indexOf(item.id) === -1) {
+                continue;
+            }
+            if (item.shape === Shape.Delete) {
                 deleted++;
             }
             else {
-                if (deleted == 0) {
+                if (deleted === 0) {
                     return item;
                 }
                 else {
@@ -951,6 +958,7 @@ var Source = (function () {
         var item = new Item();
         item.record(point);
         this.items.push(item);
+        this.myOwnItemIds.push(item.id);
     };
     Source.prototype.isEmpty = function () {
         return this.items.length == 0;

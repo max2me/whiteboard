@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 
 namespace Napkin
 {
-    public class R : Hub
+    public class SyncHub : Hub
     {
 		private static readonly NapkinConnections Members = new NapkinConnections();
 		private static readonly NapkinContents Contents = new NapkinContents();
@@ -32,48 +32,15 @@ namespace Napkin
 			await Clients.Group(napkinId).InvokeAsync("Broadcast", item);
 		}
 
-		/*
-		protected override Task OnReceived(HttpRequest request, string connectionId, string data)
-        {
-            var message = JsonConvert.DeserializeObject<Message>(data);
-			
+	    public async Task ClearAll()
+	    {
+		    var napkinId = Members.GetNapkin(Context.ConnectionId);
+			Contents.ClearAll(napkinId);
 
-			switch (message.Type)
-            {
-                case IncomingMessage.Broadcast:
-					
-					
-
-					
-
-				case IncomingMessage.RequestContent:
-					var requestContents = new
-					{
-						Type = IncomingMessage.Broadcast.ToString(),
-						Json = JsonConvert.SerializeObject()
-					};
-
-					return Connection.Send(connectionId, requestContents);
-
-				case IncomingMessage.ClearAll:
-					Contents.ClearAll(Members.GetNapkin(connectionId));
-
-					var clearAllContents = new
-					{
-						Type = IncomingMessage.ClearAll.ToString()
-					};
-
-					return Groups.Send(Members.GetNapkin(connectionId), clearAllContents, connectionId);
-
-				default:
-                    break;
-            }
-
-            return base.OnReceived(request, connectionId, data);
-        }
-		*/
-
-        public enum IncomingMessage
+		    await Clients.Group(napkinId).InvokeAsync("ClearAll");
+		}
+		
+		public enum IncomingMessage
         {
             Broadcast,
 			RequestContent,

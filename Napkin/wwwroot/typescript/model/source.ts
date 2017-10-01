@@ -1,19 +1,27 @@
 class Source {
 	items: Item[];
+	myOwnItemIds: string[];
 
 	constructor() {
 		this.items = [];
+		this.myOwnItemIds = [];
 	}
 
 	last(): Item {
 		// Have to account for `deleted` items in the source
-		var deleted = 0;
+		let deleted = 0;
+
 		for (var i = this.items.length - 1; i >= 0; i--) {
-			var item = this.items[i];
-			if (item.shape == Shape.Delete) {
+			const item = this.items[i];
+
+			if (this.myOwnItemIds.indexOf(item.id) === -1) {
+				continue;
+			}
+
+			if (item.shape === Shape.Delete) {
 				deleted++;
 			} else {
-				if (deleted == 0) {
+				if (deleted === 0) {
 					return item;
 				} else {
 					deleted--;
@@ -33,6 +41,7 @@ class Source {
 		item.record(point);
 
 		this.items.push(item);
+		this.myOwnItemIds.push(item.id);
 	}
 
 	isEmpty() {

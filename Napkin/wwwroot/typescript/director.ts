@@ -287,6 +287,7 @@ class Director {
 	startCloning(clientX: number, clientY: number) {
 		var newItem = Utility.cloneItem(this.source.last());
 		this.source.push(newItem);
+		this.source.myOwnItemIds.push(newItem.id);
 
 		this.startMoving(clientX, clientY);
 	}

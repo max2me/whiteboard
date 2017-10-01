@@ -15,16 +15,17 @@ class Syncer {
 		this.onInitialContent = onInitialContent;
 
 		this.connection = new signalR.HubConnection('/r');
-		this.connection.on('send', (data:any) => {
-			console.log(data);
-		});
 
 		this.connection.on('broadcast', (item: Item) => {
-				console.log('broadcast', item);
-
 				this.processItem(item);
 				this.drawer.redraw(false);
-			});
+		});
+
+		this.connection.on('clearAll', () => {
+			this.director.resetModeToNone();
+			this.source.items = [];
+			this.drawer.redraw(false);
+		});
 
 
 		this.connection
@@ -42,33 +43,17 @@ class Syncer {
 						this.drawer.redraw(false);
 					});
 			});
-
-		
-
-		/*
-		this.connection.received((message: any) => {
-		
-				case 'ClearAll':
-					this.director.resetModeToNone();
-					this.source.items = [];
-					break;
-			}
-			
-			
-			this.drawer.redraw(false);
-		});
-		*/
 	}
 
 	processItem(item: Item) {
-		if (item == null) {
+		if (item == null || this.source.myOwnItemIds.indexOf(item.id) !== -1) {
 			return;
 		}
 
-		var replaced = false;
-		for (var i = 0; i < this.source.items.length; i++) {
-			var k = this.source.items[i];
-			if (k.id == item.id) {
+		let replaced = false;
+		for (let i = 0; i < this.source.items.length; i++) {
+			const existingItem = this.source.items[i];
+			if (existingItem.id === item.id) {
 				this.source.items[i] = item;
 				replaced = true;
 				break;
@@ -85,10 +70,6 @@ class Syncer {
 	}
 
 	sendClearAll(): any {
-		/*
-		this.connection.send({
-			Type: 'ClearAll'
-		});
-		*/
+		this.connection.invoke('clearAll');
 	}
 }
