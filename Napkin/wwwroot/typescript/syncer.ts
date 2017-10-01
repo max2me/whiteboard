@@ -7,13 +7,11 @@ class Syncer {
 	drawer: Drawer;
 	director: Director;
 	onInitialContent: () => void;
-	broadcastsReceived: number;
 
 	constructor(source: Source, drawer: Drawer, director: Director, onInitialContent: () => void){
 		this.source = source;
 		this.drawer = drawer;
 		this.director = director;
-		this.broadcastsReceived = 0;
 		this.onInitialContent = onInitialContent;
 
 		this.connection = new signalR.HubConnection('/r');
@@ -21,27 +19,35 @@ class Syncer {
 			console.log(data);
 		});
 
+		this.connection.on('broadcast', (item: Item) => {
+				console.log('broadcast', item);
+
+				this.processItem(item);
+				this.drawer.redraw(false);
+			});
+
+
 		this.connection
 			.start()
-			.then(() => this.connection.invoke('joinNapkin', napkinId));
+			.then(() => {
+				this.connection
+					.invoke('joinNapkin', napkinId)
+					.then((items: Item[]) => {
+						this.onInitialContent();
+
+						items.forEach((item: Item) => {
+							this.processItem(item);
+						});
+
+						this.drawer.redraw(false);
+					});
+			});
+
+		
 
 		/*
 		this.connection.received((message: any) => {
-
-			switch(message.Type) {
-				case 'Broadcast':
-					if (this.broadcastsReceived === 0) {
-						this.onInitialContent();
-					} 
-
-					this.broadcastsReceived++;
-
-					var items = JSON.parse(message.Json);
-					items.forEach((item: Item) => {
-						this.processItem(item);
-					});
-					break;
-
+		
 				case 'ClearAll':
 					this.director.resetModeToNone();
 					this.source.items = [];
@@ -50,16 +56,6 @@ class Syncer {
 			
 			
 			this.drawer.redraw(false);
-		});
-
-		this.connection.error((error: any) => {
-			console.warn(error);
-		});
-
-		this.connection.start().done(() => {
-			this.connection.send({
-				Type: 'RequestContent'
-			});
 		});
 		*/
 	}
@@ -85,12 +81,7 @@ class Syncer {
 	}
 
 	send(last: Item = null) {
-		/*
-		this.connection.send({
-			Type: 'Broadcast',
-			Json: JSON.stringify(last || this.source.last())
-		});
-		*/
+		this.connection.invoke('broadcast', last || this.source.last());
 	}
 
 	sendClearAll(): any {

@@ -15,12 +15,14 @@ namespace Napkin
 		private static readonly NapkinConnections Members = new NapkinConnections();
 		private static readonly NapkinContents Contents = new NapkinContents();
 
-	    public async Task JoinNapkin(string napkinId)
+	    public async Task<IEnumerable<Item>> JoinNapkin(string napkinId)
 	    {
 		    Members.AssignToNapkin(Context.ConnectionId, napkinId);
 
 		    await Groups.AddAsync(Context.ConnectionId, napkinId);
-		}
+
+		    return Contents.GetAll(napkinId);
+	    }
 
 	    public async Task Broadcast(Item item)
 	    {
@@ -48,7 +50,7 @@ namespace Napkin
 					var requestContents = new
 					{
 						Type = IncomingMessage.Broadcast.ToString(),
-						Json = JsonConvert.SerializeObject(Contents.GetAll(Members.GetNapkin(connectionId)))
+						Json = JsonConvert.SerializeObject()
 					};
 
 					return Connection.Send(connectionId, requestContents);
