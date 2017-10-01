@@ -32,10 +32,7 @@ namespace Napkin
 				.AddRouting(options => options.LowercaseUrls = true)
 				.AddMvc();
 
-			services.AddSignalR(options =>
-		        {
-			        options.Hubs.EnableDetailedErrors = true;
-		        });
+			services.AddSignalR();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -55,7 +52,10 @@ namespace Napkin
 				.UseDefaultFiles()
 				.UseStaticFiles()
 				.UseWebSockets()
-				.UseSignalR<RawConnection>("/r")
+				.UseSignalR(routes =>
+	            {
+		            routes.MapHub<R>("r");
+	            })
 				.UseMvc(routes =>
 	            {
 		            routes

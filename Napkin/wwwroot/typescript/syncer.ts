@@ -1,4 +1,5 @@
 declare var napkinId: String;
+declare var signalR: any;
 
 class Syncer {
 	connection: any;
@@ -14,7 +15,17 @@ class Syncer {
 		this.director = director;
 		this.broadcastsReceived = 0;
 		this.onInitialContent = onInitialContent;
-		this.connection = $.connection('/r', { napkin: napkinId }, false);
+
+		this.connection = new signalR.HubConnection('/r');
+		this.connection.on('send', (data:any) => {
+			console.log(data);
+		});
+
+		this.connection
+			.start()
+			.then(() => this.connection.invoke('joinNapkin', napkinId));
+
+		/*
 		this.connection.received((message: any) => {
 
 			switch(message.Type) {
@@ -50,6 +61,7 @@ class Syncer {
 				Type: 'RequestContent'
 			});
 		});
+		*/
 	}
 
 	processItem(item: Item) {
@@ -73,15 +85,19 @@ class Syncer {
 	}
 
 	send(last: Item = null) {
+		/*
 		this.connection.send({
 			Type: 'Broadcast',
 			Json: JSON.stringify(last || this.source.last())
 		});
+		*/
 	}
 
 	sendClearAll(): any {
+		/*
 		this.connection.send({
 			Type: 'ClearAll'
 		});
+		*/
 	}
 }
